@@ -111,7 +111,7 @@ GetSubjectsAsync – sinifə görə fənn dropdown-u üçün
 
 Nəticə
 
-Layihə strukturu və CRUD axınları qaydasındadır. Create və Edit əməliyyatlarında grade əsaslı subject filtrasiya düzgün işləyir. Global exception handling mövcuddur. Repository səviyyəsində SaveChangesAsync qəsdən və əsaslandırılmış şəkildə istifadə olunmuşdur. Ümumi olaraq sistem stabil, oxunaqlı, genişlənə bilən və texniki müsahibələrdə rahat izah edilə bilən peşəkar səviyyəli bir layihədir.
+Layihə strukturu və CRUD axınları qaydasındadır. Create və Edit əməliyyatlarında grade əsaslı subject filtrasiya düzgün işləyir. Global exception handling mövcuddur. Repository səviyyəsində SaveChangesAsync qəsdən və əsaslandırılmış şəkildə istifadə olunmuşdur. Ümumi olaraq sistem stabil, oxunaqlı, genişlənə bilən  peşəkar səviyyəli bir layihədir.
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
