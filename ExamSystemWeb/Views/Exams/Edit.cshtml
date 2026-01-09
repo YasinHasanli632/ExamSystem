@@ -1,0 +1,98 @@
+﻿@model ExamEditViewModel
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+
+        <form asp-action="Edit" method="post">
+
+            <!-- Hidden ID -->
+            <input type="hidden" asp-for="Id" />
+
+            <!-- ACTION BAR -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h6 class="mb-0">İmtahanı yenilə</h6>
+                    <small class="text-muted">
+                        Mövcud imtahan məlumatlarını redaktə edin
+                    </small>
+                </div>
+
+                <div>
+                    <button type="submit" class="btn btn-primary me-2">
+                        💾 Yenilə
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ↩ Geri
+                    </a>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- FORM -->
+            <div class="row g-4">
+
+                <!-- STUDENT -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Şagird
+                    </label>
+                    <select asp-for="StudentId"
+                            asp-items="Model.Students"
+                            class="form-select">
+                        <option value="">— Şagird seçin —</option>
+                    </select>
+                    <span asp-validation-for="StudentId"
+                          class="text-danger small"></span>
+                </div>
+
+                <!-- SUBJECT -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Fənn
+                    </label>
+                    <select asp-for="SubjectId"
+                            asp-items="Model.Subjects"
+                            class="form-select">
+                        <option value="">— Fənn seçin —</option>
+                    </select>
+                    <span asp-validation-for="SubjectId"
+                          class="text-danger small"></span>
+                </div>
+
+                <!-- EXAM DATE -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        İmtahan tarixi
+                    </label>
+                    <input asp-for="ExamDate"
+                           type="date"
+                           class="form-control" />
+                    <span asp-validation-for="ExamDate"
+                          class="text-danger small"></span>
+                </div>
+
+                <!-- SCORE -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Qiymət (1–9)
+                    </label>
+                    <input asp-for="Score"
+                           type="number"
+                           min="1"
+                           max="9"
+                           class="form-control" />
+                    <span asp-validation-for="Score"
+                          class="text-danger small"></span>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

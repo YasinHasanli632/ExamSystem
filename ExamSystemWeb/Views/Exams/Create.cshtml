@@ -1,0 +1,82 @@
+﻿@model ExamCreateViewModel
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+
+        <form asp-action="Create" method="post">
+
+            <!-- ACTION BAR -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Yeni imtahan əlavə et</h6>
+
+                <div>
+                    <button type="submit" class="btn btn-success me-2">
+                        💾 Yadda saxla
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ↩ Geri
+                    </a>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- FORM -->
+            <div class="row g-3">
+
+                <!-- STUDENT -->
+                <div class="col-md-6">
+                    <label class="form-label">Şagird</label>
+                    <select asp-for="StudentId"
+                            asp-items="Model.Students"
+                            class="form-select">
+                        <option value="">— Şagird seçin —</option>
+                    </select>
+                    <span asp-validation-for="StudentId" class="text-danger"></span>
+                </div>
+
+                <!-- SUBJECT -->
+                <div class="mb-3">
+                    <label asp-for="SubjectId" class="form-label">Fənn</label>
+
+                    <select asp-for="SubjectId"
+                            asp-items="Model.Subjects"
+                            class="form-select">
+                        <option value="">-- Fənn seçin --</option>
+                    </select>
+
+                    <span asp-validation-for="SubjectId" class="text-danger"></span>
+                </div>
+
+
+                <!-- EXAM DATE -->
+                <div class="col-md-6">
+                    <label class="form-label">İmtahan tarixi</label>
+                    <input asp-for="ExamDate"
+                           type="date"
+                           class="form-control" />
+                    <span asp-validation-for="ExamDate" class="text-danger"></span>
+                </div>
+
+                <!-- SCORE -->
+                <div class="col-md-6">
+                    <label class="form-label">Qiymət (1–9)</label>
+                    <input asp-for="Score"
+                           type="number"
+                           min="1"
+                           max="9"
+                           class="form-control" />
+                    <span asp-validation-for="Score" class="text-danger"></span>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

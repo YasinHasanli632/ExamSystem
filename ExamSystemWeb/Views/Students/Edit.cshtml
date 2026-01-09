@@ -1,0 +1,85 @@
+﻿@using ExamSystemDomain.Enums
+@using ExamSystemWeb.ViewModels
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model StudentEditViewModel
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <h4 class="card-title mb-4">✏️ Şagirdi Yenilə</h4>
+
+                <form asp-action="Edit" method="post">
+
+                    <!-- Hidden Id -->
+                    <input asp-for="Id" type="hidden" />
+                    <!-- Student Number (READ-ONLY) -->
+                    <div class="mb-3">
+                        <label asp-for="StudentNumber" class="form-label"></label>
+                        <input asp-for="StudentNumber"
+                               class="form-control"
+                               readonly />
+                    </div>
+
+
+                    <!-- First Name -->
+                    <div class="mb-3">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="mb-3">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <!-- Grade (EDIT – ENUM) -->
+                    <div class="mb-3">
+                        <label asp-for="Grade" class="form-label">Sinif</label>
+
+                        <select asp-for="Grade" class="form-select">
+                            <option value="">-- Sinif seçin --</option>
+
+                            @foreach (Grade grade in Enum.GetValues(typeof(Grade)))
+                            {
+                                <option value="@grade">
+                                    @((int)grade)-ci sinif
+                                </option>
+                            }
+                        </select>
+
+                        <span asp-validation-for="Grade" class="text-danger"></span>
+                    </div>
+
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="Index"
+                           class="btn btn-secondary">
+                            ← Geri qayıt
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-warning">
+                            💾 Dəyişiklikləri saxla
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

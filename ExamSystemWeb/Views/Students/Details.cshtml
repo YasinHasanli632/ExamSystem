@@ -1,0 +1,95 @@
+﻿@using ExamSystemWeb.ViewModels
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model StudentDetailsViewModel
+
+<div class="row">
+
+    <!-- ================= STUDENT INFO ================= -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">👨‍🎓 Şagird Məlumatları</h5>
+
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Ad Soyad:</strong><br />
+                        @Model.FullName
+                    </li>
+
+                    <li class="list-group-item">
+                        <strong>Şagird nömrəsi:</strong><br />
+                        @Model.StudentNumberDisplay
+                    </li>
+
+
+                    <li class="list-group-item">
+                        <strong>Sinif:</strong><br />
+                        @((int)Model.Grade)-ci sinif
+                    </li>
+                </ul>
+
+                <div class="d-flex gap-2 mt-4">
+                    <a asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-warning w-100">
+                        ✏️ Yenilə
+                    </a>
+
+                    <a asp-action="Delete"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-danger w-100"
+                       onclick="return confirm('Bu şagirdi silmək istədiyinizə əminsiniz?');">
+                        🗑️ Sil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EXAMS (READ-ONLY) ================= -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <h5 class="card-title mb-3">📝 İmtahanlar</h5>
+
+                @if (!Model.Exams.Any())
+                {
+                    <div class="alert alert-warning">
+                        Bu şagird üçün hələ imtahan əlavə edilməyib.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Dərs</th>
+                                    <th>Tarix</th>
+                                    <th>Qiymət</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var exam in Model.Exams)
+                                {
+                                    <tr>
+                                        <td>@exam.SubjectName</td>
+                                        <td>@exam.ExamDate.ToShortDateString()</td>
+                                        <td>
+                                            <span class="badge bg-primary">
+                                                @exam.Score
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+
+</div>

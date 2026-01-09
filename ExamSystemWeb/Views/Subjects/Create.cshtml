@@ -1,0 +1,87 @@
+﻿@using ExamSystemDomain.Enums
+@model SubjectCreateViewModel
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+
+        <form asp-action="Create" method="post">
+
+            <!-- ACTION BAR -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Yeni fənn əlavə et</h6>
+
+                <div>
+                    <button type="submit" class="btn btn-success me-2">
+                        💾 Yadda saxla
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ↩ Geri
+                    </a>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- FORM -->
+            <div class="row g-3">
+
+                <!-- SUBJECT NAME -->
+                <div class="col-md-8">
+                    <label class="form-label">Fənn adı</label>
+                    <input asp-for="SubjectName"
+                           class="form-control"
+                           placeholder="Məs: Riyaziyyat" />
+                    <span asp-validation-for="SubjectName" class="text-danger"></span>
+                </div>
+
+                <!-- GRADE -->
+                <!-- GRADE -->
+                <div class="col-md-4">
+                    <label class="form-label">Sinif</label>
+
+                    <select asp-for="Grade" class="form-select">
+                        <option value="">-- Sinif seçin --</option>
+
+                        @foreach (Grade grade in Enum.GetValues(typeof(Grade)))
+                        {
+                            <option value="@grade">
+                                @((int)grade)-ci sinif
+                            </option>
+                        }
+                    </select>
+
+                    <span asp-validation-for="Grade" class="text-danger"></span>
+                </div>
+
+
+                <!-- TEACHER FIRST NAME -->
+                <div class="col-md-4">
+                    <label class="form-label">Müəllimin adı</label>
+                    <input asp-for="TeacherFirstName"
+                           class="form-control"
+                           placeholder="Məs: Elvin" />
+                    <span asp-validation-for="TeacherFirstName" class="text-danger"></span>
+                </div>
+
+                <!-- TEACHER LAST NAME -->
+                <div class="col-md-4">
+                    <label class="form-label">Müəllimin soyadı</label>
+                    <input asp-for="TeacherLastName"
+                           class="form-control"
+                           placeholder="Məs: Məmmədov" />
+                    <span asp-validation-for="TeacherLastName" class="text-danger"></span>
+                </div>
+
+                <!-- INFO -->
+               
+
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

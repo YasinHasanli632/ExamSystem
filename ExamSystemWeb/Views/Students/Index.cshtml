@@ -1,0 +1,78 @@
+﻿@using ExamSystemWeb.ViewModels
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model List<StudentListViewModel>
+
+@{
+    int count = 0;
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="card-title mb-0">👨‍🎓 Şagirdlər</h4>
+
+            <a asp-action="Create"
+               asp-controller="Students"
+               class="btn btn-success">
+                ➕ Yeni şagird
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Şagird nömrəsi</th>
+                        <th>Ad Soyad</th>
+                        <th>Sinif</th>
+                        <th class="text-end">Əməliyyatlar</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        count++;
+                        <tr>
+                            <td>@count</td>
+                            <td>@item.StudentNumberDisplay</td>
+                            <td>@item.FullName</td>
+                            <td>@((int)item.Grade)-ci sinif</td>
+
+                            <td class="text-end">
+
+                                <!-- DETAILS -->
+                                <a asp-action="Details"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-info btn-sm me-1"
+                                   title="Ətraflı bax">
+                                    👁️
+                                </a>
+
+                                <!-- EDIT -->
+                                <a asp-action="Edit"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-warning btn-sm"
+                                   title="Yenilə">
+                                    ✏️
+                                </a>
+
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-warning mt-3">
+                Hələ şagird əlavə edilməyib.
+            </div>
+        }
+
+    </div>
+</div>

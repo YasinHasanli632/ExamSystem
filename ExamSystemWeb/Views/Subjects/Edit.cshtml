@@ -1,0 +1,89 @@
+﻿@model ExamSystemWeb.ViewModels.SubjectEditViewModel
+
+@using ExamSystemDomain.Enums
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+
+        <form asp-action="Edit" method="post">
+
+            <!-- Id gizli field -->
+            <input type="hidden" asp-for="Id" />
+
+            <!-- ACTION BAR -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Fənni redaktə et</h6>
+
+                <div>
+                    <button type="submit" class="btn btn-primary me-2">
+                        💾 Yenilə
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-secondary">
+                        ↩ Geri
+                    </a>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- FORM -->
+            <div class="row g-3">
+
+                <!-- SUBJECT CODE (READ-ONLY) -->
+                <div class="col-md-4">
+                    <label class="form-label">Fənn kodu</label>
+                    <input asp-for="SubjectCode"
+                           class="form-control"
+                           readonly />
+                </div>
+
+                <!-- SUBJECT NAME -->
+                <div class="col-md-8">
+                    <label class="form-label">Fənn adı</label>
+                    <input asp-for="SubjectName"
+                           class="form-control" />
+                    <span asp-validation-for="SubjectName" class="text-danger"></span>
+                </div>
+
+                <!-- GRADE (ENUM DROPDOWN) -->
+                <div class="col-md-4">
+                    <label class="form-label">Sinif</label>
+                    <select asp-for="Grade" class="form-select">
+                        <option value="">-- Sinif seçin --</option>
+                        @foreach (Grade grade in Enum.GetValues(typeof(Grade)))
+                        {
+                            <option value="@grade">
+                                @((int)grade)-ci sinif
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="Grade" class="text-danger"></span>
+                </div>
+
+                <!-- TEACHER FIRST NAME -->
+                <div class="col-md-4">
+                    <label class="form-label">Müəllimin adı</label>
+                    <input asp-for="TeacherFirstName"
+                           class="form-control" />
+                    <span asp-validation-for="TeacherFirstName" class="text-danger"></span>
+                </div>
+
+                <!-- TEACHER LAST NAME -->
+                <div class="col-md-4">
+                    <label class="form-label">Müəllimin soyadı</label>
+                    <input asp-for="TeacherLastName"
+                           class="form-control" />
+                    <span asp-validation-for="TeacherLastName" class="text-danger"></span>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,85 @@
+﻿@model List<SubjectListViewModel>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+
+        <!-- TOP ACTION BAR (Students kimi, header-siz) -->
+        <div class="d-flex justify-content-end mb-3">
+            <a asp-action="Create" class="btn btn-success">
+                ➕ Yeni fənn
+            </a>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px">#</th>
+                        <th>Fənn kodu</th>
+                        <th>Fənn adı</th>
+                        <th>Sinif</th>
+                        <th>Müəllim</th>
+                        <th class="text-end">Əməliyyatlar</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Hələ heç bir fənn əlavə edilməyib
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int i = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@i</td>
+                                <td>@item.SubjectCode</td>
+                                <td>@item.SubjectName</td>
+                                <td>@((int)item.Grade)-ci sinif</td>
+
+                                <td>@item.TeacherFullName</td>
+                                <td class="text-end">
+
+                                    <!-- EXAMS (ENTERPRISE FEATURE) -->
+                                    <a asp-controller="Exams"
+                                       asp-action="Index"
+                                       asp-route-subjectId="@item.Id"
+                                       class="btn btn-sm btn-info me-1"
+                                       title="Bu fənn üzrə imtahanlar">
+                                        📄
+                                    </a>
+
+                                    <!-- EDIT -->
+                                    <a asp-action="Edit"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-warning me-1"
+                                       title="Redaktə et">
+                                        ✏️
+                                    </a>
+
+                                    <!-- DELETE -->
+                                    <a asp-action="Delete"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-danger"
+                                       title="Sil"
+                                       onclick="return confirm('Bu fənni silmək istədiyinizə əminsiniz?');">
+                                        🗑️
+                                    </a>
+                                </td>
+                            </tr>
+                            i++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
