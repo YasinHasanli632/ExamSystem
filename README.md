@@ -107,9 +107,7 @@ Private helper metodlar
 GetStudentsAsync – şagird dropdown-u üçün
 GetSubjectsAsync – sinifə görə fənn dropdown-u üçün
 
-Layihə üçün Tövsiyə Olunan Təmizlik
 
-Repo-da .vs, bin və obj qovluqlarının saxlanılmaması tövsiyə olunur. .gitignore əlavə edilərək bu qovluqlar git-dən çıxarılmalıdır. Bu həm repo ölçüsünü azaldır, həm də build və merge problemlərinin qarşısını alır.
 
 Nəticə
 
