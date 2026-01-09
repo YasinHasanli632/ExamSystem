@@ -14,9 +14,6 @@ namespace ExamSystemWeb.Controllers
             _subjectService = subjectService;
         }
 
-        // =========================
-        // LIST
-        // =========================
         public async Task<IActionResult> Index()
         {
             var subjects = await _subjectService.GetAllAsync();
@@ -33,9 +30,7 @@ namespace ExamSystemWeb.Controllers
             return View(model);
         }
 
-        // =========================
-        // CREATE
-        // =========================
+      
         public IActionResult Create()
         {
             return View();
@@ -61,9 +56,7 @@ namespace ExamSystemWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // =========================
-        // EDIT
-        // =========================
+      
         public async Task<IActionResult> Edit(int id)
         {
             var subject = await _subjectService.GetByIdAsync(id);
@@ -103,9 +96,7 @@ namespace ExamSystemWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // =========================
-        // DELETE
-        // =========================
+     
         public async Task<IActionResult> Delete(int id)
         {
             await _subjectService.DeleteAsync(id);

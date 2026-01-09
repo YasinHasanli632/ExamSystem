@@ -1,5 +1,5 @@
 ﻿using ExamSystemApplication.Interfaces.Services;
-using ExamSystemApplication.Services.ExamSystemApplication.Services;
+
 using ExamSystemDomain.Entities;
 using ExamSystemWeb.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +17,7 @@ namespace ExamSystemWeb.Controllers
                 _examService = examservice;
             }
 
-        // =========================
-        // LIST
-        // =========================
+       
         public async Task<IActionResult> Index()
         {
             var students = await _studentService.GetAllAsync();
@@ -60,9 +58,7 @@ namespace ExamSystemWeb.Controllers
         }
 
 
-        // =========================
-        // CREATE
-        // =========================
+      
         public IActionResult Create()
             {
                 return View();
@@ -87,9 +83,7 @@ namespace ExamSystemWeb.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // =========================
-            // EDIT
-            // =========================
+          
             public async Task<IActionResult> Edit(int id)
             {
                 var student = await _studentService.GetByIdAsync(id);
@@ -106,40 +100,30 @@ namespace ExamSystemWeb.Controllers
                 return View(model);
             }
 
-            [HttpPost]
-            [ValidateAntiForgeryToken]
         [HttpPost]
+        [ValidateAntiForgeryToken]
+   
         public async Task<IActionResult> Edit(StudentEditViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            try
+            var student = new Student
             {
-                var student = new Student
-                {
-                    Id = model.Id,
-                    StudentNumber = model.StudentNumber,
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    Grade = model.Grade
-                };
+                Id = model.Id,
+                StudentNumber = model.StudentNumber,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Grade = model.Grade
+            };
 
-                await _studentService.UpdateAsync(student);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Business error → form error
-                ModelState.AddModelError(nameof(model.StudentNumber), ex.Message);
-                return View(model);
-            }
+            await _studentService.UpdateAsync(student);
+
+           
+
+            return RedirectToAction(nameof(Index));
         }
 
-
-        // =========================
-        // DELETE
-        // =========================
         public async Task<IActionResult> Delete(int id)
             {
                 await _studentService.DeleteAsync(id);

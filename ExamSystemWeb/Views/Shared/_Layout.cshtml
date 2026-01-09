@@ -18,7 +18,6 @@
 <body>
     <div class="d-flex min-vh-100">
 
-        <!-- ================= SIDEBAR ================= -->
         <aside class="bg-dark text-white p-3" style="width:260px">
             <h4 class="mb-4 fw-bold">📘 ExamSystem</h4>
 
@@ -59,19 +58,15 @@
             </ul>
         </aside>
 
-        <!-- ================= MAIN ================= -->
         <main class="flex-fill bg-light">
 
-            <!-- TOP BAR -->
             <header class="bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
                 <span class="fw-bold">Admin Panel</span>
                 <span class="text-muted">Exam Management System</span>
             </header>
 
-            <!-- PAGE CONTENT -->
             <div class="container-fluid py-4">
 
-                @* GLOBAL ERROR ALERT *@
                 @if (TempData["ErrorMessage"] != null)
                 {
                     <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">

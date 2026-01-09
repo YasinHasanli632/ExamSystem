@@ -20,16 +20,14 @@ namespace ExamSystemApplication.Services
             _subjectRepository = subjectRepository;
         }
 
-        // =========================
-        // Create
-        // =========================
+     
         public async Task<Subject> CreateAsync(Subject subject)
         {
-            // 0️⃣ Grade enum yoxlaması
+           
             if (!Enum.IsDefined(typeof(Grade), subject.Grade))
                 throw new InvalidOperationException("Sinif 1 ilə 11 arasında olmalıdır.");
 
-            // 🔒 EYNİ AD + EYNİ SİNİF QADAĞASI
+          
             var subjects = await _subjectRepository.GetAllAsync();
 
             foreach (var s in subjects)
@@ -42,7 +40,7 @@ namespace ExamSystemApplication.Services
                 }
             }
 
-            // 1️⃣ Fənn adından qısa kod (FIZ, RIY və s.)
+           
             var words = subject.SubjectName
                 .Trim()
                 .ToUpper()
@@ -55,10 +53,9 @@ namespace ExamSystemApplication.Services
             else
                 shortName = string.Concat(words.Select(w => w[0]));
 
-            // ✅ 2️⃣ SUBJECT CODE = SABİT (UNICALLAŞDIRMA YOX)
+          
             subject.SubjectCode = shortName;
 
-            // 3️⃣ Save
             await _subjectRepository.AddAsync(subject);
 
             return subject;
@@ -66,9 +63,7 @@ namespace ExamSystemApplication.Services
 
 
 
-        // =========================
-        // Read
-        // =========================
+      
         public async Task<Subject> GetByIdAsync(int id)
         {
             var subject = await _subjectRepository.GetByIdAsync(id);
@@ -93,17 +88,17 @@ namespace ExamSystemApplication.Services
         {
             return await _subjectRepository.GetAllAsync();
         }
+       
 
         public async Task<IReadOnlyList<Subject>> GetByGradeAsync(Grade grade)
         {
             if (!Enum.IsDefined(typeof(Grade), grade))
                 throw new InvalidOperationException("Yanlış sinif.");
+
             return await _subjectRepository.GetByGradeAsync(grade);
         }
 
-        // =========================
-        // Update
-        // =========================
+       
         public async Task UpdateAsync(Subject subject)
         {
 
@@ -115,7 +110,7 @@ namespace ExamSystemApplication.Services
             if (existingSubject == null)
                 throw new KeyNotFoundException("Yenilənəcək dərs tapılmadı.");
 
-            // Business rule: SubjectCode dəyişdirilirsə, unikal olmalıdır
+            
             if (!string.Equals(
                     existingSubject.SubjectCode,
                     subject.SubjectCode,
@@ -132,9 +127,7 @@ namespace ExamSystemApplication.Services
             await _subjectRepository.UpdateAsync(subject);
         }
 
-        // =========================
-        // Delete
-        // =========================
+       
         public async Task DeleteAsync(int id)
         {
             var subject = await _subjectRepository.GetByIdAsync(id);

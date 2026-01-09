@@ -2,7 +2,7 @@
 using ExamSystemDomain.Entities;
 using ExamSystemDomain.Enums;
 using ExamSystemInfrastructure.Data;
-using ExamSystemInfrastructure.Data.ExamSystemInfrastructure.Data;
+
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -21,18 +21,14 @@ namespace ExamSystemInfrastructure.Repositories
             _context = context;
         }
 
-        // =========================
-        // Create
-        // =========================
+        
         public async Task AddAsync(Subject subject)
         {
             await _context.Subjects.AddAsync(subject);
             await _context.SaveChangesAsync();
         }
 
-        // =========================
-        // Read
-        // =========================
+      
         public async Task<Subject?> GetByIdAsync(int id)
         {
             return await _context.Subjects
@@ -65,23 +61,21 @@ namespace ExamSystemInfrastructure.Repositories
                 .ToListAsync();
         }
 
-        // =========================
-        // Update
-        // =========================
+       
         public async Task UpdateAsync(Subject subject)
         {
             _context.Entry(subject).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
 
-        // =========================
-        // Delete
-        // =========================
+        
         public async Task DeleteAsync(Subject subject)
         {
             _context.Subjects.Remove(subject);
             await _context.SaveChangesAsync();
         }
+       
+
     }
 }
 

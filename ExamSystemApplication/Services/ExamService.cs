@@ -7,10 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ExamSystemApplication.Services
-{
+
     
-    using ExamSystemDomain.Entities;
+   
 
     namespace ExamSystemApplication.Services
     {
@@ -30,26 +29,24 @@ namespace ExamSystemApplication.Services
                 _subjectRepository = subjectRepository;
             }
 
-            // =========================
-            // CREATE
-            // =========================
+       
             public async Task<Exam> CreateAsync(Exam exam)
             {
-                // Student yoxlanışı
+               
                 var student = await _studentRepository.GetByIdAsync(exam.StudentId);
                 if (student == null)
                     throw new KeyNotFoundException("Şagird tapılmadı.");
 
-                // Subject yoxlanışı
+                
                 var subject = await _subjectRepository.GetByIdAsync(exam.SubjectId);
                 if (subject == null)
                     throw new KeyNotFoundException("Dərs tapılmadı.");
 
-                // Score validation
+              
                 if (exam.Score < 1 || exam.Score > 9)
                     throw new InvalidOperationException("Qiymət 1 ilə 9 arasında olmalıdır.");
 
-                // Eyni gün + eyni fənn yoxlaması
+               
                 var exists = await _examRepository.ExistsSameDayAsync(
                     exam.StudentId,
                     exam.SubjectId,
@@ -64,9 +61,7 @@ namespace ExamSystemApplication.Services
                 return exam;
             }
 
-            // =========================
-            // READ
-            // =========================
+         
             public async Task<Exam> GetByIdAsync(int id)
             {
                 var exam = await _examRepository.GetByIdAsync(id);
@@ -91,9 +86,7 @@ namespace ExamSystemApplication.Services
                 return _examRepository.GetBySubjectIdAsync(subjectId);
             }
 
-            // =========================
-            // UPDATE
-            // =========================
+           
             public async Task UpdateAsync(Exam exam)
             {
                 var existing = await _examRepository.GetByIdAsync(exam.Id);
@@ -121,9 +114,7 @@ namespace ExamSystemApplication.Services
                 await _examRepository.UpdateAsync(existing);
             }
 
-            // =========================
-            // DELETE
-            // =========================
+           
             public async Task DeleteAsync(int id)
             {
                 var exam = await _examRepository.GetByIdAsync(id);
@@ -135,4 +126,4 @@ namespace ExamSystemApplication.Services
         }
     }
 
-}
+

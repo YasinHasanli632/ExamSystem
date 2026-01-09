@@ -12,3 +12,4 @@ C:\Users\Asus\Videos\ExamSystem\ExamSystemDomain\obj\Debug\net8.0\refint\ExamSys
 C:\Users\Asus\Videos\ExamSystem\ExamSystemDomain\obj\Debug\net8.0\ExamSystemDomain.pdb
 C:\Users\Asus\Videos\ExamSystem\ExamSystemDomain\obj\Debug\net8.0\ExamSystemDomain.genruntimeconfig.cache
 C:\Users\Asus\Videos\ExamSystem\ExamSystemDomain\obj\Debug\net8.0\ref\ExamSystemDomain.dll
+C:\Users\Asus\Videos\ExamSystem\ExamSystemDomain\obj\Debug\net8.0\ExamSystemDomain.sourcelink.json

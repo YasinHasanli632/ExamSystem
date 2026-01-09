@@ -1,7 +1,7 @@
 ﻿using ExamSystemApplication.Interfaces.Repositories;
 using ExamSystemDomain.Entities;
 using ExamSystemInfrastructure.Data;
-using ExamSystemInfrastructure.Data.ExamSystemInfrastructure.Data;
+
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -20,18 +20,14 @@ namespace ExamSystemInfrastructure.Repositories
             _context = context;
         }
 
-        // =========================
-        // Create
-        // =========================
+       
         public async Task AddAsync(Student student)
         {
             await _context.Students.AddAsync(student);
             await _context.SaveChangesAsync();
         }
 
-        // =========================
-        // Read
-        // =========================
+       
         public async Task<Student?> GetByIdAsync(int id)
         {
             return await _context.Students
@@ -63,22 +59,17 @@ namespace ExamSystemInfrastructure.Repositories
                 .OrderByDescending(n => n)
                 .FirstOrDefaultAsync();
 
-            // int default = 0 → deməli hələ student yoxdur
             return lastNumber + 1;
         }
 
-        // =========================
-        // Update
-        // =========================
+        
         public async Task UpdateAsync(Student student)
         {
             _context.Students.Update(student);
             await _context.SaveChangesAsync();
         }
 
-        // =========================
-        // Delete
-        // =========================
+        
         public async Task DeleteAsync(Student student)
         {
             _context.Students.Remove(student);

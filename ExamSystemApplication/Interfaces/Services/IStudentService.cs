@@ -9,18 +9,18 @@ namespace ExamSystemApplication.Interfaces.Services
 {
     public interface IStudentService
     {
-        // Create
+       
         Task<Student> CreateAsync(Student student);
 
-        // Read
+      
         Task<Student> GetByIdAsync(int id);
         Task<Student> GetByStudentNumberAsync(int studentNumber);
         Task<IReadOnlyList<Student>> GetAllAsync();
 
-        // Update
+      
         Task UpdateAsync(Student student);
 
-        // Delete
+       
         Task DeleteAsync(int id);
     }
 }

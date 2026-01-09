@@ -17,7 +17,7 @@ namespace ExamSystemWeb.ViewModels
         [Range(1, 9)]
         public int Score { get; set; }
 
-        // Dropdown üçün
+        
         public List<SelectListItem> Students { get; set; } = new();
         public List<SelectListItem> Subjects { get; set; } = new();
     }

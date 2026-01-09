@@ -13,9 +13,7 @@
 
                 <form asp-action="Edit" method="post">
 
-                    <!-- Hidden Id -->
                     <input asp-for="Id" type="hidden" />
-                    <!-- Student Number (READ-ONLY) -->
                     <div class="mb-3">
                         <label asp-for="StudentNumber" class="form-label"></label>
                         <input asp-for="StudentNumber"
@@ -24,7 +22,6 @@
                     </div>
 
 
-                    <!-- First Name -->
                     <div class="mb-3">
                         <label asp-for="FirstName" class="form-label"></label>
                         <input asp-for="FirstName" class="form-control" />
@@ -32,7 +29,6 @@
                               class="text-danger"></span>
                     </div>
 
-                    <!-- Last Name -->
                     <div class="mb-3">
                         <label asp-for="LastName" class="form-label"></label>
                         <input asp-for="LastName" class="form-control" />
@@ -40,7 +36,6 @@
                               class="text-danger"></span>
                     </div>
 
-                    <!-- Grade (EDIT – ENUM) -->
                     <div class="mb-3">
                         <label asp-for="Grade" class="form-label">Sinif</label>
 
@@ -59,7 +54,6 @@
                     </div>
 
 
-                    <!-- Buttons -->
                     <div class="d-flex justify-content-between mt-4">
                         <a asp-action="Index"
                            class="btn btn-secondary">

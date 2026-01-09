@@ -1,7 +1,7 @@
 ﻿using ExamSystemApplication.Interfaces.Repositories;
 using ExamSystemDomain.Entities;
 using ExamSystemInfrastructure.Data;
-using ExamSystemInfrastructure.Data.ExamSystemInfrastructure.Data;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ExamSystemInfrastructure.Repositories

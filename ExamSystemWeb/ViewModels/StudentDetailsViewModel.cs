@@ -11,7 +11,7 @@ namespace ExamSystemWeb.ViewModels
 
         public List<StudentExamItemViewModel> Exams { get; set; } = new();
 
-        // ✅ DISPLAY üçün
+       
         public string StudentNumberDisplay
             => $"STD-{StudentNumber:D4}";
     }

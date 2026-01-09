@@ -5,7 +5,6 @@
 
         <form asp-action="Create" method="post">
 
-            <!-- ACTION BAR -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0">Yeni imtahan əlavə et</h6>
 
@@ -22,35 +21,35 @@
 
             <hr />
 
-            <!-- FORM -->
             <div class="row g-3">
 
-                <!-- STUDENT -->
+                <!-- ŞAGİRD -->
                 <div class="col-md-6">
                     <label class="form-label">Şagird</label>
                     <select asp-for="StudentId"
                             asp-items="Model.Students"
-                            class="form-select">
+                            class="form-select"
+                            id="studentSelect">
                         <option value="">— Şagird seçin —</option>
                     </select>
                     <span asp-validation-for="StudentId" class="text-danger"></span>
                 </div>
 
-                <!-- SUBJECT -->
+                <!-- FƏNN -->
                 <div class="mb-3">
                     <label asp-for="SubjectId" class="form-label">Fənn</label>
 
                     <select asp-for="SubjectId"
-                            asp-items="Model.Subjects"
-                            class="form-select">
-                        <option value="">-- Fənn seçin --</option>
+                            class="form-select"
+                            id="subjectSelect">
+                        <option value="">— Əvvəl şagird seçin —</option>
                     </select>
 
                     <span asp-validation-for="SubjectId" class="text-danger"></span>
                 </div>
 
 
-                <!-- EXAM DATE -->
+                <!-- İMTAHAN TARİXİ -->
                 <div class="col-md-6">
                     <label class="form-label">İmtahan tarixi</label>
                     <input asp-for="ExamDate"
@@ -59,7 +58,7 @@
                     <span asp-validation-for="ExamDate" class="text-danger"></span>
                 </div>
 
-                <!-- SCORE -->
+                <!-- QİYMƏT -->
                 <div class="col-md-6">
                     <label class="form-label">Qiymət (1–9)</label>
                     <input asp-for="Score"
@@ -79,4 +78,59 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const studentSelect = document.getElementById('studentSelect');
+        const subjectSelect = document.getElementById('subjectSelect');
+
+        studentSelect.addEventListener('change', function () {
+
+            const studentId = this.value;
+
+            // Şagird seçilməyibsə
+            if (!studentId) {
+                subjectSelect.innerHTML =
+                    '<option value="">— Əvvəl şagird seçin —</option>';
+                subjectSelect.disabled = true;
+                return;
+            }
+
+            // Loading vəziyyəti
+            subjectSelect.disabled = true;
+            subjectSelect.innerHTML =
+                '<option value="">⏳ Fənnlər yüklənir...</option>';
+
+            fetch(`/Exams/GetSubjectsByStudent?studentId=${studentId}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    subjectSelect.innerHTML = '';
+
+                    // Əgər fənn yoxdursa
+                    if (data.length === 0) {
+                        subjectSelect.innerHTML =
+                            '<option value="">— Bu şagird üçün fənn tapılmadı —</option>';
+                        subjectSelect.disabled = true;
+                        return;
+                    }
+
+                    // Fənnlər varsa
+                    subjectSelect.innerHTML =
+                        '<option value="">— Fənn seçin —</option>';
+
+                    data.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.name;
+                        subjectSelect.appendChild(opt);
+                    });
+
+                    subjectSelect.disabled = false;
+                });
+        });
+
+        // Page load-da fənn disable olsun
+        subjectSelect.disabled = true;
+    </script>
 }
+

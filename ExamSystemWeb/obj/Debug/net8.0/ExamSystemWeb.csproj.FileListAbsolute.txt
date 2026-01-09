@@ -150,3 +150,4 @@ C:\Users\Asus\Videos\ExamSystem\ExamSystemWeb\obj\Debug\net8.0\refint\ExamSystem
 C:\Users\Asus\Videos\ExamSystem\ExamSystemWeb\obj\Debug\net8.0\ExamSystemWeb.pdb
 C:\Users\Asus\Videos\ExamSystem\ExamSystemWeb\obj\Debug\net8.0\ExamSystemWeb.genruntimeconfig.cache
 C:\Users\Asus\Videos\ExamSystem\ExamSystemWeb\obj\Debug\net8.0\ref\ExamSystemWeb.dll
+C:\Users\Asus\Videos\ExamSystem\ExamSystemWeb\obj\Debug\net8.0\ExamSystemWeb.sourcelink.json

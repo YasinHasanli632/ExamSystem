@@ -6,7 +6,6 @@
 
         <form asp-action="Create" method="post">
 
-            <!-- ACTION BAR -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0">Yeni fənn əlavə et</h6>
 
@@ -23,10 +22,10 @@
 
             <hr />
 
-            <!-- FORM -->
+          
             <div class="row g-3">
 
-                <!-- SUBJECT NAME -->
+               
                 <div class="col-md-8">
                     <label class="form-label">Fənn adı</label>
                     <input asp-for="SubjectName"
@@ -35,8 +34,7 @@
                     <span asp-validation-for="SubjectName" class="text-danger"></span>
                 </div>
 
-                <!-- GRADE -->
-                <!-- GRADE -->
+               
                 <div class="col-md-4">
                     <label class="form-label">Sinif</label>
 
@@ -55,7 +53,7 @@
                 </div>
 
 
-                <!-- TEACHER FIRST NAME -->
+             
                 <div class="col-md-4">
                     <label class="form-label">Müəllimin adı</label>
                     <input asp-for="TeacherFirstName"
@@ -64,7 +62,7 @@
                     <span asp-validation-for="TeacherFirstName" class="text-danger"></span>
                 </div>
 
-                <!-- TEACHER LAST NAME -->
+               
                 <div class="col-md-4">
                     <label class="form-label">Müəllimin soyadı</label>
                     <input asp-for="TeacherLastName"
@@ -73,7 +71,7 @@
                     <span asp-validation-for="TeacherLastName" class="text-danger"></span>
                 </div>
 
-                <!-- INFO -->
+                
                
 
             </div>

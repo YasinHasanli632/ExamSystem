@@ -1,6 +1,7 @@
 ﻿using ExamSystemApplication.Interfaces.Repositories;
 using ExamSystemApplication.Interfaces.Services;
 using ExamSystemDomain.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,22 +19,35 @@ namespace ExamSystemApplication.Services
             _studentRepository = studentRepository;
         }
 
-        // =========================
-        // Create
-        // =========================
+
         public async Task<Student> CreateAsync(Student student)
         {
-            // Avtomatik int StudentNumber
-            student.StudentNumber =
-                await _studentRepository.GetNextStudentSequenceAsync();
+            const int maxAttempts = 2;
 
-            await _studentRepository.AddAsync(student);
-            return student;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    student.StudentNumber =
+                        await _studentRepository.GetNextStudentSequenceAsync();
+
+                    await _studentRepository.AddAsync(student);
+
+                    return student;
+                }
+                catch (DbUpdateException) when (attempt < maxAttempts)
+                {
+                    
+                }
+            }
+
+            
+            throw new InvalidOperationException(
+                "Şagird nömrəsi yaradılarkən problem yarandı. Zəhmət olmasa yenidən cəhd edin.");
         }
 
-        // =========================
-        // Read
-        // =========================
+
+
         public async Task<Student> GetByIdAsync(int id)
         {
             var student = await _studentRepository.GetByIdAsync(id);
@@ -60,9 +74,7 @@ namespace ExamSystemApplication.Services
             return await _studentRepository.GetAllAsync();
         }
 
-        // =========================
-        // Update
-        // =========================
+      
         public async Task UpdateAsync(Student student)
         {
             var existingStudent =
@@ -71,16 +83,14 @@ namespace ExamSystemApplication.Services
             if (existingStudent == null)
                 throw new KeyNotFoundException("Yenilənəcək şagird tapılmadı.");
 
-            // 🔒 StudentNumber dəyişməzdir
+          
             student.StudentNumber = existingStudent.StudentNumber;
 
             await _studentRepository.UpdateAsync(student);
         }
 
 
-        // =========================
-        // Delete
-        // =========================
+       
         public async Task DeleteAsync(int id)
         {
             var student = await _studentRepository.GetByIdAsync(id);
