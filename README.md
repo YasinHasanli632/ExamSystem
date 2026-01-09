@@ -112,3 +112,31 @@ GetSubjectsAsync – sinifə görə fənn dropdown-u üçün
 Nəticə
 
 Layihə strukturu və CRUD axınları qaydasındadır. Create və Edit əməliyyatlarında grade əsaslı subject filtrasiya düzgün işləyir. Global exception handling mövcuddur. Repository səviyyəsində SaveChangesAsync qəsdən və əsaslandırılmış şəkildə istifadə olunmuşdur. Ümumi olaraq sistem stabil, oxunaqlı, genişlənə bilən və texniki müsahibələrdə rahat izah edilə bilən peşəkar səviyyəli bir layihədir.
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Layihəni Lokalda İşə Salmaq Üçün
+
+1. GitHub-dan layihəni klonlayın:
+   git clone https://github.com/YasinHasanli632/ExamSystem.git
+
+2. Layihəni Visual Studio-da açın:
+   ExamSystem.sln faylını açmaq kifayətdir.
+
+3. appsettings.json faylında connection string-i öz SQL Server mühitinizə uyğunlaşdırın.
+   Məsələn:
+   Server=.;Database=ExamSystemDb;Trusted_Connection=True;TrustServerCertificate=True;
+
+4. NuGet paketlərini bərpa edin:
+   Visual Studio-da:
+   Tools → NuGet Package Manager → Restore NuGet Packages
+
+5. Database migration-larını tətbiq edin:
+   Tools → NuGet Package Manager → Package Manager Console açın
+   Sonra aşağıdakı əmri icra edin:
+   Update-Database
+
+6. Tətbiqi işə salın:
+   Visual Studio-da F5 və ya IIS Express düyməsi ilə layihəni run edin.
+
