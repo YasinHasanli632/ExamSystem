@@ -1,4 +1,4 @@
-Exam System – İmtahan Modulu (Create və Edit Məntiqi)
+Exam System – İmtahan Modulu 
 
 Layihə Haqqında Ümumi Məlumat
 
