@@ -1,36 +1,116 @@
-ExamSystem – İmtahan İdarəetmə Sistemi
+Exam System – İmtahan Modulu (Create və Edit Məntiqi)
 
-Bu layihə ASP.NET Core MVC üzərində qurulmuş, məktəb tipli təhsil müəssisələri üçün nəzərdə tutulmuş imtahan idarəetmə sistemidir. Layihənin əsas məqsədi sadə CRUD əməliyyatlarından kənara çıxaraq real biznes qaydaları ilə işləyən, təmiz arxitekturalı və genişlənə bilən bir sistem qurmaqdır.
+Layihə Haqqında Ümumi Məlumat
 
-Layihə hazırlanarkən real sistemlərdə qarşılaşılan problemlər və qaydalar nəzərə alınmışdır. Burada yalnız məlumat əlavə etmək deyil, həmin məlumatların düzgünlüyü, təkrarlanmasının qarşısının alınması, istifadəçi üçün aydın göstərilməsi və sistemin stabil davranışı əsas götürülmüşdür.
+Bu layihə ASP.NET Core MVC texnologiyası üzərində qurulmuş məktəb tipli imtahan idarəetmə sistemidir. Layihə Clean Architecture prinsiplərinə əsaslanır və qatlar arasında məsuliyyət bölgüsü aydın şəkildə qorunur. İmtahan modulu real məktəb mühitində tətbiq olunan qaydalar nəzərə alınaraq dizayn edilmişdir. Modulun əsas məqsədi imtahanların düzgün biznes qaydalarına uyğun şəkildə yaradılmasını və redaktə edilməsini təmin etməkdir.
 
-İstifadə olunan texnologiyalar:
-ASP.NET Core MVC framework
-Entity Framework Core
-SQL Server
-Clean Architecture prinsipləri
-Repository və Service Pattern
+Sistem real məktəb strukturunu modelləşdirir. Hər bir şagird müəyyən bir sinfə aiddir. Hər bir fənn yalnız müəyyən bir sinif üçün təyin olunur. İmtahan isə yalnız şagirdin aid olduğu sinfə uyğun fənn üzrə yaradıla və redaktə edilə bilər. Bu qayda həm Create, həm də Edit əməliyyatlarında eyni şəkildə qorunur.
+
+İstifadə Olunan Texnologiyalar
+
+ASP.NET Core MVC
 Razor Views
 Bootstrap 5
-Enum-based validation
-Global Exception Handling
+Entity Framework Core
+SQL Server
+Clean Architecture
+Repository Pattern
+Service Layer
+AJAX (Dependent Dropdown üçün)
+Global Exception Handling (GlobalExceptionFilter)
 
-Layihə arxitekturası Clean Architecture yanaşmasına əsaslanır. Sistem dörd əsas qatdan ibarətdir: Domain, Application, Infrastructure və Web. Domain qatında əsas entity-lər və enum-lar saxlanılır. Application qatında repository və service interfeysləri, həmçinin biznes məntiqi yerləşir. Infrastructure qatında DbContext və repository implementasiyaları mövcuddur. Web qatında isə controller-lər, view model-lər və Razor UI yerləşir. Bu bölgü kodun oxunaqlılığını, test edilə bilməsini və gələcəkdə genişləndirilməsini asanlaşdırır.
+Arxitektura Quruluşu
 
-Student (Şagird) modulu şagirdlərin idarə olunması üçün nəzərdə tutulmuşdur. Şagird əlavə edilərkən StudentNumber avtomatik olaraq sistem tərəfindən yaradılır. Bu dəyər database-də int tipində saxlanılır, lakin istifadəçiyə UI-də STD-0001 formatında göstərilir. Bu yanaşma database performansını qoruyur və eyni zamanda istifadəçi üçün daha anlaşılan görüntü yaradır. Bu formatlama ViewModel səviyyəsində edilir ki, UI-də əlavə məntiq yazmağa ehtiyac qalmasın.
+Layihə Clean Architecture yanaşması əsasında hazırlanmışdır və aşağıdakı qatlara bölünür.
 
-Şagirdin sinfi Grade enum-u vasitəsilə idarə olunur. Grade yalnız 1-dən 11-ə qədər dəyərləri qəbul edir. Bu enum həm UI səviyyəsində select box ilə, həm də service qatında yoxlanılır. Nəticədə yanlış sinif dəyərinin daxil edilməsi mümkün olmur.
+Domain qatı
+Bu qatda əsas biznes obyektləri yerləşir. Student, Subject və Exam entity-ləri, eləcə də Grade enum-u bu qatda saxlanılır. Domain qatı heç bir UI və ya database asılılığı daşımır və yalnız biznes məntiqini əks etdirir.
 
-Subject (Fənn) modulunda real biznes qaydaları tətbiq olunmuşdur. Eyni sinif üçün eyni adda fənnin əlavə edilməsinə icazə verilmir. Bu qayda service qatında yoxlanılır. Eyni fənn fərqli siniflər üçün mövcud ola bilər, lakin eyni sinifdə təkrar ola bilməz. Bu yanaşma real məktəb sistemlərinə uyğundur.
+Application qatı
+Bu qatda servis interfeysləri yerləşir. IStudentService, ISubjectService və IExamService kimi interfeyslər vasitəsilə controller-lər biznes qaydalarına uyğun şəkildə işləyir. Controller-lər repository qatına birbaşa müraciət etmir, bütün əməliyyatlar servislər üzərindən icra olunur.
 
-SubjectCode avtomatik yaradılır və fənnin adından qısa kod kimi formalaşdırılır (məsələn, Fizika → FIZ). SubjectCode sinifdən asılı olaraq dəyişmir və əlavə sufixlər (1, 2, -10 və s.) istifadə edilmir. Bunun səbəbi SubjectCode-un fənni təmsil etməsidir, sinfi yox. Sinif məlumatı ayrıca Grade sahəsində saxlanılır.
+Infrastructure qatı
+Bu qat database əməliyyatlarını icra edir. Entity Framework Core istifadə edilərək AppDbContext və repository-lər implementasiya olunmuşdur. Məlumatın əlavə edilməsi, yenilənməsi, silinməsi və xüsusi sorğular (sinifə görə fənn, şagirdə görə imtahan və s.) bu qatda həyata keçirilir.
 
-Exam (İmtahan) modulu şagirdlər və fənlər arasında əlaqəni idarə edir. İmtahan yalnız mövcud şagird və mövcud fənn üçün əlavə edilə bilər. ExamDate və Score kimi məlumatlar saxlanılır. İmtahanlar mərkəzi Exam modulundan idarə olunur.
+Bu layihədə SaveChangesAsync metodu repository səviyyəsində qəsdən istifadə olunmuşdur. Məqsəd hər bir CRUD əməliyyatının atomik və aydın şəkildə icra olunmasını təmin etməkdir. Hər repository metodu öz əməliyyatının məsuliyyətini daşıyır və dəyişikliklərin database-ə yazılması explicit şəkildə həyata keçirilir. Bu yanaşma kiçik və orta ölçülü layihələr üçün oxunaqlılığı artırır və əməliyyat axınını daha rahat izləməyə imkan verir.
 
-Student Details səhifəsində şagirdin imtahanları yalnız oxuma (read-only) rejimində göstərilir. Bu səhifədə “İmtahan əlavə et” düyməsi qəsdən çıxarılmışdır. Bunun səbəbi Single Responsibility prinsipidir. Details səhifəsi yalnız məlumat göstərmək üçündür, data yaratmaq üçün yox. İmtahan əlavə etmək yalnız Exam modulunda mümkündür. Bu yanaşma həm UX, həm də memarlıq baxımından daha doğrudur.
+Web qatı
+Bu qat istifadəçi interfeysini və HTTP sorğularını idarə edir. Controller-lər, ViewModel-lər və Razor View-lər bu qatda yerləşir. UI yalnız təqdimat və istifadəçi qarşılıqlı əlaqəsi üçündür, biznes məntiqi saxlanılmır.
 
-Layihədə controller-lərdə try-catch istifadə olunmur. Bütün xətalar GlobalExceptionFilter vasitəsilə mərkəzləşdirilmiş şəkildə idarə olunur. InvalidOperationException və KeyNotFoundException kimi xətalar tutulur və istifadəçiyə UI-də yuxarı hissədə Bootstrap alert şəklində göstərilir. Bu zaman yeni səhifə açılmır və istifadəçi kontekstdən çıxmır. Bu davranış real sistemlərdə istifadə olunan standart yanaşmadır.
+Qlobal Exception İdarəetməsi
 
-Database səviyyəsində Foreign Key qaydaları qorunur. Məsələn, əgər hər hansı bir fənn üzrə imtahanlar mövcuddursa, həmin fənnin silinməsinə icazə verilmir. Bu qayda həm database constraint-ləri, həm də service qatında yoxlamalar vasitəsilə təmin olunur.
+Layihədə GlobalExceptionFilter istifadə olunur. Service və Repository qatında atılan exception-lar UI-də xam şəkildə göstərilmir. Xətalar mərkəzləşdirilmiş şəkildə idarə olunur və istifadəçiyə uyğun davranış təmin edilir.
 
-UI tərəfində Razor Views sadə saxlanılmışdır. Bütün display məntiqi ViewModel-lərdə həll edilmişdir. Details səhifələri yalnız oxuma məqsədlidir. Create və Edit əməliyyatları ayrı səhifələrdə həyata keçirilir. Bootstrap istifadə edilərək sadə, anlaşılan və professional admin panel görünüşü əldə edilmişdir.
+Create və Edit Məntiqi
+
+Create səhifəsi açıldıqda fənn siyahısı boş vəziyyətdə olur. İstifadəçi əvvəlcə şagirdi seçir. Şagird seçildikdən sonra sistem avtomatik olaraq həmin şagirdin sinfini müəyyən edir və yalnız həmin sinfə uyğun fənnlər istifadəçiyə təqdim olunur.
+
+Edit səhifəsində isə mövcud imtahanın aid olduğu şagird avtomatik müəyyən edilir və fənn siyahısı dərhal həmin şagirdin sinfinə uyğun şəkildə doldurulur. Create və Edit səhifələri eyni biznes qaydasına əsaslanır və davranış baxımından tam uyğundur.
+
+Dinamik UI Davranışı
+
+Şagird və fənn sahələri arasında asılı dropdown mexanizmi qurulmuşdur. Şagird seçilməyənədək fənn sahəsi deaktiv vəziyyətdə qalır və istifadəçiyə əvvəlcə şagird seçilməsi barədə məlumat verilir.
+
+Şagird seçildikdən sonra serverə AJAX sorğusu göndərilir. Server tərəfində şagirdin sinfi müəyyən edilir və yalnız uyğun fənnlər JSON formatında geri qaytarılır. Əgər seçilmiş şagird üçün heç bir fənn mövcud deyilsə, istifadəçiyə bu barədə açıq və anlaşılan mesaj göstərilir.
+
+Validation və Davranış
+
+ModelState doğrulaması uğursuz olduqda form yenidən göstərilərkən şagird və fənn seçimləri itmir. Dropdown-lar mövcud şagirdin sinfinə uyğun şəkildə yenidən doldurulur. Bu yanaşma istifadəçi təcrübəsinin qorunmasını və səhvlərin rahat şəkildə düzəldilməsini təmin edir.
+
+Modullar və Metodlar
+
+Students (Şagirdlər) modulu
+
+IStudentService metodları
+CreateAsync – yeni şagird yaradılması
+GetByIdAsync – id-yə görə şagirdin gətirilməsi
+GetByStudentNumberAsync – şagird nömrəsinə görə gətirilməsi
+GetAllAsync – bütün şagirdlərin siyahısı
+UpdateAsync – şagird məlumatlarının yenilənməsi
+DeleteAsync – şagirdin silinməsi
+
+IStudentRepository metodları
+AddAsync – şagird əlavə edir və SaveChangesAsync icra edir
+GetByIdAsync – id ilə şagirdi tapır
+GetByStudentNumberAsync – student number ilə tapır
+GetAllAsync – bütün şagirdlər
+UpdateAsync – update və SaveChangesAsync
+GetNextStudentSequenceAsync – növbəti şagird nömrəsi
+DeleteAsync – delete və SaveChangesAsync
+
+StudentsController metodları
+Index, Details, Create (GET/POST), Edit (GET/POST), Delete
+
+Subjects (Fənlər) modulu
+
+ISubjectService metodları
+CreateAsync, GetByIdAsync, GetByCodeAsync, GetAllAsync, GetByGradeAsync, UpdateAsync, DeleteAsync
+
+ISubjectRepository metodları
+AddAsync, GetByIdAsync, GetByCodeAsync, GetAllAsync, GetByGradeAsync, UpdateAsync, DeleteAsync
+
+SubjectsController metodları
+Index, Create (GET/POST), Edit (GET/POST), Delete
+
+Exams (İmtahanlar) modulu
+
+IExamService metodları
+CreateAsync, GetByIdAsync, GetAllAsync, GetByStudentIdAsync, GetBySubjectIdAsync, UpdateAsync, DeleteAsync
+
+IExamRepository metodları
+AddAsync, GetByIdAsync, GetAllAsync, GetAllWithDetailsAsync, GetByStudentIdAsync, GetBySubjectIdAsync, HasExamsAsync, ExistsSameDayAsync, UpdateAsync, DeleteAsync
+
+ExamsController metodları
+Index, Create (GET/POST), Edit (GET/POST), Delete, GetSubjectsByStudent
+
+Private helper metodlar
+GetStudentsAsync – şagird dropdown-u üçün
+GetSubjectsAsync – sinifə görə fənn dropdown-u üçün
+
+Layihə üçün Tövsiyə Olunan Təmizlik
+
+Repo-da .vs, bin və obj qovluqlarının saxlanılmaması tövsiyə olunur. .gitignore əlavə edilərək bu qovluqlar git-dən çıxarılmalıdır. Bu həm repo ölçüsünü azaldır, həm də build və merge problemlərinin qarşısını alır.
+
+Nəticə
+
+Layihə strukturu və CRUD axınları qaydasındadır. Create və Edit əməliyyatlarında grade əsaslı subject filtrasiya düzgün işləyir. Global exception handling mövcuddur. Repository səviyyəsində SaveChangesAsync qəsdən və əsaslandırılmış şəkildə istifadə olunmuşdur. Ümumi olaraq sistem stabil, oxunaqlı, genişlənə bilən və texniki müsahibələrdə rahat izah edilə bilən peşəkar səviyyəli bir layihədir.
