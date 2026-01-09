@@ -1,4 +1,4 @@
-Exam System – İmtahan Modulu 
+Exam System 
 
 Layihə Haqqında Ümumi Məlumat
 
