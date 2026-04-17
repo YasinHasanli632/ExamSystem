@@ -25,7 +25,7 @@ yarn-error.log*
 # System files
 .DS_Store
 Thumbs.db
-
+  
 # Testing
 coverage/
 
@@ -36,3 +36,5 @@ coverage/
 
 # Environment (future üçün)
 src/environments/*.local.ts
+
+.vs/
