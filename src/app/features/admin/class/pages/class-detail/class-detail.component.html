@@ -1,0 +1,1009 @@
+<ng-container *ngIf="isListMode; else detailMode">
+  <section class="class-detail-page">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <div class="title-wrap">
+          <div class="title-line">
+            <h1>Sinif siyahısı</h1>
+          </div>
+
+          <p class="subtitle">
+            Bütün siniflər burada göstərilir. Filter et, bax və ətraflı aç.
+          </p>
+        </div>
+      </div>
+
+      <div class="top-bar-actions">
+        <button type="button" class="btn btn-light" (click)="resetClassFilters()">
+          Filteri sıfırla
+        </button>
+        <button type="button" class="btn btn-primary" (click)="navigateToCreate()">
+          Yeni sinif əlavə et
+        </button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Sinif filteri</h2>
+          <p>Yuxarıdan axtar, aşağıdan sinifləri 5-lik bloklarla göstər</p>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-control search-control">
+          <label>Sinif axtarışı</label>
+          <input
+            type="text"
+            [(ngModel)]="classSearch"
+            placeholder="Sinif adı, otaq, tədris ili və ya status yaz..."
+          />
+        </div>
+
+        <div class="filter-control">
+          <label>Status</label>
+          <select [(ngModel)]="classStatusFilter">
+            <option value="">Hamısı</option>
+            <option value="Aktiv">Aktiv</option>
+            <option value="Passiv">Passiv</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" *ngIf="isListLoading">
+      <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <strong>Siniflər yüklənir...</strong>
+        <span>Sinif siyahısı hazırlanır.</span>
+      </div>
+    </section>
+
+    <section class="card error-card" *ngIf="!isListLoading && loadError">
+      <h3>Xəta baş verdi</h3>
+      <p>{{ loadError }}</p>
+    </section>
+
+    <section class="card" *ngIf="!isListLoading && !loadError">
+      <div class="card-header">
+        <div>
+          <h2>Bütün siniflər</h2>
+          <p>Hazırda {{ filteredClassList().length }} sinif tapıldı</p>
+        </div>
+      </div>
+
+      <div class="students-list" *ngIf="visibleFilteredClassList().length > 0; else noClasses">
+        <div
+          class="student-row"
+          *ngFor="let item of visibleFilteredClassList(); trackBy: trackByClass"
+        >
+          <div class="student-main">
+            <div class="student-meta">
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.academicYear }} • Otaq: {{ item.room }}</span>
+              <small>Orta bal: {{ item.averageScore }}</small>
+            </div>
+          </div>
+
+          <div class="student-stats">
+            <div class="mini-stat">
+              <span>Status</span>
+              <strong class="inline-status" [ngClass]="getStatusClass(item.status)">
+                {{ item.status }}
+              </strong>
+            </div>
+
+            <div class="mini-stat">
+              <span>Tələbə sayı</span>
+              <strong>{{ item.studentCount }}</strong>
+            </div>
+
+            <div class="mini-stat">
+              <span>Fənn sayı</span>
+              <strong>{{ item.subjectCount }}</strong>
+            </div>
+
+            <div class="mini-stat">
+              <span>Müəllim sayı</span>
+              <strong>{{ item.teacherCount }}</strong>
+            </div>
+          </div>
+
+          <div class="student-actions">
+            <button type="button" class="btn btn-light" (click)="openClassDetail(item.id)">
+              Ətraflı bax
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noClasses>
+        <div class="empty-state">Filterə uyğun sinif tapılmadı.</div>
+      </ng-template>
+
+      <div class="top-bar-actions more-actions" *ngIf="hasMoreClasses()">
+        <button type="button" class="btn btn-primary" (click)="loadMoreClasses()">
+          Daha çox göstər
+        </button>
+      </div>
+    </section>
+  </section>
+</ng-container>
+
+<ng-template #detailMode>
+  <ng-container *ngIf="!isLoading && classDetail() as detail; else loadingOrError">
+    <section class="class-detail-page">
+      <div class="top-bar">
+        <div class="top-bar-left">
+          <button type="button" class="back-btn" (click)="goBack()">← Geri qayıt</button>
+
+          <div class="title-wrap">
+            <div class="title-line">
+              <h1>{{ isEditMode ? (editForm.name || detail.name) : detail.name }}</h1>
+              <span class="status-badge" [ngClass]="getStatusClass(isEditMode ? editForm.status : detail.status)">
+                {{ isEditMode ? editForm.status : detail.status }}
+              </span>
+              <span class="edit-mode-badge" *ngIf="isEditMode">Edit mode</span>
+            </div>
+
+            <p class="subtitle">
+              {{ (isEditMode ? editForm.description : detail.description) || 'Bu sinif üçün əlavə təsvir daxil edilməyib.' }}
+            </p>
+
+            <div class="meta-line">
+              <span class="meta-chip">Tədris ili: {{ isEditMode ? editForm.academicYear : detail.academicYear }}</span>
+              <span class="meta-chip">Otaq: {{ (isEditMode ? editForm.room : detail.room) || '-' }}</span>
+              <span class="meta-chip">Maksimum yer: {{ isEditMode ? editForm.maxStudentCount : detail.maxStudentCount }}</span>
+              <span class="meta-chip">Yaradılma: {{ formatDate(detail.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-bar-actions">
+          <ng-container *ngIf="!isEditMode; else editActions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="startEdit()"
+              [disabled]="!canEdit()"
+            >
+              Düzəliş et
+            </button>
+            <button type="button" class="btn btn-light" (click)="navigateToCreate()">
+              Yeni sinif əlavə et
+            </button>
+            <button type="button" class="btn btn-primary" (click)="navigateToCreateExam()">
+              İmtahan yarat
+            </button>
+          </ng-container>
+
+          <ng-template #editActions>
+            <button
+              type="button"
+              class="btn btn-success"
+              (click)="saveEdit()"
+              [disabled]="!hasEditChanges() || isEditSubmitting"
+            >
+              {{ isEditSubmitting ? 'Yadda saxlanılır...' : 'Yadda saxla' }}
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-light"
+              (click)="cancelEdit()"
+              [disabled]="isEditSubmitting"
+            >
+              Ləğv et
+            </button>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">Ümumi tələbə</span>
+          <strong>{{ classStats()?.totalStudents ?? detail.students.length }}</strong>
+          <small>Maksimum: {{ isEditMode ? editForm.maxStudentCount : detail.maxStudentCount }}</small>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Fənn sayı</span>
+          <strong>{{ detail.subjects.length }}</strong>
+          <small>Tədris olunan fənlər</small>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Müəllim sayı</span>
+          <strong>{{ getUniqueTeacherCount() }}</strong>
+          <small>Təyin olunmuş müəllimlər</small>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">İmtahan sayı</span>
+          <strong>{{ classStats()?.examCount ?? detail.examCount }}</strong>
+          <small>Ümumi imtahanlar</small>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Orta bal</span>
+          <strong>{{ classStats()?.averageScore ?? detail.averageScore }}</strong>
+          <small>Sinif ortalaması</small>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Davamiyyət</span>
+          <strong>{{ classStats()?.attendanceRate ?? detail.attendanceRate }}%</strong>
+          <small>Orta davamiyyət</small>
+        </div>
+      </div>
+
+      <div class="page-layout">
+        <div class="main-column">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Sinif haqqında</h2>
+                <p>Sinfin əsas məlumatları və ümumi təsviri</p>
+              </div>
+            </div>
+
+            <div class="info-grid" *ngIf="!isEditMode; else editInfoBlock">
+              <div class="info-item">
+                <span>Sinif adı</span>
+                <strong>{{ detail.name }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span>Tədris ili</span>
+                <strong>{{ detail.academicYear }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span>Otaq</span>
+                <strong>{{ detail.room || '-' }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span>Status</span>
+                <strong>{{ detail.status }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span>Maksimum tələbə sayı</span>
+                <strong>{{ detail.maxStudentCount }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span>Cari tələbə sayı</span>
+                <strong>{{ detail.students.length }}</strong>
+              </div>
+
+              <div class="info-item full-width">
+                <span>Açıqlama</span>
+                <strong>{{ detail.description || 'Əlavə qeyd yoxdur.' }}</strong>
+              </div>
+            </div>
+
+            <ng-template #editInfoBlock>
+              <div class="edit-grid">
+                <div class="form-control">
+                  <label>Sinif adı</label>
+                  <input type="text" [(ngModel)]="editForm.name" />
+                </div>
+
+                <div class="form-control">
+                  <label>Tədris ili</label>
+                  <input type="text" [(ngModel)]="editForm.academicYear" />
+                </div>
+
+                <div class="form-control">
+                  <label>Otaq</label>
+                  <input type="text" [(ngModel)]="editForm.room" />
+                </div>
+
+                <div class="form-control">
+                  <label>Status</label>
+                  <select [(ngModel)]="editForm.status">
+                    <option value="Aktiv">Aktiv</option>
+                    <option value="Passiv">Passiv</option>
+                  </select>
+                </div>
+
+                <div class="form-control">
+                  <label>Maksimum tələbə sayı</label>
+                  <input type="number" [(ngModel)]="editForm.maxStudentCount" min="1" />
+                </div>
+
+                <div class="form-control full-width">
+                  <label>Açıqlama</label>
+                  <textarea rows="4" [(ngModel)]="editForm.description"></textarea>
+                </div>
+              </div>
+            </ng-template>
+
+            <div class="capacity-wrap">
+              <div class="capacity-head">
+                <span>Sinif doluluğu</span>
+                <strong>{{ getStudentCountLabel() }}</strong>
+              </div>
+
+              <div class="capacity-bar">
+                <div class="capacity-fill" [style.width.%]="getStudentCapacityPercent()"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" *ngIf="isEditMode">
+            <div class="card-header">
+              <div>
+                <h2>Fənnlər</h2>
+                <p>API-dən gələn subject-lərlə sinifin fənnlərini seç və dəyiş</p>
+              </div>
+            </div>
+
+            <div class="filter-row single-row">
+              <div class="filter-control search-control">
+                <label>Fənn axtarışı</label>
+                <input
+                  type="text"
+                  [ngModel]="subjectSearchText"
+                  (input)="onSubjectSearchChange($any($event.target).value)"
+                  placeholder="Fənn adı və ya kod yaz..."
+                />
+              </div>
+            </div>
+
+            <div class="loading-inline" *ngIf="isOptionsLoading">Fənn seçimləri yüklənir...</div>
+
+            <div class="subject-picker-grid" *ngIf="filteredAvailableSubjects().length > 0">
+              <button
+                type="button"
+                class="subject-picker-chip"
+                *ngFor="let subject of filteredAvailableSubjects()"
+                [class.active]="isSubjectSelected(subject.id)"
+                (click)="toggleSubject(subject)"
+              >
+                <strong>{{ subject.name }}</strong>
+                <small>{{ subject.code || 'Kod yoxdur' }}</small>
+              </button>
+            </div>
+          </section>
+
+          <section class="card" *ngIf="isEditMode">
+            <div class="card-header">
+              <div>
+                <h2>Şagirdlər</h2>
+                <p>API-dən student axtarışı ilə seç, əlavə et və çıxart</p>
+              </div>
+            </div>
+
+            <div class="filter-row single-row">
+              <div class="filter-control search-control">
+                <label>Şagird axtarışı</label>
+                <input
+                  type="text"
+                  (input)="onStudentSearchChange($any($event.target).value)"
+                  placeholder="Ad və ya email yaz..."
+                />
+              </div>
+            </div>
+
+            <div class="search-results" *ngIf="searchedStudents().length > 0">
+              <button
+                type="button"
+                class="search-result-item"
+                *ngFor="let student of searchedStudents(); trackBy: trackByStudent"
+                (click)="addStudent(student)"
+              >
+                <img [src]="student.photoUrl" [alt]="student.fullName" />
+                <div class="student-meta">
+                  <strong>{{ student.fullName }}</strong>
+                  <span>{{ student.email }}</span>
+                  <small>{{ student.className || 'Sinifsiz' }} • {{ student.status }}</small>
+                </div>
+              </button>
+            </div>
+
+            <div class="selected-students" *ngIf="detail.students.length > 0">
+              <div class="selected-student-card" *ngFor="let student of detail.students; trackBy: trackByStudent">
+                <img [src]="student.photoUrl" [alt]="student.fullName" />
+
+                <div class="student-card-meta">
+                  <strong>{{ student.fullName }}</strong>
+                  <span>{{ student.email }}</span>
+                  <small>{{ student.className || detail.name }} • {{ student.status }}</small>
+                </div>
+
+                <button type="button" class="remove-btn" (click)="removeStudent(student.id)">
+                  Sil
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Ümumi göstəricilər</h2>
+                <p>Sinifin daxili performans və aktivlik göstəriciləri</p>
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <div class="metric-card">
+                <span>Aktiv tələbələr</span>
+                <strong>{{ getActiveStudentsCount() }}</strong>
+              </div>
+
+              <div class="metric-card">
+                <span>Passiv tələbələr</span>
+                <strong>{{ getPassiveStudentsCount() }}</strong>
+              </div>
+
+              <div class="metric-card">
+                <span>Məzun tələbələr</span>
+                <strong>{{ getGraduatedStudentsCount() }}</strong>
+              </div>
+
+              <div class="metric-card">
+                <span>Tamamlanmış imtahan</span>
+                <strong>{{ getCompletedExamCount() }}</strong>
+              </div>
+
+              <div class="metric-card">
+                <span>Aktiv imtahan</span>
+                <strong>{{ getActiveExamCount() }}</strong>
+              </div>
+
+              <div class="metric-card">
+                <span>Planlaşdırılan imtahan</span>
+                <strong>{{ getPlannedExamCount() }}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header row-header">
+              <div>
+                <h2>Davamiyyət cədvəli</h2>
+                <p>API-dən gələn son attendance session-ları üzrə cədvəl</p>
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="filter-control search-control">
+                <label>Tələbə axtarışı</label>
+                <input
+                  type="text"
+                  [(ngModel)]="attendanceSearch"
+                  placeholder="Ad, email və ya status üzrə axtar..."
+                />
+              </div>
+
+              <div class="filter-control">
+                <label>Davamiyyət statusu</label>
+                <select [(ngModel)]="attendanceStatusFilter">
+                  <option value="">Hamısı</option>
+                  <option value="Gəlib">Gəlib</option>
+                  <option value="Gecikib">Gecikib</option>
+                  <option value="İcazəli">İcazəli</option>
+                  <option value="Yoxdur">Yoxdur</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="loading-inline" *ngIf="isAttendanceLoading">Davamiyyət məlumatları yüklənir...</div>
+
+            <div class="table-wrap" *ngIf="!isAttendanceLoading && filteredAttendanceRows().length > 0; else noAttendanceRows">
+              <table class="data-table attendance-table">
+                <thead>
+                  <tr>
+                    <th>Tələbə</th>
+                    <th *ngFor="let column of attendanceColumns()" [title]="column.subjectName + ' • ' + column.teacherName">
+                      {{ column.shortLabel }}
+                    </th>
+                    <th>Orta davamiyyət</th>
+                    <th>Qısa xülasə</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let row of filteredAttendanceRows(); trackBy: trackByAttendanceRow">
+                    <td>
+                      <div class="teacher-cell">
+                        <img [src]="row.photoUrl" [alt]="row.fullName" />
+                        <div class="teacher-meta">
+                          <strong>{{ row.fullName }}</strong>
+                          <span>{{ row.email }}</span>
+                          <small [ngClass]="getStatusClass(row.status)">
+                            {{ row.status }}
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td *ngFor="let record of row.records">
+                      <span
+                        class="attendance-pill"
+                        [ngClass]="getAttendanceStatusClass(record.status)"
+                        [title]="record.status"
+                      >
+                        {{ getAttendanceStatusShort(record.status) }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <strong>{{ row.attendanceRate }}%</strong>
+                    </td>
+
+                    <td>
+                      <span class="attendance-summary">
+                        {{ getAttendanceSummary(row) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <ng-template #noAttendanceRows>
+              <div class="empty-state">Attendance məlumatı tapılmadı.</div>
+            </ng-template>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Tələbə task-ları</h2>
+                <p>Sinifdəki tələbələrin task-ları backend endpoint-dən gətirilir</p>
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="filter-control search-control">
+                <label>Task axtarışı</label>
+                <input
+                  type="text"
+                  [(ngModel)]="taskSearch"
+                  placeholder="Task, müəllim, fənn və ya tələbə adı..."
+                />
+              </div>
+
+              <div class="filter-control">
+                <label>Task statusu</label>
+                <select [(ngModel)]="taskStatusFilter">
+                  <option value="">Hamısı</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Submitted">Submitted</option>
+                  <option value="Reviewed">Reviewed</option>
+                  <option value="Late">Late</option>
+                  <option value="Missing">Missing</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="loading-inline" *ngIf="isTaskLoading">Task-lar yüklənir...</div>
+
+            <div class="task-grid" *ngIf="!isTaskLoading && filteredTasks().length > 0; else noTasks">
+              <div class="task-card" *ngFor="let task of filteredTasks(); trackBy: trackByTask">
+                <div class="task-top">
+                  <div>
+                    <h3>{{ task.title }}</h3>
+                    <p>{{ task.studentFullName }} • {{ task.subjectName }}</p>
+                  </div>
+
+                  <span class="status-pill" [ngClass]="getTaskStatusClass(task.status)">
+                    {{ task.status }}
+                  </span>
+                </div>
+
+                <div class="task-meta-grid">
+                  <div>
+                    <span>Müəllim</span>
+                    <strong>{{ task.teacherName || '-' }}</strong>
+                  </div>
+                  <div>
+                    <span>Verilmə tarixi</span>
+                    <strong>{{ formatDate(task.assignedDate) }}</strong>
+                  </div>
+                  <div>
+                    <span>Son tarix</span>
+                    <strong>{{ formatDate(task.dueDate) }}</strong>
+                  </div>
+                  <div>
+                    <span>Bal</span>
+                    <strong>{{ task.score }} / {{ task.maxScore }}</strong>
+                  </div>
+                </div>
+
+                <p class="task-note" *ngIf="task.note">{{ task.note }}</p>
+              </div>
+            </div>
+
+            <ng-template #noTasks>
+              <div class="empty-state">Bu sinif üzrə task tapılmadı.</div>
+            </ng-template>
+          </section>
+
+          <section class="card">
+            <div class="card-header row-header">
+              <div>
+                <h2>Sinif üzrə imtahanlar</h2>
+                <p>Bu sinif üçün keçirilmiş və planlaşdırılan imtahanlar</p>
+              </div>
+
+              <button type="button" class="btn btn-primary" (click)="navigateToCreateExam()">
+                Yeni imtahan yarat
+              </button>
+            </div>
+
+            <div class="filter-row">
+              <div class="filter-control search-control">
+                <label>İmtahan axtarışı</label>
+                <input
+                  type="text"
+                  [(ngModel)]="examSearch"
+                  placeholder="İmtahan adı və ya fənn yaz..."
+                />
+              </div>
+
+              <div class="filter-control">
+                <label>Status filteri</label>
+                <select [(ngModel)]="examStatusFilter">
+                  <option value="">Hamısı</option>
+                  <option value="Planned">Planlaşdırılıb</option>
+                  <option value="Active">Aktiv</option>
+                  <option value="Completed">Tamamlanıb</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-wrap" *ngIf="filteredExams().length > 0; else noExams">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>İmtahan adı</th>
+                    <th>Fənn</th>
+                    <th>Tarix</th>
+                    <th>Müddət</th>
+                    <th>Maksimum bal</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let exam of filteredExams()">
+                    <td><strong>{{ exam.title }}</strong></td>
+                    <td>{{ exam.subjectName }}</td>
+                    <td>{{ formatDateTime(exam.examDate) }}</td>
+                    <td>{{ exam.durationMinutes }} dəq</td>
+                    <td>{{ exam.totalScore }}</td>
+                    <td>
+                      <span class="status-pill" [ngClass]="getExamStatusClass(exam.status)">
+                        {{ getExamStatusLabel(exam.status) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <ng-template #noExams>
+              <div class="empty-state">Bu sinif üçün imtahan tapılmadı.</div>
+            </ng-template>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Keçirilən fənlər</h2>
+                <p>Sinifdə tədris olunan ümumi fənn siyahısı</p>
+              </div>
+            </div>
+
+            <div class="subject-tags" *ngIf="detail.subjects.length > 0; else noSubjects">
+              <div class="subject-tag" *ngFor="let subject of detail.subjects">
+                <strong>{{ subject.name }}</strong>
+                <small>{{ subject.code || 'Kod yoxdur' }}</small>
+              </div>
+            </div>
+
+            <ng-template #noSubjects>
+              <div class="empty-state">Bu sinif üçün fənn təyin olunmayıb.</div>
+            </ng-template>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Tələbələr</h2>
+                <p>Sinifə aid tələbə siyahısı və əsas göstəricilər</p>
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="filter-control search-control">
+                <label>Tələbə axtarışı</label>
+                <input
+                  type="text"
+                  [(ngModel)]="studentSearch"
+                  placeholder="Ad, email və ya status üzrə axtar..."
+                />
+              </div>
+
+              <div class="filter-control">
+                <label>Status</label>
+                <select [(ngModel)]="studentStatusFilter">
+                  <option value="">Hamısı</option>
+                  <option value="Aktiv">Aktiv</option>
+                  <option value="Passiv">Passiv</option>
+                  <option value="Məzun">Məzun</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="students-list" *ngIf="filteredStudents().length > 0; else noStudents">
+              <div class="student-row" *ngFor="let student of filteredStudents(); trackBy: trackByStudent">
+                <div class="student-main">
+                  <img [src]="student.photoUrl" [alt]="student.fullName" />
+
+                  <div class="student-meta">
+                    <strong>{{ student.fullName }}</strong>
+                    <span>{{ student.email }}</span>
+                    <small>{{ student.className || detail.name }}</small>
+                  </div>
+                </div>
+
+                <div class="student-stats">
+                  <div class="mini-stat">
+                    <span>Orta bal</span>
+                    <strong>{{ student.averageScore ?? 0 }}</strong>
+                  </div>
+
+                  <div class="mini-stat">
+                    <span>Davamiyyət</span>
+                    <strong>{{ student.attendanceRate ?? 0 }}%</strong>
+                  </div>
+
+                  <div class="mini-stat">
+                    <span>Status</span>
+                    <strong class="inline-status" [ngClass]="getStatusClass(student.status)">
+                      {{ student.status }}
+                    </strong>
+                  </div>
+                </div>
+
+                <div class="student-actions">
+                  <button
+                    type="button"
+                    class="btn btn-light"
+                    (click)="navigateToStudentDetail(student.id)"
+                  >
+                    Ətraflı bax
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noStudents>
+              <div class="empty-state">Filterə uyğun tələbə tapılmadı.</div>
+            </ng-template>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Müəllimlər və fənlər</h2>
+                <p>Hansı müəllimin hansı fənni tədris etdiyini idarə et</p>
+              </div>
+            </div>
+
+            <div class="filter-row single-row">
+              <div class="filter-control search-control">
+                <label>Fənn və müəllim axtarışı</label>
+                <input
+                  type="text"
+                  [(ngModel)]="teacherSearch"
+                  placeholder="Fənn və ya müəllim adına görə axtar..."
+                />
+              </div>
+            </div>
+
+            <div class="table-wrap" *ngIf="filteredTeacherRows().length > 0; else noTeacherRows">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Fənn</th>
+                    <th>Kod</th>
+                    <th>Təyin olunmuş müəllim</th>
+                    <th>Alternativ müəllimlər</th>
+                    <th>Dəyiş</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr *ngFor="let row of filteredTeacherRows(); trackBy: trackByTeacherRow">
+                    <td><strong>{{ row.subjectName }}</strong></td>
+
+                    <td>{{ row.subjectCode || '-' }}</td>
+
+                    <td>
+                      <div class="teacher-cell">
+                        <ng-container *ngIf="getAssignedTeacher(row) as teacher; else teacherNotAssigned">
+                          <img [src]="teacher.photoUrl" [alt]="teacher.fullName" />
+
+                          <div class="teacher-meta">
+                            <strong>{{ teacher.fullName }}</strong>
+                            <span>{{ teacher.email }}</span>
+                            <small [ngClass]="getTeacherStatusClass(teacher.status)">
+                              {{ teacher.status }}
+                            </small>
+                          </div>
+                        </ng-container>
+
+                        <ng-template #teacherNotAssigned>
+                          <span class="not-assigned">Təyin edilməyib</span>
+                        </ng-template>
+                      </div>
+                    </td>
+
+                    <td>
+                      <div class="teacher-list" *ngIf="getTeacherOptionsForRow(row).length > 0">
+                        <span *ngFor="let teacher of getTeacherOptionsForRow(row)">
+                          {{ teacher.fullName }}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td>
+                      <select
+                        class="teacher-select"
+                        [ngModel]="row.assignedTeacherId"
+                        (ngModelChange)="onTeacherChanged(row, $event)"
+                        [disabled]="!isEditMode"
+                      >
+                        <option [ngValue]="null">Müəllim seç</option>
+                        <option
+                          *ngFor="let teacher of getTeacherOptionsForRow(row)"
+                          [ngValue]="teacher.id"
+                        >
+                          {{ teacher.fullName }} — {{ teacher.status }}
+                        </option>
+                      </select>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <ng-template #noTeacherRows>
+              <div class="empty-state">Müəllim-fənn məlumatı tapılmadı.</div>
+            </ng-template>
+          </section>
+        </div>
+
+        <aside class="side-column">
+          <section class="card sticky-card">
+            <div class="card-header">
+              <div>
+                <h2>Sürətli baxış</h2>
+                <p>Sinfin ən vacib məlumatları qısa xülasə şəklində</p>
+              </div>
+            </div>
+
+            <div class="quick-summary">
+              <div class="quick-item">
+                <span>Sinif adı</span>
+                <strong>{{ isEditMode ? editForm.name : detail.name }}</strong>
+              </div>
+
+              <div class="quick-item">
+                <span>Tələbə sayı</span>
+                <strong>{{ detail.students.length }}</strong>
+              </div>
+
+              <div class="quick-item">
+                <span>Top tələbələrin ortalaması</span>
+                <strong>{{ getTopStudentsAverage() }}</strong>
+              </div>
+
+              <div class="quick-item">
+                <span>İmtahan sayı</span>
+                <strong>{{ detail.exams.length }}</strong>
+              </div>
+
+              <div class="quick-item">
+                <span>Müəllim sayı</span>
+                <strong>{{ getUniqueTeacherCount() }}</strong>
+              </div>
+
+              <div class="quick-item">
+                <span>Task sayı</span>
+                <strong>{{ classTasks().length }}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="card sticky-card">
+            <div class="card-header">
+              <div>
+                <h2>Sürətli əməliyyatlar</h2>
+                <p>Bu sinif üçün əsas idarəetmə əməliyyatları</p>
+              </div>
+            </div>
+
+            <div class="action-list" *ngIf="!isEditMode; else editActionList">
+              <button
+                type="button"
+                class="action-btn primary"
+                (click)="startEdit()"
+                [disabled]="!canEdit()"
+              >
+                Sinif məlumatlarını redaktə et
+              </button>
+
+              <button type="button" class="action-btn" (click)="navigateToCreateExam()">
+                Yeni imtahan yarat
+              </button>
+
+              <button type="button" class="action-btn" (click)="navigateToCreate()">
+                Yeni sinif əlavə et
+              </button>
+
+              <button type="button" class="action-btn" (click)="goBack()">
+                Siyahıya qayıt
+              </button>
+            </div>
+
+            <ng-template #editActionList>
+              <div class="action-list">
+                <button
+                  type="button"
+                  class="action-btn primary"
+                  (click)="saveEdit()"
+                  [disabled]="!hasEditChanges() || isEditSubmitting"
+                >
+                  {{ isEditSubmitting ? 'Yadda saxlanılır...' : 'Yadda saxla' }}
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn"
+                  (click)="cancelEdit()"
+                  [disabled]="isEditSubmitting"
+                >
+                  Dəyişiklikləri ləğv et
+                </button>
+
+                <button type="button" class="action-btn" (click)="goBack()" [disabled]="isEditSubmitting">
+                  Siyahıya qayıt
+                </button>
+              </div>
+            </ng-template>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </ng-container>
+</ng-template>
+      
+<ng-template #loadingOrError>
+  <section class="class-detail-page">
+    <div class="card" *ngIf="isLoading">
+      <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <strong>Məlumatlar yüklənir...</strong>
+        <span>Sinif məlumatları hazırlanır, zəhmət olmasa gözləyin.</span>
+      </div>
+    </div>
+
+    <div class="card error-card" *ngIf="!isLoading && loadError">
+      <h3>Xəta baş verdi</h3>
+      <p>{{ loadError }}</p>
+      <button type="button" class="btn btn-primary" routerLink="/admin/classes">
+        Sinif siyahısına qayıt
+      </button>
+    </div>
+  </section>
+</ng-template>

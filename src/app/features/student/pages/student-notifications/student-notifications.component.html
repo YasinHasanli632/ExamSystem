@@ -1,0 +1,147 @@
+<div class="student-notification-page">
+  <section class="notification-hero">
+    <div class="hero-left">
+      <span class="hero-kicker">Student Notification Center</span>
+      <h2>Bildiriş axını</h2>
+      <p>
+        Backenddən gələn real bildirişlər burada avtomatik yenilənir.
+        Refresh etmədən son dəyişiklikləri görə bilirsən.
+      </p>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-card unread">
+        <strong>{{ unreadCount() }}</strong>
+        <span>Oxunmamış</span>
+      </div>
+
+      <div class="stat-card total">
+        <strong>{{ notifications().length }}</strong>
+        <span>Ümumi bildiriş</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="toolbar-card">
+    <div class="toolbar-left">
+      <label class="field search-field">
+        <span>Axtarış</span>
+        <input
+          #searchInput
+          type="text"
+          placeholder="Başlıq, mesaj və ya kateqoriya üzrə..."
+          (input)="setSearchText(searchInput.value)" />
+      </label>
+
+      <label class="field compact">
+        <span>Növ</span>
+        <select #typeSelect (change)="setType(typeSelect.value)">
+          <option value="">Hamısı</option>
+          <option value="System">Sistem</option>
+          <option value="Exam">İmtahan</option>
+          <option value="Task">Tapşırıq</option>
+          <option value="Attendance">Davamiyyət</option>
+          <option value="User">İstifadəçi</option>
+        </select>
+      </label>
+
+      <label class="field compact">
+        <span>Status</span>
+        <select #readSelect (change)="setReadFilter(readSelect.value)">
+          <option value="">Hamısı</option>
+          <option value="false">Oxunmamış</option>
+          <option value="true">Oxunmuş</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="toolbar-right">
+      <button
+        type="button"
+        class="secondary-btn"
+        [disabled]="isLoading() || isActionLoading()"
+        (click)="loadNotifications()">
+        Yenilə
+      </button>
+
+      <button
+        type="button"
+        class="primary-btn"
+        [disabled]="!unreadCount() || isActionLoading()"
+        (click)="markAllAsRead()">
+        Hamısını oxunmuş et
+      </button>
+    </div>
+  </section>
+
+  <div class="loading-box" *ngIf="isLoading()">
+    Bildirişlər yüklənir...
+  </div>
+
+  <div class="error-box" *ngIf="errorMessage()">
+    {{ errorMessage() }}
+  </div>
+
+  <div class="empty-box" *ngIf="!isLoading() && !filteredNotifications().length">
+    <div class="empty-icon">🔔</div>
+    <h3>Bildiriş tapılmadı</h3>
+    <p>Hazırkı filterə uyğun bildiriş yoxdur.</p>
+  </div>
+
+  <div class="notification-list" *ngIf="filteredNotifications().length">
+    <article
+      class="notification-item"
+      *ngFor="let item of filteredNotifications(); trackBy: trackByNotificationId"
+      [class.unread]="!item.isRead"
+      [class.info]="item.colorKey === 'info'"
+      [class.success]="item.colorKey === 'success'"
+      [class.warning]="item.colorKey === 'warning'"
+      [class.danger]="item.colorKey === 'danger'">
+      <div class="notification-icon">
+        {{ item.iconText }}
+      </div>
+
+      <div class="notification-body">
+        <div class="notification-top">
+          <div class="notification-heading">
+            <div class="tag-row">
+              <span class="type-chip">{{ item.typeLabel }}</span>
+              <span class="priority-chip">{{ item.priorityLabel }}</span>
+              <span class="status-chip unread-chip" *ngIf="!item.isRead">Yeni</span>
+            </div>
+
+            <h3>{{ item.title }}</h3>
+          </div>
+
+          <span class="time-text">{{ item.timeText }}</span>
+        </div>
+
+        <p class="notification-message">{{ item.message }}</p>
+
+        <div class="notification-meta">
+          <span *ngIf="item.category">Kateqoriya: {{ item.category }}</span>
+          <span *ngIf="item.relatedEntityType">Entity: {{ item.relatedEntityType }}</span>
+          <span *ngIf="item.relatedEntityId">ID: {{ item.relatedEntityId }}</span>
+        </div>
+      </div>
+
+      <div class="notification-actions">
+        <button type="button" class="ghost-btn" (click)="openNotification(item)">
+          Aç
+        </button>
+
+        <button
+          type="button"
+          class="ghost-btn"
+          *ngIf="!item.isRead"
+          (click)="markAsRead(item)">
+          Oxunmuş et
+        </button>
+
+        <button type="button" class="danger-btn" (click)="remove(item)">
+          Sil
+        </button>
+      </div>
+    </article>
+  </div>
+</div>

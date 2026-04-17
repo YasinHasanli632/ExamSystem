@@ -1,0 +1,202 @@
+<div class="attendance-page">
+  <section class="page-header-card">
+    <div class="page-header-card__content">
+      <span class="page-chip">Student Panel</span>
+      <h1>Davamiyyətim</h1>
+      <p>
+        Fənn, status və tarix aralığı üzrə davamiyyət qeydlərinə bax,
+        statistikaları izlə və axtarış apar.
+      </p>
+    </div>
+  </section>
+
+  <section class="filter-card">
+    <div class="filter-card__header">
+      <div>
+        <h2>Filter paneli</h2>
+        <p>Fənn seç, tarix aralığı müəyyən et və nəticəni dəqiqləşdir.</p>
+      </div>
+
+      <div class="filter-card__actions">
+        <button type="button" class="secondary-btn" (click)="resetFilters()">
+          Təmizlə
+        </button>
+        <button type="button" class="primary-btn" (click)="applyFilters()">
+          Tətbiq et
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group">
+        <label for="subjectName">Fənn seç</label>
+        <select
+          id="subjectName"
+          name="subjectName"
+          [(ngModel)]="filter.subjectName"
+          (change)="applyFilters()">
+          <option value="">Bütün fənlər</option>
+          <option *ngFor="let item of subjectOptions" [value]="item.name">
+            {{ item.name }} ({{ item.count }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="startDate">Başlanğıc tarix</label>
+        <input
+          id="startDate"
+          name="startDate"
+          type="date"
+          [(ngModel)]="filter.startDate"
+          (change)="applyFilters()" />
+      </div>
+
+      <div class="form-group">
+        <label for="endDate">Bitiş tarix</label>
+        <input
+          id="endDate"
+          name="endDate"
+          type="date"
+          [(ngModel)]="filter.endDate"
+          (change)="applyFilters()" />
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select
+          id="status"
+          name="status"
+          [(ngModel)]="filter.status"
+          (change)="applyFilters()">
+          <option value="">Bütün statuslar</option>
+          <option value="Gəlib">Gəlib</option>
+          <option value="Gecikib">Gecikib</option>
+          <option value="Yoxdur">Yoxdur</option>
+          <option value="İcazəli">İcazəli</option>
+        </select>
+      </div>
+
+      <div class="form-group form-group--full">
+        <label for="searchText">Axtarış</label>
+        <input
+          id="searchText"
+          name="searchText"
+          type="text"
+          [(ngModel)]="filter.searchText"
+          (input)="applyFilters()"
+          placeholder="Fənn, müəllim, status, qeyd və səbəb üzrə axtar..." />
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span class="stat-card__label">Ümumi qeyd sayı</span>
+      <strong class="stat-card__value">{{ stats.totalCount }}</strong>
+      <small class="stat-card__hint">Seçilmiş filter nəticəsi</small>
+    </article>
+
+    <article class="stat-card stat-card--present">
+      <span class="stat-card__label">İştirak etdi</span>
+      <strong class="stat-card__value">{{ stats.presentCount }}</strong>
+      <small class="stat-card__hint">Gəlib statuslu qeydlər</small>
+    </article>
+
+    <article class="stat-card stat-card--late">
+      <span class="stat-card__label">Gecikdi</span>
+      <strong class="stat-card__value">{{ stats.lateCount }}</strong>
+      <small class="stat-card__hint">Gecikib statuslu qeydlər</small>
+    </article>
+
+    <article class="stat-card stat-card--absent">
+      <span class="stat-card__label">Qayıb</span>
+      <strong class="stat-card__value">{{ stats.absentCount }}</strong>
+      <small class="stat-card__hint">Yoxdur statuslu qeydlər</small>
+    </article>
+  </section>
+
+  <section class="table-card">
+    <div class="table-card__header">
+      <div>
+        <h2>Davamiyyət cədvəli</h2>
+        <p>Seçilən filterə uyğun davamiyyət məlumatları.</p>
+      </div>
+
+      <span class="result-badge">{{ filteredAttendanceItems.length }} nəticə</span>
+    </div>
+
+    <div *ngIf="isLoading" class="state-box">
+      <div class="loader"></div>
+      <div>
+        <strong>Yüklənir...</strong>
+        <p>Davamiyyət məlumatları backenddən gətirilir.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoading && errorMessage" class="state-box state-box--error">
+      <strong>Xəta baş verdi</strong>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="primary-btn" (click)="loadAttendance()">
+        Yenidən yoxla
+      </button>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage && isFilterLoading" class="state-box state-box--inline">
+      <div class="loader loader--small"></div>
+      <p>Filter nəticələri yenilənir...</p>
+    </div>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && !filteredAttendanceItems.length"
+      class="empty-state">
+      <div class="empty-state__icon">📋</div>
+      <h3>{{ emptyStateTitle }}</h3>
+      <p>{{ emptyStateDescription }}</p>
+
+      <button
+        *ngIf="hasActiveFilters"
+        type="button"
+        class="secondary-btn"
+        (click)="resetFilters()">
+        Filterləri təmizlə
+      </button>
+    </div>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && filteredAttendanceItems.length"
+      class="table-wrapper">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Tarix</th>
+            <th>Gün</th>
+            <th>Fənn</th>
+            <th>Müəllim</th>
+            <th>Status</th>
+            <th>Sinif</th>
+            <th>Qeyd / Səbəb</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let item of filteredAttendanceItems; trackBy: trackByAttendance">
+            <td>{{ formatDate(item.sessionDate) }}</td>
+            <td class="capitalize">{{ formatWeekday(item.sessionDate) }}</td>
+            <td class="cell-strong">{{ item.subjectName }}</td>
+            <td>{{ item.teacherName }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(item.statusLabel)">
+                {{ item.statusLabel }}
+              </span>
+            </td>
+            <td>{{ item.className || '-' }}</td>
+            <td class="note-cell" [title]="item.noteSummary || '-'">
+              {{ item.noteSummary || '-' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

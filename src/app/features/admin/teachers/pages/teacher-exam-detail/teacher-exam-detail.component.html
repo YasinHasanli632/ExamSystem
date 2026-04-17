@@ -1,0 +1,968 @@
+<section class="teacher-exam-detail-page">
+  <div class="page-header">
+    <div class="page-header__content">
+      <button type="button" class="back-link" (click)="goBack()">← İmtahan siyahısına qayıt</button>
+
+      <div class="page-badges" *ngIf="examDetail">
+        <span class="status-badge" [ngClass]="getStatusClass(examDetail.status)">
+          {{ getStatusLabel(examDetail.status) }}
+        </span>
+        <span class="mode-badge">{{ getModeTitle() }}</span>
+      </div>
+
+      <h1 class="page-title">
+        {{ examDetail?.title || 'İmtahan detaili' }}
+      </h1>
+
+      <p class="page-subtitle">
+        {{ getModeDescription() }}
+      </p>
+    </div>
+
+    <div class="page-header__actions" *ngIf="examDetail">
+      <ng-container *ngIf="mode === 'planned'">
+        <button
+          *ngIf="!isEditMode"
+          type="button"
+          class="btn btn-secondary"
+          (click)="enableEditMode()"
+        >
+          Redaktə et
+        </button>
+
+        <button
+          *ngIf="isEditMode"
+          type="button"
+          class="btn btn-light"
+          [disabled]="saving"
+          (click)="cancelEditMode()"
+        >
+          Ləğv et
+        </button>
+
+        <button
+          *ngIf="isEditMode"
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="saving"
+          (click)="publishExam()"
+        >
+          {{ saving ? 'Gözləyin...' : 'Yayımla' }}
+        </button>
+
+        <button
+          *ngIf="isEditMode"
+          type="button"
+          class="btn btn-primary"
+          [disabled]="saving"
+          (click)="savePlannedExam()"
+        >
+          {{ saving ? 'Yadda saxlanılır...' : 'Yadda saxla' }}
+        </button>
+      </ng-container>
+
+      <button
+        *ngIf="mode === 'active'"
+        type="button"
+        class="btn btn-light"
+        [disabled]="refreshingLiveStats"
+        (click)="loadSubmissions(false)"
+      >
+        {{ refreshingLiveStats ? 'Yenilənir...' : 'Canlı məlumatları yenilə' }}
+      </button>
+
+      <button
+        *ngIf="mode === 'completed' && submissionDetail && getOpenAnswers(submissionDetail.answers).length > 0"
+        type="button"
+        class="btn btn-primary"
+        [disabled]="grading"
+        (click)="saveGrading()"
+      >
+        {{ grading ? 'Qiymətləndirmə yadda saxlanılır...' : 'Qiymətləndirməni yadda saxla' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-error" *ngIf="gradingError">
+    {{ gradingError }}
+  </div>
+
+  <div class="loading-card" *ngIf="loading">
+    <div class="loader"></div>
+    <p>İmtahan məlumatları yüklənir...</p>
+  </div>
+
+  <ng-container *ngIf="!loading && examDetail as detail">
+    <div class="overview-grid">
+      <div class="hero-card">
+        <div class="hero-card__top">
+          <div>
+            <div class="hero-card__meta">İmtahan məlumatları</div>
+            <h2>{{ detail.title }}</h2>
+            <p>{{ detail.description || 'Bu imtahan üçün əlavə təsvir daxil edilməyib.' }}</p>
+          </div>
+
+          <div class="hero-side">
+            <div class="mini-stat">
+              <span>Fənn</span>
+              <strong>{{ detail.subjectName || '-' }}</strong>
+            </div>
+            <div class="mini-stat">
+              <span>Sinif</span>
+              <strong>{{ detail.className || '-' }}</strong>
+            </div>
+            <div class="mini-stat">
+              <span>Müəllim</span>
+              <strong>{{ detail.teacherName || '-' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-card">
+            <span>Başlama</span>
+            <strong>{{ formatDateTime(detail.startTime) }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Bitmə</span>
+            <strong>{{ formatDateTime(detail.endTime) }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Müddət</span>
+            <strong>{{ detail.durationMinutes || 0 }} dəq</strong>
+          </div>
+          <div class="stat-card">
+            <span>Ümumi bal</span>
+            <strong>{{ detail.totalScore || 0 }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Sual sayı</span>
+            <strong>{{ detail.totalQuestionCount || 0 }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Açıq sual</span>
+            <strong>{{ detail.openQuestionCount || 0 }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Qapalı sual</span>
+            <strong>{{ detail.closedQuestionCount || 0 }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Qapalı sual balı</span>
+            <strong>{{ detail.closedQuestionScore || 0 }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="mode === 'planned'">
+      <div class="planned-layout">
+        <section class="panel-card panel-card--soft">
+          <div class="panel-card__header panel-card__header--space">
+            <div>
+              <h3>Planlaşdırma paneli</h3>
+              <p>
+                İmtahan hələ başlamayıb. Burada imtahanın əsas məlumatları, sual sayı, sual növləri və ballar tam idarə olunur.
+              </p>
+            </div>
+
+            <div class="edit-mode-state" [class.edit-mode-state--active]="isEditMode">
+              {{ isEditMode ? 'Redaktə aktivdir' : 'Baxış rejimi' }}
+            </div>
+          </div>
+
+          <div class="planned-top-grid" *ngIf="(isEditMode ? editableExam : detail) as panelExam">
+            <div class="summary-box">
+              <span>Başlamağa qalan vaxt</span>
+              <strong>{{ getCanStartCountdownText() }}</strong>
+            </div>
+            <div class="summary-box">
+              <span>Ümumi sual</span>
+              <strong>{{ panelExam.totalQuestionCount || 0 }}</strong>
+            </div>
+            <div class="summary-box">
+              <span>Açıq sual</span>
+              <strong>{{ panelExam.openQuestionCount || 0 }}</strong>
+            </div>
+            <div class="summary-box">
+              <span>Qapalı sual</span>
+              <strong>{{ panelExam.closedQuestionCount || 0 }}</strong>
+            </div>
+            <div class="summary-box">
+              <span>Ümumi bal</span>
+              <strong>{{ panelExam.totalScore || 0 }}</strong>
+            </div>
+            <div class="summary-box">
+              <span>Qapalı sual balı</span>
+              <strong>{{ panelExam.closedQuestionScore || 0 }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-card" *ngIf="editableExam as exam">
+          <div class="panel-card__header">
+            <div>
+              <h3>İmtahanın əsas məlumatları</h3>
+              <p>Vaxt, sinif, fənn, təlimat və ümumi məlumatlar burada redaktə edilir.</p>
+            </div>
+          </div>
+
+          <div class="inline-loader" *ngIf="createOptionsLoading">
+            Seçim məlumatları yüklənir...
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label>İmtahan adı</label>
+              <input
+                type="text"
+                [(ngModel)]="exam.title"
+                [readonly]="!isEditMode"
+                placeholder="İmtahan adını daxil et"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Sinif</label>
+              <select [(ngModel)]="exam.classId" [disabled]="!isEditMode">
+                <option [ngValue]="null">Seçilməyib</option>
+                <option *ngFor="let classItem of classOptions" [ngValue]="classItem.id">
+                  {{ classItem.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Fənn</label>
+              <select [(ngModel)]="exam.subjectId" [disabled]="!isEditMode">
+                <option [ngValue]="null">Seç</option>
+                <option *ngFor="let subjectItem of subjectOptions" [ngValue]="subjectItem.id">
+                  {{ subjectItem.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Müəllim</label>
+              <input type="text" [value]="teacherName || exam.teacherName" readonly />
+            </div>
+
+            <div class="form-group">
+              <label>Başlama vaxtı</label>
+              <input type="datetime-local" [(ngModel)]="exam.startTime" [readonly]="!isEditMode" />
+            </div>
+
+            <div class="form-group">
+              <label>Bitmə vaxtı</label>
+              <input type="datetime-local" [(ngModel)]="exam.endTime" [readonly]="!isEditMode" />
+            </div>
+
+            <div class="form-group">
+              <label>Müddət (dəq)</label>
+              <input type="number" [(ngModel)]="exam.durationMinutes" [readonly]="!isEditMode" min="1" />
+            </div>
+
+            <div class="form-group">
+              <label>Yayımlanma statusu</label>
+              <select [(ngModel)]="exam.isPublished" [disabled]="!isEditMode">
+                <option [ngValue]="false">Qaralama</option>
+                <option [ngValue]="true">Yayımlanıb</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label>Təlimat</label>
+              <textarea rows="4" [(ngModel)]="exam.instructions" [readonly]="!isEditMode" placeholder="İmtahan təlimatları"></textarea>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label>Təsvir</label>
+              <textarea rows="4" [(ngModel)]="exam.description" [readonly]="!isEditMode" placeholder="Əlavə açıqlama"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-card" *ngIf="editableExam as exam">
+          <div class="panel-card__header panel-card__header--space">
+            <div>
+              <h3>Sual idarəetməsi</h3>
+              <p>
+                Burada hər sualı ayrıca redaktə etmək, variantları dəyişmək və doğru cavabı yeniləmək mümkündür.
+              </p>
+            </div>
+
+            <div class="header-inline-actions" *ngIf="isEditMode">
+              <button type="button" class="btn btn-light" (click)="toggleAddQuestionPanel()">
+                {{ addQuestionPanelOpen ? 'Paneli bağla' : '+ Sual əlavə et' }}
+              </button>
+              <button type="button" class="btn btn-light" (click)="rebalanceOpenScores()">
+                Açıq balları böl
+              </button>
+              <button type="button" class="btn btn-light" (click)="rebalanceClosedScores()">
+                Qapalı balları böl
+              </button>
+              <button type="button" class="btn btn-primary" (click)="rebalanceAllScores()">
+                Hamısını bərabər böl
+              </button>
+            </div>
+          </div>
+
+          <div class="action-panel" *ngIf="isEditMode && addQuestionPanelOpen">
+            <div class="action-panel__content">
+              <div>
+                <h4>Yeni sual əlavə et</h4>
+                <p>Sual tipini seç və yeni sualı siyahıya daxil et.</p>
+              </div>
+
+              <div class="action-panel__controls">
+                <div class="form-group form-group--compact">
+                  <label>Sual tipi</label>
+                  <select [(ngModel)]="addQuestionType">
+                    <option value="OpenText">Açıq sual</option>
+                    <option value="SingleChoice">Tək seçimli</option>
+                    <option value="MultipleChoice">Çox seçimli</option>
+                  </select>
+                </div>
+
+                <button type="button" class="btn btn-primary" (click)="addQuestionFromPanel()">
+                  Sualı əlavə et
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-panel action-panel--warning" *ngIf="isEditMode && pendingQuestionRemoval as pending">
+            <div class="action-panel__content action-panel__content--column">
+              <div>
+                <h4>Sual silinməsi üçün seçim et</h4>
+                <p>
+                  <strong>{{ pending.questionText || 'Seçilmiş sual' }}</strong>
+                  silinəcək. İndi iki variantdan birini seç:
+                </p>
+              </div>
+
+              <div class="remove-strategy-grid">
+                <div class="remove-strategy-card">
+                  <h5>1) Yerinə yeni sual əlavə et</h5>
+                  <p>Eyni mövqedə yeni sual yaranacaq, ümumi sual sayı dəyişməyəcək.</p>
+
+                  <div class="form-group form-group--compact">
+                    <label>Yeni sual tipi</label>
+                    <select [(ngModel)]="replacementQuestionType">
+                      <option value="OpenText">Açıq sual</option>
+                      <option value="SingleChoice">Tək seçimli</option>
+                      <option value="MultipleChoice">Çox seçimli</option>
+                    </select>
+                  </div>
+
+                  <button type="button" class="btn btn-primary" (click)="confirmRemoveQuestionWithReplacement()">
+                    Əvəz et
+                  </button>
+                </div>
+
+                <div class="remove-strategy-card">
+                  <h5>2) Sual sayını azalt</h5>
+                  <p>
+                    Sual tam silinəcək. Eyni tipli qalan sualların balları avtomatik yenidən bölünəcək.
+                  </p>
+
+                  <button type="button" class="btn btn-secondary" (click)="confirmRemoveQuestionReduceCounts()">
+                    Sual sayını azalt
+                  </button>
+                </div>
+              </div>
+
+              <div class="remove-actions">
+                <button type="button" class="btn btn-light" (click)="cancelPendingQuestionRemoval()">
+                  Ləğv et
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="question-list">
+            <div class="question-card" *ngFor="let question of exam.questions; let i = index; trackBy: trackByQuestion">
+              <div class="question-card__header">
+                <div>
+                  <div class="question-number">Sual {{ i + 1 }}</div>
+                  <div class="question-type-pill">{{ getQuestionTypeLabel(question.type) }}</div>
+                </div>
+
+                <div class="question-card__actions" *ngIf="isEditMode">
+                  <button
+                    *ngIf="!isQuestionEditing(question, i)"
+                    type="button"
+                    class="btn btn-light btn-sm"
+                    (click)="startQuestionEdit(question, i)"
+                  >
+                    Redaktə et
+                  </button>
+
+                  <button
+                    *ngIf="isQuestionEditing(question, i)"
+                    type="button"
+                    class="btn btn-light btn-sm"
+                    (click)="cancelQuestionEdit(question, i)"
+                  >
+                    Ləğv et
+                  </button>
+
+                  <button
+                    *ngIf="isQuestionEditing(question, i)"
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="saveQuestionEdit(question, i)"
+                  >
+                    Sualı tətbiq et
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-danger-outline btn-sm"
+                    (click)="requestRemoveQuestion(i)"
+                  >
+                    Sil
+                  </button>
+                </div>
+              </div>
+
+              <div class="question-grid">
+                <div class="form-group form-group--full">
+                  <label>Sual mətni</label>
+                  <textarea
+                    rows="3"
+                    [(ngModel)]="question.questionText"
+                    [readonly]="!isQuestionEditing(question, i)"
+                    placeholder="Sual mətnini daxil et"
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Sual tipi</label>
+                  <select
+                    [(ngModel)]="question.type"
+                    [disabled]="!isQuestionEditing(question, i)"
+                    (ngModelChange)="onQuestionTypeChange(question)"
+                  >
+                    <option value="SingleChoice">Tək seçimli</option>
+                    <option value="MultipleChoice">Çox seçimli</option>
+                    <option value="OpenText">Açıq sual</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Bal</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="question.points"
+                    [readonly]="!isQuestionEditing(question, i)"
+                    min="1"
+                    (ngModelChange)="onQuestionPointsChange()"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Sıra nömrəsi</label>
+                  <input type="number" [(ngModel)]="question.orderNumber" readonly />
+                </div>
+
+                <div class="form-group" *ngIf="question.type !== 'OpenText'">
+                  <label>Seçim rejimi</label>
+                  <select
+                    [(ngModel)]="question.selectionMode"
+                    [disabled]="!isQuestionEditing(question, i)"
+                    (ngModelChange)="normalizeCorrectAnswers(question)"
+                  >
+                    <option value="single">Tək seçim</option>
+                    <option value="multiple">Çox seçim</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-group--full">
+                  <label>Qeyd / Açıqlama</label>
+                  <textarea
+                    rows="2"
+                    [(ngModel)]="question.description"
+                    [readonly]="!isQuestionEditing(question, i)"
+                    placeholder="Sual üzrə əlavə qeyd"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="options-block" *ngIf="question.type !== 'OpenText'">
+                <div class="options-block__header">
+                  <div>
+                    <h4>Variantlar</h4>
+                    <p class="options-help-text">
+                      Hər variantı ayrıca redaktə et və doğru cavabı dəyiş.
+                    </p>
+                  </div>
+
+                  <button
+                    *ngIf="isQuestionEditing(question, i)"
+                    type="button"
+                    class="btn btn-light btn-sm"
+                    (click)="addOption(question, i)"
+                  >
+                    + Variant əlavə et
+                  </button>
+                </div>
+
+                <div class="option-row" *ngFor="let option of question.options; let optionIndex = index">
+                  <div class="option-check">
+                    <ng-container *ngIf="question.selectionMode === 'single'; else multiSelectTemplate">
+                      <input
+                        type="radio"
+                        [name]="'single-correct-' + i"
+                        [checked]="option.isCorrect"
+                        [disabled]="!isQuestionEditing(question, i)"
+                        (change)="onSingleCorrectChange(question, optionIndex)"
+                      />
+                    </ng-container>
+
+                    <ng-template #multiSelectTemplate>
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="option.isCorrect"
+                        [disabled]="!isQuestionEditing(question, i)"
+                        (ngModelChange)="onMultipleCorrectChange(question)"
+                      />
+                    </ng-template>
+                  </div>
+
+                  <div class="option-inputs">
+                    <input
+                      type="text"
+                      [(ngModel)]="option.optionText"
+                      [readonly]="!isOptionEditing(question, i, option, optionIndex)"
+                      placeholder="Variant mətni"
+                    />
+                    <input
+                      type="text"
+                      [(ngModel)]="option.optionKey"
+                      [readonly]="!isOptionEditing(question, i, option, optionIndex)"
+                      placeholder="Variant açarı (istəyə bağlı)"
+                    />
+                  </div>
+
+                  <div class="option-actions" *ngIf="isQuestionEditing(question, i)">
+                    <button
+                      *ngIf="!isOptionEditing(question, i, option, optionIndex)"
+                      type="button"
+                      class="btn btn-light btn-sm"
+                      (click)="startOptionEdit(question, i, option, optionIndex)"
+                    >
+                      Redaktə et
+                    </button>
+
+                    <button
+                      *ngIf="isOptionEditing(question, i, option, optionIndex)"
+                      type="button"
+                      class="btn btn-light btn-sm"
+                      (click)="cancelOptionEdit(question, i, option, optionIndex)"
+                    >
+                      Ləğv et
+                    </button>
+
+                    <button
+                      *ngIf="isOptionEditing(question, i, option, optionIndex)"
+                      type="button"
+                      class="btn btn-primary btn-sm"
+                      (click)="saveOptionEdit(question, i, option, optionIndex)"
+                    >
+                      Tətbiq et
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-danger-outline btn-sm"
+                      (click)="removeOption(question, optionIndex)"
+                      [disabled]="question.options.length <= 2"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="empty-side-state" *ngIf="!exam.questions?.length">
+              Hələ sual əlavə edilməyib.
+            </div>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="mode === 'active'">
+      <div class="stats-grid">
+        <div class="stat-summary">
+          <span>İmtahana başlayanlar</span>
+          <strong>{{ getStartedCount() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Başlamayanlar</span>
+          <strong>{{ getNotStartedStudentCount() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Canlı iştirak faizi</span>
+          <strong>{{ formatPercent(getLiveParticipantRate()) }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Bitməyə qalan vaxt</span>
+          <strong>{{ getRemainingActiveTimeText() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Yekun bal</span>
+          <strong>{{ detail.totalScore }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Qapalı sual</span>
+          <strong>{{ detail.closedQuestionCount }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Açıq sual</span>
+          <strong>{{ detail.openQuestionCount }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Qapalı sual payı</span>
+          <strong>{{ formatPercent(getClosedQuestionPercent()) }}</strong>
+        </div>
+      </div>
+
+      <section class="panel-card">
+        <div class="panel-card__header panel-card__header--space">
+          <div>
+            <h3>Canlı imtahan paneli</h3>
+            <p>İmtahan davam edir. Suallar yalnız baxış rejimində göstərilir, redaktə bağlanıb.</p>
+          </div>
+
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            Canlı rejim
+          </div>
+        </div>
+
+        <div class="readonly-questions">
+          <div class="question-view-card" *ngFor="let question of detail.questions; let i = index">
+            <div class="question-view-card__top">
+              <div>
+                <h4>{{ i + 1 }}. {{ question.questionText }}</h4>
+                <p class="question-type">
+                  {{ getQuestionTypeLabel(question.type) }}
+                </p>
+              </div>
+
+              <span class="question-point-badge">{{ question.points }} bal</span>
+            </div>
+
+            <div class="readonly-note" *ngIf="isOpenQuestion(question.type)">
+              Bu açıq sualdır. Cavablar imtahan bitdikdən sonra qiymətləndiriləcək.
+            </div>
+
+            <ul class="readonly-options" *ngIf="!isOpenQuestion(question.type)">
+              <li *ngFor="let option of question.options">
+                <span>{{ option.optionText }}</span>
+                <strong *ngIf="option.isCorrect">Doğru cavab</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+
+    <ng-container *ngIf="mode === 'completed'">
+      <div class="stats-grid">
+        <div class="stat-summary">
+          <span>Tələbə sayı</span>
+          <strong>{{ submissions.length }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Yoxlanıb</span>
+          <strong>{{ getReviewedCount() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Gözləyən</span>
+          <strong>{{ getPendingReviewCount() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Orta bal</span>
+          <strong>{{ getAverageScore() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Orta faiz</span>
+          <strong>{{ formatPercent(getAveragePercent()) }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Ən yüksək bal</span>
+          <strong>{{ getHighestScore() }}</strong>
+        </div>
+        <div class="stat-summary">
+          <span>Ən aşağı bal</span>
+          <strong>{{ getLowestScore() }}</strong>
+        </div>
+      </div>
+
+      <div class="completed-layout">
+        <section class="panel-card">
+          <div class="panel-card__header">
+            <div>
+              <h3>Tələbə nəticələri</h3>
+              <p>Müəllim əvvəl ümumi nəticələri görür, sonra konkret tələbə detailinə daxil olur.</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper" *ngIf="submissions && submissions.length > 0; else noSubmissionsState">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>Tələbə</th>
+                  <th>Nömrə</th>
+                  <th *ngIf="shouldShowAutoScore()">Auto bal</th>
+                  <th>Manual bal</th>
+                  <th>Toplam bal</th>
+                  <th>Faiz</th>
+                  <th>Açıq sual</th>
+                  <th>Yoxlama</th>
+                  <th>Əməliyyat</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr
+                  *ngFor="let item of submissions; let i = index"
+                  [class.row-active]="selectedSubmission?.studentExamId === item.studentExamId"
+                >
+                  <td>{{ item.studentFullName || '-' }}</td>
+                  <td>{{ item.studentNumber || '-' }}</td>
+                  <td *ngIf="shouldShowAutoScore()">{{ item.autoGradedScore ?? 0 }}</td>
+                  <td>{{ item.manualGradedScore ?? 0 }}</td>
+                  <td>{{ item.score ?? 0 }}</td>
+                  <td>{{ formatPercent(getSubmissionPercent(item)) }}</td>
+                  <td>{{ (item.reviewedOpenQuestionsCount ?? 0) }}/{{ (item.openQuestionsCount ?? 0) }}</td>
+                  <td>
+                    <span class="review-state" [ngClass]="getReviewStateClass(item)">
+                      {{ getReviewStateLabel(item) }}
+                    </span>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-primary btn-sm" (click)="openSubmission(item)">
+                      Ətraflı bax
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="submission-fallback-list">
+              <div
+                class="submission-fallback-card"
+                *ngFor="let item of submissions; let i = index"
+                [class.row-active]="selectedSubmission?.studentExamId === item.studentExamId"
+              >
+                <div class="submission-fallback-card__top">
+                  <div>
+                    <h4>{{ item.studentFullName || '-' }}</h4>
+                    <p>{{ item.studentNumber || 'Nömrə yoxdur' }}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="openSubmission(item)"
+                  >
+                    Ətraflı bax
+                  </button>
+                </div>
+
+                <div class="submission-fallback-grid">
+                  <div *ngIf="shouldShowAutoScore()">
+                    <span>Auto bal</span>
+                    <strong>{{ item.autoGradedScore ?? 0 }}</strong>
+                  </div>
+                  <div>
+                    <span>Manual bal</span>
+                    <strong>{{ item.manualGradedScore ?? 0 }}</strong>
+                  </div>
+                  <div>
+                    <span>Toplam bal</span>
+                    <strong>{{ item.score ?? 0 }}</strong>
+                  </div>
+                  <div>
+                    <span>Faiz</span>
+                    <strong>{{ formatPercent(getSubmissionPercent(item)) }}</strong>
+                  </div>
+                  <div>
+                    <span>Açıq sual</span>
+                    <strong>{{ (item.reviewedOpenQuestionsCount ?? 0) }}/{{ (item.openQuestionsCount ?? 0) }}</strong>
+                  </div>
+                  <div>
+                    <span>Yoxlama</span>
+                    <strong>{{ getReviewStateLabel(item) }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noSubmissionsState>
+            <div class="empty-state">
+              <div class="empty-state__icon">📝</div>
+              <h3>Hələ submission yoxdur</h3>
+              <p>Bu imtahan üçün tamamlanmış tələbə submissionu tapılmadı.</p>
+            </div>
+          </ng-template>
+        </section>
+
+        <section class="panel-card panel-card--sticky">
+          <div class="panel-card__header">
+            <div>
+              <h3>Tələbə cavab detaili</h3>
+              <p>
+                Qapalı suallar yalnız baxış üçündür. Açıq suallar üzrə bal və müəllim qeydi burada verilir.
+              </p>
+            </div>
+          </div>
+
+          <div class="loading-inline" *ngIf="loadingSubmissionDetail">
+            Tələbə cavabları yüklənir...
+          </div>
+
+          <div class="empty-side-state" *ngIf="!loadingSubmissionDetail && !submissionDetail">
+            Siyahıdan bir tələbə seçərək ətraflı baxışa keç.
+          </div>
+
+          <ng-container *ngIf="!loadingSubmissionDetail && submissionDetail as submission">
+            <div class="student-hero">
+              <div>
+                <h4>{{ submission.studentFullName }}</h4>
+                <p>{{ submission.studentNumber || 'Nömrə mövcud deyil' }}</p>
+              </div>
+
+              <div class="student-hero__score">
+                <span>Toplam nəticə</span>
+                <strong>{{ submission.score }}</strong>
+                <small>{{ formatPercent(getSubmissionDetailPercent()) }}</small>
+              </div>
+            </div>
+
+            <div class="student-meta-grid">
+              <div class="mini-meta">
+                <span>Başlama</span>
+                <strong>{{ formatDateTime(submission.startTime) }}</strong>
+              </div>
+              <div class="mini-meta">
+                <span>Təhvil</span>
+                <strong>{{ formatDateTime(submission.submittedAt) }}</strong>
+              </div>
+              <div class="mini-meta" *ngIf="shouldShowAutoScore()">
+                <span>Auto bal</span>
+                <strong>{{ submission.autoGradedScore }}</strong>
+              </div>
+              <div class="mini-meta">
+                <span>Manual bal</span>
+                <strong>{{ submission.manualGradedScore }}</strong>
+              </div>
+            </div>
+
+            <div class="answer-section">
+              <div class="answer-section__header">
+                <h4>Qapalı suallar</h4>
+                <p>Müəllim burada yalnız cavablara baxır. Dəyişiklik edilmir.</p>
+              </div>
+
+              <div class="answer-card readonly" *ngFor="let answer of getClosedAnswers(submission.answers)">
+                <div class="answer-card__top">
+                  <div>
+                    <h5>{{ answer.questionText }}</h5>
+                    <p>{{ answer.maxScore }} bal</p>
+                  </div>
+
+                  <div class="answer-score-view">
+                    <span>Alınan bal</span>
+                    <strong>{{ answer.awardedScore }}</strong>
+                  </div>
+                </div>
+
+                <div class="choice-list">
+                  <div
+                    class="choice-item"
+                    *ngFor="let option of answer.options"
+                    [class.choice-item--selected]="option.isSelected"
+                    [class.choice-item--correct]="option.isCorrect"
+                  >
+                    <span>{{ option.text }}</span>
+                    <div class="choice-tags">
+                      <small *ngIf="option.isSelected">Seçilib</small>
+                      <small *ngIf="option.isCorrect">Doğru</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="answer-section" *ngIf="getOpenAnswers(submission.answers).length > 0">
+              <div class="answer-section__header">
+                <h4>Açıq sualların qiymətləndirilməsi</h4>
+                <p>Hər açıq sual üçün bal və müəllim qeydi daxil et, sonra yuxarıdan yadda saxla.</p>
+              </div>
+
+              <div class="answer-card editable" *ngFor="let answer of getOpenAnswers(submission.answers)">
+                <div class="answer-card__top">
+                  <div>
+                    <h5>{{ answer.questionText }}</h5>
+                    <p>Maksimum bal: {{ answer.maxScore }}</p>
+                  </div>
+
+                  <div class="review-badge" [class.review-badge--done]="answer.isReviewed">
+                    {{ answer.isReviewed ? 'Yoxlanıb' : 'Yoxlanmayıb' }}
+                  </div>
+                </div>
+
+                <div class="student-answer-box">
+                  <label>Tələbənin cavabı</label>
+                  <div class="student-answer-text">
+                    {{ answer.studentAnswerText || 'Cavab daxil edilməyib.' }}
+                  </div>
+                </div>
+
+                <div class="grading-grid">
+                  <div class="form-group">
+                    <label>Verilən bal</label>
+                    <input
+                      type="number"
+                      min="0"
+                      [max]="answer.maxScore"
+                      [(ngModel)]="answer.awardedScore"
+                    />
+                  </div>
+
+                  <div class="form-group form-group--full">
+                    <label>Müəllim qeydi</label>
+                    <textarea
+                      rows="3"
+                      [(ngModel)]="answer.teacherFeedback"
+                      placeholder="Bu bala görə qısa qeyd yaz"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="empty-side-state" *ngIf="getOpenAnswers(submission.answers).length === 0">
+              Bu submission üçün açıq sual yoxdur. Nəticə avtomatik yoxlanıb və təsdiqlənmiş hesab olunur.
+            </div>
+          </ng-container>
+        </section>
+      </div>
+    </ng-container>
+  </ng-container>
+</section>

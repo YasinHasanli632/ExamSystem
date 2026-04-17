@@ -1,0 +1,16 @@
+<div class="teacher-page">
+  <div *ngIf="isLoading" class="state-card">Fənlər yüklənir...</div>
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">{{ errorMessage }}</div>
+
+  <div class="subject-grid" *ngIf="!isLoading && !errorMessage && teacher">
+    <div class="subject-card" *ngFor="let subject of teacher.subjects; let i = index">
+      <span class="subject-index">#{{ i + 1 }}</span>
+      <h3>{{ subject }}</h3>
+      <p>Müəllimə bağlı fənn</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!teacher.subjects.length">
+      Sizə bağlı fənn tapılmadı.
+    </div>
+  </div>
+</div>

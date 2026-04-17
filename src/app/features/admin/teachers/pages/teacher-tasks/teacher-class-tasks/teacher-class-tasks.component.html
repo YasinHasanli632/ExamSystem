@@ -1,0 +1,184 @@
+<div class="teacher-page">
+  <div *ngIf="isLoading" class="state-card">
+    Sinifə aid tasklar yüklənir...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage" class="class-tasks-shell">
+    <div class="page-header">
+      <div class="page-header__left">
+        <button type="button" class="back-btn" (click)="goBack()">
+          Geri
+        </button>
+
+        <div class="page-title-block">
+          <h2>{{ classSummary?.className || ('Sinif #' + classRoomId) }} üzrə tapşırıqlar</h2>
+          <p>
+            {{ classSummary?.academicYear || '-' }}
+            <span *ngIf="classSummary?.room"> • Otaq: {{ classSummary?.room }}</span>
+          </p>
+        </div>
+      </div>
+
+      <button type="button" class="refresh-btn" (click)="loadData()">
+        Yenilə
+      </button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Ümumi tasklar</span>
+        <strong>{{ totalTaskCount }}</strong>
+      </div>
+
+      <div class="summary-card waiting">
+        <span class="summary-label">Başlamayan</span>
+        <strong>{{ waitingTaskCount }}</strong>
+      </div>
+
+      <div class="summary-card active">
+        <span class="summary-label">Davam edən</span>
+        <strong>{{ activeTaskCount }}</strong>
+      </div>
+
+      <div class="summary-card completed">
+        <span class="summary-label">Bitmiş</span>
+        <strong>{{ completedTaskCount }}</strong>
+      </div>
+    </div>
+
+    <div class="filter-panel">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Task başlığı, fənn, müəllim və ya status üzrə axtar..."
+        />
+      </div>
+
+      <div class="filter-tabs">
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'all'"
+          (click)="setFilter('all')"
+        >
+          Hamısı
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'waiting'"
+          (click)="setFilter('waiting')"
+        >
+          Başlamayan
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'active'"
+          (click)="setFilter('active')"
+        >
+          Davam edən
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'completed'"
+          (click)="setFilter('completed')"
+        >
+          Bitmiş
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="filteredTasks.length; else emptyState" class="task-list">
+      <div
+        class="task-card"
+        *ngFor="let item of filteredTasks; trackBy: trackByTaskGroup"
+      >
+        <div class="task-card__top">
+          <div class="task-card__title-block">
+            <div class="task-state-badge" [ngClass]="getStateClass(item.taskState)">
+              {{ item.taskState }}
+            </div>
+
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.subjectName || '-' }}</p>
+          </div>
+
+          <div class="task-card__top-right">
+            <div class="task-meta-pill">
+              Maksimum bal: {{ item.maxScore }}
+            </div>
+            <div class="task-meta-pill">
+              {{ getRemainingLabel(item) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="task-card__body">
+          <div class="info-grid">
+            <div class="info-item">
+              <span>Təyin edilib</span>
+              <strong>{{ item.assignedDate | date:'dd.MM.yyyy HH:mm' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Son tarix</span>
+              <strong>{{ item.dueDate | date:'dd.MM.yyyy HH:mm' }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Təhvil verən</span>
+              <strong>{{ item.submittedCount }} / {{ item.totalStudentCount }}</strong>
+            </div>
+
+            <div class="info-item">
+              <span>Təhvil verməyən</span>
+              <strong>{{ item.missingCount }} / {{ item.totalStudentCount }}</strong>
+            </div>
+          </div>
+
+          <div class="progress-row">
+            <div class="progress-block">
+              <div class="progress-label-row">
+                <span>Təhvil faizi</span>
+                <strong>%{{ getSubmissionRate(item) }}</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill submit" [style.width.%]="getSubmissionRate(item)"></div>
+              </div>
+            </div>
+
+            <div class="progress-block">
+              <div class="progress-label-row">
+                <span>Təhvil verməyənlər</span>
+                <strong>%{{ getMissingRate(item) }}</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill missing" [style.width.%]="getMissingRate(item)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="task-card__footer">
+          <button type="button" class="primary-btn" (click)="openTaskDetail(item)">
+            Ətraflı bax
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <h3>Task tapılmadı</h3>
+        <p>Bu sinif üçün uyğun task görünmədi.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

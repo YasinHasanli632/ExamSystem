@@ -1,0 +1,344 @@
+<div class="settings-page">
+  <div class="settings-page__header">
+    <div>
+      <h1 class="settings-page__title">Ayarlar</h1>
+      <p class="settings-page__subtitle">
+        Sistemin ümumi, imtahan, bildiriş və təhlükəsizlik parametrlərini idarə edin.
+      </p>
+    </div>
+
+    <div class="settings-page__status-card">
+      <span class="settings-page__status-label">Son yenilənmə</span>
+      <strong class="settings-page__status-value">{{ updatedAtLabel }}</strong>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert--error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert--success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="isLoading" class="settings-loading">
+    <div class="settings-loading__card"></div>
+    <div class="settings-loading__card"></div>
+    <div class="settings-loading__card"></div>
+    <div class="settings-loading__card"></div>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+    <div class="settings-grid">
+      <section class="settings-card">
+        <div class="settings-card__header">
+          <div>
+            <h2>Ümumi ayarlar</h2>
+            <p>Sistemin əsas görünən məlumatlarını idarə edin.</p>
+          </div>
+        </div>
+
+        <div class="form-grid form-grid--2">
+          <div class="form-field">
+            <label for="systemName">Sistem adı</label>
+            <input
+              id="systemName"
+              type="text"
+              [(ngModel)]="settings.general.systemName"
+              placeholder="Sistem adını daxil edin" />
+          </div>
+
+          <div class="form-field">
+            <label for="schoolName">Məktəb adı</label>
+            <input
+              id="schoolName"
+              type="text"
+              [(ngModel)]="settings.general.schoolName"
+              placeholder="Məktəb adını daxil edin" />
+          </div>
+
+          <div class="form-field">
+            <label for="academicYear">Akademik il</label>
+            <input
+              id="academicYear"
+              type="text"
+              [(ngModel)]="settings.general.academicYear"
+              placeholder="2025-2026" />
+          </div>
+
+          <div class="form-field">
+            <label for="defaultLanguage">Default dil</label>
+            <select
+              id="defaultLanguage"
+              [(ngModel)]="settings.general.defaultLanguage">
+              <option
+                *ngFor="let language of languageOptions"
+                [value]="language.value">
+                {{ language.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <div class="settings-card__header">
+          <div>
+            <h2>İmtahan ayarları</h2>
+            <p>İmtahan axınına təsir edən əsas parametrləri idarə edin.</p>
+          </div>
+        </div>
+
+        <div class="form-grid form-grid--2">
+          <div class="form-field">
+            <label for="defaultExamDurationMinutes">Default imtahan müddəti (dəqiqə)</label>
+            <input
+              id="defaultExamDurationMinutes"
+              type="number"
+              min="1"
+              [(ngModel)]="settings.exam.defaultExamDurationMinutes" />
+          </div>
+
+          <div class="form-field">
+            <label for="accessCodeActivationMinutes">Access code aktivləşmə vaxtı (dəqiqə)</label>
+            <input
+              id="accessCodeActivationMinutes"
+              type="number"
+              min="0"
+              [(ngModel)]="settings.exam.accessCodeActivationMinutes" />
+          </div>
+
+          <div class="form-field">
+            <label for="lateEntryToleranceMinutes">Gec giriş limiti (dəqiqə)</label>
+            <input
+              id="lateEntryToleranceMinutes"
+              type="number"
+              min="0"
+              [(ngModel)]="settings.exam.lateEntryToleranceMinutes" />
+          </div>
+
+          <div class="form-field">
+            <label for="defaultPassScore">Default keçid balı</label>
+            <input
+              id="defaultPassScore"
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="settings.exam.defaultPassScore" />
+          </div>
+        </div>
+
+        <div class="toggle-list">
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Vaxt bitəndə avtomatik submit et</span>
+              <small class="toggle-item__desc">
+                İmtahan vaxtı bitəndə cavablar avtomatik olaraq təhvil verilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.exam.autoSubmitOnEndTime" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Erkən submit-ə icazə ver</span>
+              <small class="toggle-item__desc">
+                Tələbə imtahan müddəti bitmədən əvvəl imtahanı təhvil verə bilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.exam.allowEarlySubmit" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Nəticələri avtomatik yayımla</span>
+              <small class="toggle-item__desc">
+                İmtahan tamamlandıqdan sonra nəticələr avtomatik göstərilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.exam.autoPublishResults" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Balı dərhal göstər</span>
+              <small class="toggle-item__desc">
+                Tələbə imtahanı submit etdikdən sonra balını dərhal görə bilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.exam.showScoreImmediately" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Düzgün cavabları göstər</span>
+              <small class="toggle-item__desc">
+                İmtahan tamamlandıqdan sonra düzgün cavablar tələbəyə göstərilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.exam.showCorrectAnswersAfterCompletion" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <div class="settings-card__header">
+          <div>
+            <h2>Bildiriş ayarları</h2>
+            <p>Modullar üzrə bildirişlərin göndərilməsini idarə edin.</p>
+          </div>
+        </div>
+
+        <div class="toggle-list">
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">İmtahan yayımlananda bildiriş</span>
+              <small class="toggle-item__desc">
+                Yeni imtahan yayımlandıqda bildiriş göndərilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.notification.examPublishNotificationEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">İmtahan vaxtı dəyişəndə bildiriş</span>
+              <small class="toggle-item__desc">
+                Reschedule olduqda müəllim və tələbələr məlumatlandırılsın.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.notification.examRescheduleNotificationEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">İmtahan başlamazdan əvvəl bildiriş</span>
+              <small class="toggle-item__desc">
+                İmtahan startına yaxın xatırlatma tipli bildiriş göndərilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.notification.examStartNotificationEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Nəticə bildirişi</span>
+              <small class="toggle-item__desc">
+                Nəticələr yayımlandıqda istifadəçilərə bildiriş göndərilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.notification.resultNotificationEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Davamiyyət bildirişi</span>
+              <small class="toggle-item__desc">
+                Davamiyyətlə bağlı bildiriş axını aktiv olsun.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.notification.attendanceNotificationEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Tapşırıq bildirişi</span>
+              <small class="toggle-item__desc">
+                Yeni tapşırıq və tapşırıq yenilənməsi bildirişləri aktiv olsun.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.notification.taskNotificationEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <div class="settings-card__header">
+          <div>
+            <h2>Sessiya və təhlükəsizlik</h2>
+            <p>İmtahan sessiyası və giriş təhlükəsizliyi ilə bağlı ayarlar.</p>
+          </div>
+        </div>
+
+        <div class="form-grid form-grid--2">
+          <div class="form-field">
+            <label for="autoSaveIntervalSeconds">Auto save intervalı (saniyə)</label>
+            <input
+              id="autoSaveIntervalSeconds"
+              type="number"
+              min="5"
+              [(ngModel)]="settings.security.autoSaveIntervalSeconds" />
+          </div>
+
+          <div class="form-field">
+            <label for="sessionTimeoutMinutes">Sessiya timeout (dəqiqə)</label>
+            <input
+              id="sessionTimeoutMinutes"
+              type="number"
+              min="1"
+              [(ngModel)]="settings.security.sessionTimeoutMinutes" />
+          </div>
+
+          <div class="form-field">
+            <label for="maxAccessCodeAttempts">Maksimum access code cəhd sayı</label>
+            <input
+              id="maxAccessCodeAttempts"
+              type="number"
+              min="1"
+              [(ngModel)]="settings.security.maxAccessCodeAttempts" />
+          </div>
+        </div>
+
+        <div class="toggle-list">
+          <label class="toggle-item">
+            <div class="toggle-item__content">
+              <span class="toggle-item__title">Yenidən girişə icazə ver</span>
+              <small class="toggle-item__desc">
+                Tələbə imtahandan çıxıb yenidən daxil ola bilsin.
+              </small>
+            </div>
+            <input type="checkbox" [(ngModel)]="settings.security.allowReEntry" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="settings-actions">
+      <button
+        type="button"
+        class="btn btn--secondary"
+        [disabled]="isSaving || isLoading || isResetting"
+        (click)="resetForm()">
+        Sıfırla
+      </button>
+
+      <button
+        type="button"
+        class="btn btn--ghost"
+        [disabled]="isSaving || isLoading || isResetting"
+        (click)="resetToDefaults()">
+        {{ isResetting ? 'Qaytarılır...' : 'Default dəyərlərə qaytar' }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn--primary"
+        [disabled]="isSaving || isLoading || !hasChanges"
+        (click)="saveSettings()">
+        {{ isSaving ? 'Yadda saxlanılır...' : 'Yadda saxla' }}
+      </button>
+    </div>
+  </ng-container>
+</div>

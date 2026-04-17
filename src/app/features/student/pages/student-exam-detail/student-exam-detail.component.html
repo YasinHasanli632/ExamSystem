@@ -1,0 +1,364 @@
+<div class="student-exam-detail-page">
+  <div class="page-toolbar">
+    <div class="toolbar-meta">
+      <button type="button" class="secondary-btn" (click)="backToList()">
+        ← Siyahıya qayıt
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="hero-card">
+    <div>
+      <span class="hero-chip">Yüklənir</span>
+      <h1>{{ loadingMessage }}</h1>
+      <p>Zəhmət olmasa gözlə...</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="completed-card">
+    <div class="completed-card__icon">⚠️</div>
+    <h2>Xəta baş verdi</h2>
+    <p>{{ errorMessage }}</p>
+
+    <div class="completed-card__actions">
+      <button type="button" class="primary-btn" (click)="loadExamDetail()">
+        Yenidən yoxla
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage && examDetail">
+    <section class="hero-card">
+      <div class="hero-card__left">
+        <span class="hero-chip">Student Exam Detail</span>
+        <h1>{{ examDetail.examTitle }}</h1>
+        <p>
+          {{ examDetail.instructions || 'İmtahan üçün əlavə təlimat təqdim edilməyib.' }}
+        </p>
+      </div>
+
+      <div class="hero-card__right">
+        <div class="hero-stat">
+          <span>Fənn</span>
+          <strong>{{ examDetail.subjectName }}</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span>Müəllim</span>
+          <strong>{{ examDetail.teacherName || 'Təyin edilməyib' }}</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span>Başlama vaxtı</span>
+          <strong>{{ formatDateTime(examDetail.startTime) }}</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span>Bitmə vaxtı</span>
+          <strong>{{ formatDateTime(examDetail.endTime) }}</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span>Müddət</span>
+          <strong>{{ examDetail.durationMinutes }} dəqiqə</strong>
+        </div>
+
+        <div class="hero-stat">
+          <span>Status</span>
+          <strong>{{ getStatusLabel(examSession?.status || examDetail.status) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="showStartArea" class="rules-card">
+      <div class="rules-card__header">
+        <div>
+          <h2>İmtahan qaydaları və şərtləri</h2>
+          <p>
+            İmtahan parolu artıq təsdiqlənib. Qaydaları oxu, qəbul et və vaxt tamam olanda
+            imtahana daxil ol.
+          </p>
+        </div>
+
+        <div class="timer-badge">
+          Başlamağa qalan vaxt: {{ waitingLabel }}
+        </div>
+      </div>
+
+      <div class="instructions-box">
+        <p>{{ examDetail.instructions || 'Qayda və təlimat əlavə edilməyib.' }}</p>
+      </div>
+
+      <div class="rules-list">
+        <div class="rule-item">
+          <strong>1.</strong>
+          <span>İmtahan zamanı başqa tab-a keçmək warning yaradır.</span>
+        </div>
+
+        <div class="rule-item">
+          <strong>2.</strong>
+          <span>Copy, paste və sağ klik cəhdləri log olunur.</span>
+        </div>
+
+        <div class="rule-item">
+          <strong>3.</strong>
+          <span>Vaxt bitəndə imtahan avtomatik təhvil verilə bilər.</span>
+        </div>
+
+        <div class="rule-item">
+          <strong>4.</strong>
+          <span>Qaydaları qəbul etmədən imtahana daxil olmaq mümkün deyil.</span>
+        </div>
+      </div>
+
+      <label class="agree-box">
+        <input type="checkbox" [(ngModel)]="acceptRules" />
+        <span>Qaydaları oxudum və qəbul edirəm.</span>
+      </label>
+
+      <div *ngIf="startErrorMessage" class="inline-error">
+        {{ startErrorMessage }}
+      </div>
+
+      <div class="rules-actions">
+        <button type="button" class="secondary-btn" (click)="backToList()">
+          Geri qayıt
+        </button>
+
+        <button
+          type="button"
+          class="primary-btn"
+          [disabled]="startButtonDisabled"
+          (click)="startExam()">
+          {{ startButtonLabel }}
+        </button>
+      </div>
+    </section>
+
+    <section *ngIf="showResultArea" class="result-card result-card--final">
+      <div class="result-card__icon">
+        {{ examDetail.isMissed ? '⛔' : examDetail.publishedScore !== null ? '🎉' : '⏳' }}
+      </div>
+
+      <h2>{{ resultTitle }}</h2>
+      <p class="result-card__description">{{ resultDescription }}</p>
+
+      <div class="result-grid">
+        <div class="result-item">
+          <span>Status</span>
+          <strong>{{ getStatusLabel(examDetail.status) }}</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Müddət</span>
+          <strong>{{ examDetail.durationMinutes }} dəqiqə</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Başlama vaxtı</span>
+          <strong>{{ formatDateTime(examDetail.startTime) }}</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Bitmə vaxtı</span>
+          <strong>{{ formatDateTime(examDetail.endTime) }}</strong>
+        </div>
+
+        <div class="result-item result-item--highlight">
+          <span>Yekun bal</span>
+          <strong>
+            {{ displayedScore !== null ? displayedScore : 'Yoxlanılır' }}
+          </strong>
+        </div>
+
+        <div class="result-item">
+          <span>Nəticə vəziyyəti</span>
+          <strong>
+            {{
+              examDetail.isMissed
+                ? 'Buraxılıb'
+                : examDetail.publishedScore !== null
+                  ? 'Hazırdır'
+                  : 'Yoxlanılır'
+            }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="completed-card__actions">
+        <button type="button" class="primary-btn" (click)="backToList()">
+          Siyahıya qayıt
+        </button>
+      </div>
+    </section>
+
+    <ng-container *ngIf="showSessionArea && examSession">
+      <section class="session-top-grid">
+        <article class="session-stat-card session-stat-card--timer">
+          <span class="session-stat-card__label">Qalan vaxt</span>
+          <strong class="session-stat-card__value">{{ timerLabel }}</strong>
+          <small>Müddət countdown ilə gedir</small>
+        </article>
+
+        <article class="session-stat-card">
+          <span class="session-stat-card__label">Cavablanan sual</span>
+          <strong class="session-stat-card__value">
+            {{ answeredQuestionCount }} / {{ totalQuestionCount }}
+          </strong>
+          <small>Ümumi irəliləyiş</small>
+        </article>
+
+        <article class="session-stat-card">
+          <span class="session-stat-card__label">Warning sayı</span>
+          <strong class="session-stat-card__value">{{ examSession.warningCount }}</strong>
+          <small>Təhlükəsizlik qeydləri</small>
+        </article>
+
+        <article class="session-stat-card">
+          <span class="session-stat-card__label">Maksimum bal</span>
+          <strong class="session-stat-card__value">{{ examSession.totalScore }}</strong>
+          <small>İmtahanın ümumi balı</small>
+        </article>
+      </section>
+
+      <section class="progress-card">
+        <div class="progress-card__top">
+          <div>
+            <h2>İrəliləyiş</h2>
+            <p>Cavab verdiyin suallar üzrə ümumi vəziyyət</p>
+          </div>
+
+          <span class="progress-chip">{{ progressPercent }}%</span>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-bar__fill" [style.width.%]="progressPercent"></div>
+        </div>
+      </section>
+
+      <div *ngIf="successMessage" class="inline-success">
+        {{ successMessage }}
+      </div>
+
+      <div *ngIf="sessionErrorMessage" class="inline-error">
+        {{ sessionErrorMessage }}
+      </div>
+
+      <section class="question-list">
+        <article
+          *ngFor="let question of examSession.questions"
+          class="question-card">
+          <div class="question-card__header">
+            <div>
+              <div class="question-topline">
+                <span class="question-order">Sual {{ question.orderNumber }}</span>
+                <span class="question-type">{{ formatQuestionType(question.type) }}</span>
+                <span class="question-point">{{ question.points }} bal</span>
+              </div>
+
+              <h3>{{ question.questionText }}</h3>
+              <p *ngIf="question.description" class="question-description">
+                {{ question.description }}
+              </p>
+            </div>
+
+            <div class="question-side">
+              <span class="answer-state">
+                {{ getQuestionProgressLabel(question) }}
+              </span>
+
+              <span *ngIf="isQuestionSaving(question.id)" class="save-state save-state--saving">
+                Yadda saxlanılır...
+              </span>
+
+              <span *ngIf="isQuestionSaved(question.id)" class="save-state save-state--saved">
+                Yadda saxlandı
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="question.type === 'SingleChoice'" class="option-list">
+            <label
+              *ngFor="let option of question.options"
+              class="option-item">
+              <input
+                type="radio"
+                [name]="'single-' + question.id"
+                [checked]="answerDrafts[question.id]?.selectedOptionId === option.id"
+                (change)="onSingleChoiceChange(question, option.id)" />
+
+              <div class="option-content">
+                <strong>{{ option.optionKey || 'Seçim' }}</strong>
+                <span>{{ option.optionText }}</span>
+              </div>
+            </label>
+          </div>
+
+          <div *ngIf="question.type === 'MultipleChoice'" class="option-list">
+            <label
+              *ngFor="let option of question.options"
+              class="option-item">
+              <input
+                type="checkbox"
+                [checked]="answerDrafts[question.id]?.selectedOptionIds?.includes(option.id)"
+                (change)="onMultipleChoiceChange(question, option.id, $any($event.target).checked)" />
+
+              <div class="option-content">
+                <strong>{{ option.optionKey || 'Seçim' }}</strong>
+                <span>{{ option.optionText }}</span>
+              </div>
+            </label>
+          </div>
+
+          <div *ngIf="question.type === 'OpenText'" class="open-answer-box">
+            <textarea
+              rows="8"
+              [(ngModel)]="answerDrafts[question.id].answerText"
+              placeholder="Cavabını burada yaz..."></textarea>
+
+            <div class="open-answer-box__actions">
+              <button
+                type="button"
+                class="secondary-btn"
+                (click)="toggleOpenTextExpanded(question.id)">
+                {{ openTextExpanded[question.id] ? 'Kiçilt' : 'Genişləndir' }}
+              </button>
+
+              <button
+                type="button"
+                class="primary-btn"
+                [disabled]="isQuestionSaving(question.id)"
+                (click)="saveOpenTextAnswer(question)">
+                {{ isQuestionSaving(question.id) ? 'Yadda saxlanılır...' : 'Cavabı yadda saxla' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="submit-card">
+        <div>
+          <h2>İmtahanı təhvil ver</h2>
+          <p>
+            Bütün cavablarını yoxladıqdan sonra imtahanı təhvil ver. Təhvil verdikdən
+            sonra dəyişiklik etmək mümkün olmaya bilər.
+          </p>
+        </div>
+
+        <div class="submit-card__actions">
+          <button type="button" class="secondary-btn" (click)="backToList()">
+            Siyahıya qayıt
+          </button>
+
+          <button
+            type="button"
+            class="danger-btn"
+            [disabled]="isSubmitting || isAutoSubmitting"
+            (click)="submitExam(false)">
+            {{ isSubmitting ? 'Təhvil verilir...' : 'İmtahanı təhvil ver' }}
+          </button>
+        </div>
+      </section>
+    </ng-container>
+  </ng-container>
+</div>

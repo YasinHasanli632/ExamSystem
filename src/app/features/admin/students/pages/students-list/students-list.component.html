@@ -1,0 +1,235 @@
+<section class="students-page">
+  <div class="page-header">
+    <div>
+      <h1>Şagirdlər</h1>
+      <p>Şagirdlərin siyahısı, filter və ümumi idarəetmə paneli</p>
+    </div>
+
+    <button type="button" class="btn btn-primary" (click)="goToCreate()">
+      + Şagird əlavə et
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="summary-label">Ümumi şagird</span>
+      <strong>{{ stats.totalStudents }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span class="summary-label">Aktiv</span>
+      <strong>{{ stats.activeStudents }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span class="summary-label">Passiv</span>
+      <strong>{{ stats.passiveStudents }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span class="summary-label">Orta bal</span>
+      <strong>{{ stats.averageScore }}%</strong>
+    </div>
+  </div>
+
+  <div class="filter-card full-width-card">
+    <div class="card-header">
+      <div>
+        <h2>Filter panel</h2>
+        <p>Ad, sinif, müəllim, status və bala görə axtarış et</p>
+      </div>
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group search-group">
+        <label>Ad / Soyad</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.fullName"
+          placeholder="Məs: Ləman Həsənova"
+          (input)="onFullNameInput()"
+          (focus)="onFullNameInput()"
+          (blur)="hideNameSuggestions()" />
+
+        <div class="suggestions-dropdown" *ngIf="showNameSuggestions">
+          <button
+            type="button"
+            class="suggestion-item"
+            *ngFor="let item of fullNameSuggestions"
+            (mousedown)="selectNameSuggestion(item)">
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Sinif</label>
+        <select [(ngModel)]="filter.className">
+          <option value="">Bütün siniflər</option>
+          <option *ngFor="let classItem of classOptions" [value]="classItem.name">
+            {{ classItem.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group search-group">
+        <label>Müəllim</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.teacherName"
+          placeholder="Məs: Aygün Məlikova"
+          (input)="onTeacherInput()"
+          (focus)="onTeacherInput()"
+          (blur)="hideTeacherSuggestions()" />
+
+        <div class="suggestions-dropdown" *ngIf="showTeacherSuggestions">
+          <button
+            type="button"
+            class="suggestion-item"
+            *ngFor="let item of teacherSuggestions"
+            (mousedown)="selectTeacherSuggestion(item)">
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Minimum bal</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          [(ngModel)]="filter.minScore"
+          placeholder="Məs: 70" />
+      </div>
+
+      <div class="form-group">
+        <label>Maksimum bal</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          [(ngModel)]="filter.maxScore"
+          placeholder="Məs: 100" />
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status">
+          <option value="">Bütün statuslar</option>
+          <option *ngFor="let status of statusOptions" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn btn-primary" (click)="applyFilters()">
+        Filter et
+      </button>
+
+      <button type="button" class="btn btn-light" (click)="resetFilters()">
+        Sıfırla
+      </button>
+    </div>
+  </div>
+
+  <div class="table-card full-width-card">
+    <div class="card-header">
+      <div>
+        <h2>Şagird siyahısı</h2>
+        <p>Backend-dən gələn real şagird məlumatları göstərilir</p>
+      </div>
+
+      <span class="table-count">{{ filteredStudents.length }} nəfər</span>
+    </div>
+
+    <div class="loading-box" *ngIf="isLoading">
+      Şagird siyahısı yüklənir...
+    </div>
+
+    <div class="error-box" *ngIf="!isLoading && errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="table-wrapper" *ngIf="!isLoading && !errorMessage">
+      <table>
+        <thead>
+          <tr>
+            <th>Şagird</th>
+            <th>Şagird nömrəsi</th>
+            <th>Sinif</th>
+            <th>Müəllim</th>
+            <th>Orta bal</th>
+            <th>İmtahan sayı</th>
+            <th>Davamiyyət</th>
+            <th>Status</th>
+            <th>Əməliyyatlar</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let student of filteredStudents">
+            <td>
+              <div class="student-cell">
+                <img [src]="student.photoUrl" [alt]="student.fullName" />
+                <div>
+                  <strong>{{ student.fullName }}</strong>
+                  <p>{{ student.email }}</p>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ student.studentNumber }}</td>
+
+            <td>
+              <span class="table-badge">
+                {{ student.className }}
+              </span>
+            </td>
+
+            <td>{{ student.teacherName }}</td>
+
+            <td>{{ student.averageScore }}%</td>
+
+            <td>{{ student.examsCount }}</td>
+
+            <td>{{ student.attendanceRate }}%</td>
+
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="student.status === 'Aktiv'"
+                [class.passive]="student.status === 'Passiv'"
+                [class.graduate]="student.status === 'Məzun'">
+                {{ student.status }}
+              </span>
+            </td>
+
+            <td>
+              <div class="table-actions">
+                <button type="button" class="btn btn-outline" (click)="onView(student)">
+                  Ətraflı bax
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  (click)="onDelete(student)">
+                  Sil
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredStudents.length === 0">
+            <td colspan="9" class="empty-state">
+              Filterə uyğun şagird tapılmadı.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

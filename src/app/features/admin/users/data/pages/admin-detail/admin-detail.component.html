@@ -1,0 +1,250 @@
+<section class="admin-detail-page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a routerLink="/admin/users/admins" class="back-link">
+        <span>←</span>
+        <span>Admin siyahısına qayıt</span>
+      </a>
+
+      <div class="title-block">
+        <h1>Admin ətraflı baxış</h1>
+        <p>İstifadəçi hesabı, profil məlumatları və sistem qeydləri</p>
+      </div>
+    </div>
+
+    <div class="page-actions">
+      <button type="button" class="btn btn-secondary" (click)="refresh()">
+        Yenilə
+      </button>
+
+      <a
+        *ngIf="user"
+        class="btn btn-primary"
+        [routerLink]="['/admin/users/admins', user.userId, 'edit']"
+      >
+        Düzəliş et
+      </a>
+    </div>
+  </div>
+
+  <div class="state-card loading" *ngIf="loading">
+    <div class="loader"></div>
+    <div>
+      <strong>Məlumatlar yüklənir...</strong>
+      <p>Zəhmət olmasa gözləyin</p>
+    </div>
+  </div>
+
+  <div class="state-card error" *ngIf="!loading && errorMessage">
+    <div class="state-icon">!</div>
+    <div>
+      <strong>Xəta baş verdi</strong>
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading && !errorMessage && user as user">
+    <div class="hero-card">
+      <div class="hero-left">
+        <div class="avatar-wrapper">
+          <img
+            *ngIf="user.photoUrl; else initialsAvatar"
+            [src]="user.photoUrl"
+            [alt]="displayName"
+            class="avatar-image"
+          />
+
+          <ng-template #initialsAvatar>
+            <div class="avatar-fallback">{{ initials }}</div>
+          </ng-template>
+        </div>
+
+        <div class="hero-content">
+          <div class="badges">
+            <span class="badge role-badge">{{ roleLabel }}</span>
+            <span class="badge status-badge" [ngClass]="statusClass">{{ statusLabel }}</span>
+          </div>
+
+          <h2>{{ displayName }}</h2>
+          <p class="hero-subtitle">{{ user.email }}</p>
+
+          <div class="hero-meta">
+            <div class="meta-chip">
+              <span class="meta-label">Username</span>
+              <strong>{{ getInfo(user.username) }}</strong>
+            </div>
+
+            <div class="meta-chip">
+              <span class="meta-label">User ID</span>
+              <strong>#{{ user.userId }}</strong>
+            </div>
+
+            <div class="meta-chip">
+              <span class="meta-label">Sistem rolu</span>
+              <strong>{{ roleLabel }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="quick-stat">
+          <span class="quick-stat-label">Yaradılma tarixi</span>
+          <strong>{{ formatShortDate(user.createdAt) }}</strong>
+        </div>
+
+        <div class="quick-stat">
+          <span class="quick-stat-label">Son yenilənmə</span>
+          <strong>{{ formatShortDate(user.updatedAt) }}</strong>
+        </div>
+
+        <div class="quick-stat">
+          <span class="quick-stat-label">Əlaqə nömrəsi</span>
+          <strong>{{ getInfo(user.phoneNumber) }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Status</span>
+        <strong>{{ statusLabel }}</strong>
+        <small>Hesab vəziyyəti</small>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Rol</span>
+        <strong>{{ roleLabel }}</strong>
+        <small>Sistem səlahiyyəti</small>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Doğum tarixi</span>
+        <strong>{{ formatShortDate(user.birthDate) }}</strong>
+        <small>Profil məlumatı</small>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Yaş</span>
+        <strong>{{ getInfo(user.age) }}</strong>
+        <small>Mövcud yaş</small>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <section class="detail-card">
+        <div class="card-header">
+          <h3>Əsas məlumatlar</h3>
+          <p>İstifadəçinin profil və əlaqə məlumatları</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Ad</span>
+            <strong>{{ getInfo(user.firstName) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Soyad</span>
+            <strong>{{ getInfo(user.lastName) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Tam ad</span>
+            <strong>{{ displayName }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <strong>{{ getInfo(user.email) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Telefon</span>
+            <strong>{{ getInfo(user.phoneNumber) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Doğum tarixi</span>
+            <strong>{{ formatShortDate(user.birthDate) }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-card">
+        <div class="card-header">
+          <h3>Hesab məlumatları</h3>
+          <p>Login, status və əlaqəli sistem identifikatorları</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">User ID</span>
+            <strong>{{ user.userId }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Username</span>
+            <strong>{{ getInfo(user.username) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Rol</span>
+            <strong>{{ roleLabel }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Status</span>
+            <strong>{{ statusLabel }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Teacher ID</span>
+            <strong>{{ getInfo(user.teacherId) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Student ID</span>
+            <strong>{{ getInfo(user.studentId) }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-card wide">
+        <div class="card-header">
+          <h3>Əlavə qeyd</h3>
+          <p>İstifadəçiyə aid əlavə açıqlama və qeyd</p>
+        </div>
+
+        <div class="note-box">
+          {{ user.details || 'Bu istifadəçi üçün əlavə qeyd daxil edilməyib.' }}
+        </div>
+      </section>
+
+      <section class="detail-card wide">
+        <div class="card-header">
+          <h3>Sistem qeydləri</h3>
+          <p>Yaradılma və son yenilənmə tarixçəsi</p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot created"></div>
+            <div class="timeline-content">
+              <strong>Hesab yaradıldı</strong>
+              <span>{{ formatDate(user.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-dot updated"></div>
+            <div class="timeline-content">
+              <strong>Son yenilənmə</strong>
+              <span>{{ formatDate(user.updatedAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</section>

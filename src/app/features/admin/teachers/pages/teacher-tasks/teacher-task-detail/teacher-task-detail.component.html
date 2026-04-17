@@ -1,0 +1,359 @@
+<div class="teacher-page">
+  <div *ngIf="isLoading" class="state-card">
+    Task detail yüklənir...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && task && !errorMessage" class="task-detail-shell">
+    <div class="page-header">
+      <div class="page-header__left">
+        <button type="button" class="back-btn" (click)="goBack()">
+          Geri
+        </button>
+
+        <div class="page-title-block">
+          <div class="task-state-badge" [ngClass]="getStateClass(task.taskState)">
+            {{ task.taskState }}
+          </div>
+
+          <h2>{{ task.title }}</h2>
+          <p>
+            {{ task.className }} • {{ task.subjectName }} • {{ getRemainingLabel() }}
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          (click)="toggleResults()"
+        >
+          {{ showResults ? 'Nəticələri gizlət' : 'Nəticələrə bax' }}
+        </button>
+
+        <button
+          type="button"
+          class="secondary-btn"
+          (click)="toggleExtendPanel()"
+          [disabled]="!canExtendTask() || isExtending"
+        >
+          Vaxt uzat
+        </button>
+
+        <button
+          type="button"
+          class="danger-btn"
+          (click)="deleteTask()"
+          [disabled]="isDeleting"
+        >
+          {{ isDeleting ? 'Silinir...' : 'Sil' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="successMessage" class="success-banner">
+      {{ successMessage }}
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Ümumi tələbə</span>
+        <strong>{{ task.totalStudentCount }}</strong>
+      </div>
+
+      <div class="summary-card success">
+        <span class="summary-label">Təhvil verən</span>
+        <strong>{{ task.submittedCount }}</strong>
+      </div>
+
+      <div class="summary-card warning">
+        <span class="summary-label">Təhvil verməyən</span>
+        <strong>{{ task.missingCount }}</strong>
+      </div>
+
+      <div class="summary-card info">
+        <span class="summary-label">Yoxlanan</span>
+        <strong>{{ task.reviewedCount }}</strong>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="detail-card">
+        <div class="card-header">
+          <h3>Task məlumatları</h3>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span>Sinif</span>
+            <strong>{{ task.className }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Fənn</span>
+            <strong>{{ task.subjectName || '-' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Müəllim</span>
+            <strong>{{ task.teacherName || '-' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Maksimum bal</span>
+            <strong>{{ task.maxScore }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Başlama vaxtı</span>
+            <strong>{{ task.assignedDate | date:'dd.MM.yyyy HH:mm' }}</strong>
+          </div>
+
+          <div class="detail-item">
+            <span>Son tarix</span>
+            <strong>{{ task.dueDate | date:'dd.MM.yyyy HH:mm' }}</strong>
+          </div>
+
+          <div class="detail-item detail-item--full">
+            <span>Təsvir</span>
+            <strong>{{ task.description || '-' }}</strong>
+          </div>
+
+          <div class="detail-item detail-item--full">
+            <span>Link</span>
+            <strong>{{ task.link || '-' }}</strong>
+          </div>
+
+          <div class="detail-item detail-item--full">
+            <span>Qeyd</span>
+            <strong>{{ task.note || '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <div class="card-header">
+          <h3>Task statistikası</h3>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-label-row">
+            <span>Təhvil faizi</span>
+            <strong>%{{ getSubmissionRate() }}</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill submit" [style.width.%]="getSubmissionRate()"></div>
+          </div>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-label-row">
+            <span>Təhvil verməyənlər</span>
+            <strong>%{{ getMissingRate() }}</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill missing" [style.width.%]="getMissingRate()"></div>
+          </div>
+        </div>
+
+        <div class="mini-info-list">
+          <div class="mini-info">
+            <span>Status</span>
+            <strong>{{ task.taskState }}</strong>
+          </div>
+
+          <div class="mini-info">
+            <span>Qalan vaxt</span>
+            <strong>{{ getRemainingLabel() }}</strong>
+          </div>
+
+          <div class="mini-info">
+            <span>Yoxlananlar</span>
+            <strong>{{ task.reviewedCount }} nəfər</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="showExtendPanel" class="extend-panel">
+      <div class="card-header">
+        <h3>Task vaxtını uzat</h3>
+      </div>
+
+      <div *ngIf="extendErrorMessage" class="inline-error">
+        {{ extendErrorMessage }}
+      </div>
+
+      <div class="extend-form">
+        <div class="form-group">
+          <label>Yeni son tarix</label>
+          <input type="datetime-local" [(ngModel)]="extendDueDate" />
+        </div>
+
+        <div class="extend-actions">
+          <button
+            type="button"
+            class="secondary-btn"
+            (click)="toggleExtendPanel()"
+            [disabled]="isExtending"
+          >
+            Ləğv et
+          </button>
+
+          <button
+            type="button"
+            class="primary-btn"
+            (click)="saveExtendedTime()"
+            [disabled]="isExtending"
+          >
+            {{ isExtending ? 'Yadda saxlanılır...' : 'Yadda saxla' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="showResults" class="results-card">
+      <div class="card-header">
+        <h3>Şagird nəticələri</h3>
+        <p>
+          Təhvil verən: {{ task.submittedCount }} •
+          Təhvil verməyən: {{ task.missingCount }} •
+          Yoxlanan: {{ task.reviewedCount }}
+        </p>
+      </div>
+
+      <div *ngIf="!task.students?.length" class="empty-state">
+        <h3>Nəticə yoxdur</h3>
+        <p>Bu task üzrə hələ şagird siyahısı görünmür.</p>
+      </div>
+
+      <div *ngIf="task.students?.length" class="student-list">
+        <div
+          class="student-card"
+          *ngFor="let student of task.students; trackBy: trackByStudentTask"
+        >
+          <div class="student-card__top" (click)="toggleStudent(student)">
+            <div class="student-main">
+              <div class="student-avatar">
+                <img *ngIf="student.photoUrl; else initialsBlock" [src]="student.photoUrl" alt="" />
+                <ng-template #initialsBlock>
+                  <span>{{ student.fullName?.charAt(0) || '?' }}</span>
+                </ng-template>
+              </div>
+
+              <div class="student-info">
+                <h4>{{ student.fullName }}</h4>
+                <p>{{ student.studentNumber || '-' }}</p>
+              </div>
+            </div>
+
+            <div class="student-top-right">
+              <div class="student-status">
+                {{ student.submissionStatus }}
+              </div>
+
+              <div class="student-score">
+                {{ student.score }} / {{ student.maxScore }}
+              </div>
+
+              <button type="button" class="expand-btn">
+                {{ isExpanded(student.studentTaskId) ? 'Bağla' : 'Aç' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="isExpanded(student.studentTaskId)" class="student-card__body">
+            <div *ngIf="isLoadingSubmissionDetail && !getSubmissionDetail(student.studentTaskId)" class="loading-inline">
+              Cavab detalları yüklənir...
+            </div>
+
+            <ng-container *ngIf="getSubmissionDetail(student.studentTaskId) as detail">
+              <div class="submission-grid">
+                <div class="submission-item">
+                  <span>Təhvil statusu</span>
+                  <strong>{{ detail.submissionStatus }}</strong>
+                </div>
+
+                <div class="submission-item">
+                  <span>Təhvil vaxtı</span>
+                  <strong>{{ detail.submittedAt ? (detail.submittedAt | date:'dd.MM.yyyy HH:mm') : '-' }}</strong>
+                </div>
+
+                <div class="submission-item submission-item--full">
+                  <span>Şagirdin mətni</span>
+                  <strong>{{ detail.submissionText || '-' }}</strong>
+                </div>
+
+                <div class="submission-item submission-item--full">
+                  <span>Şagirdin linki</span>
+                  <strong>{{ detail.submissionLink || '-' }}</strong>
+                </div>
+
+                <div class="submission-item submission-item--full">
+                  <span>Fayl linki</span>
+                  <strong>{{ detail.submissionFileUrl || '-' }}</strong>
+                </div>
+              </div>
+
+              <div class="grading-panel">
+                <div class="card-header small">
+                  <h3>Qiymətləndirmə</h3>
+                </div>
+
+                <div *ngIf="!isTaskExpired()" class="grading-locked">
+                  Qiymətləndirmə taskın müddəti bitəndən sonra aktiv olur.
+                </div>
+
+                <div *ngIf="isTaskExpired() && getGradeForm(student.studentTaskId) as form" class="grading-form">
+                  <div *ngIf="form.error" class="inline-error">
+                    {{ form.error }}
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Bal</label>
+                      <input
+                        type="number"
+                        min="0"
+                        [max]="detail.maxScore"
+                        [(ngModel)]="form.score"
+                      />
+                    </div>
+
+                    <div class="form-group form-group--full">
+                      <label>Rəy / açıqlama</label>
+                      <textarea
+                        rows="4"
+                        [(ngModel)]="form.feedback"
+                        placeholder="Şagirdə görünəcək qeydi yazın..."
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div class="grade-meta">
+                    <span>Yoxlanma vaxtı: {{ detail.checkedAt ? (detail.checkedAt | date:'dd.MM.yyyy HH:mm') : '-' }}</span>
+                  </div>
+
+                  <div class="grade-actions">
+                    <button
+                      type="button"
+                      class="primary-btn"
+                      (click)="submitGrade(student.studentTaskId)"
+                      [disabled]="form.saving"
+                    >
+                      {{ form.saving ? 'Yadda saxlanılır...' : 'Qiyməti yadda saxla' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

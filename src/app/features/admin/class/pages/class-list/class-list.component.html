@@ -1,0 +1,190 @@
+<section class="class-list-page">
+  <div class="page-header">
+    <div>
+      <h1>Siniflər</h1>
+      <p>Sinifləri axtar, filtr et, ətraflı bax və idarə et.</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="goToCreate()">
+        + Yeni sinif
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-card">
+    <div class="filters-header">
+      <h3>Axtarış və filter</h3>
+      <p>Sinif adına, fənnə, müəllimə və statusa görə filtrlə</p>
+    </div>
+
+    <div class="filters-grid">
+      <div class="form-group">
+        <label>Sinif axtar</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.className"
+          (ngModelChange)="applyFilters()"
+          placeholder="Məsələn: 10A"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Fənnə görə</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.subjectName"
+          (ngModelChange)="applyFilters()"
+          placeholder="Məsələn: Riyaziyyat"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Müəllimə görə</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.teacherName"
+          (ngModelChange)="applyFilters()"
+          placeholder="Məsələn: Elvin"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status" (ngModelChange)="applyFilters()">
+          <option value="">Hamısı</option>
+          <option value="Aktiv">Aktiv</option>
+          <option value="Passiv">Passiv</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn btn-secondary" (click)="resetFilters()">
+        Sıfırla
+      </button>
+    </div>
+  </div>
+
+  <div class="state-card error" *ngIf="errorMessage()">
+    {{ errorMessage() }}
+  </div>
+
+  <div class="state-card" *ngIf="loading()">Siniflər yüklənir...</div>
+
+  <div class="state-card" *ngIf="!loading() && detailLoading()">
+    Filter üçün əlavə sinif məlumatları hazırlanır...
+  </div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="summary-bar">
+      <div>
+        <strong>{{ totalItems() }}</strong> sinif tapıldı
+      </div>
+
+      <div class="pagination-summary" *ngIf="totalItems() > 0">
+        {{ startIndex() }} - {{ endIndex() }} / {{ totalItems() }}
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredClasses().length === 0">
+      Heç bir sinif tapılmadı.
+    </div>
+
+    <div class="class-cards" *ngIf="pagedClasses().length > 0">
+      <article
+        class="class-card"
+        *ngFor="let item of pagedClasses(); trackBy: trackByClassId"
+      >
+        <div class="card-top">
+          <div>
+            <div class="class-badge">{{ item.name }}</div>
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.academicYear }} • {{ item.room || 'Otaq yoxdur' }}</p>
+          </div>
+
+          <div class="status-badge" [class.passive]="item.status === 'Passiv'">
+            {{ item.status }}
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span>Şagird</span>
+            <strong>{{ item.studentCount }}</strong>
+          </div>
+
+          <div class="stat-box">
+            <span>Fənn</span>
+            <strong>{{ item.subjectCount }}</strong>
+          </div>
+
+          <div class="stat-box">
+            <span>Müəllim</span>
+            <strong>{{ item.teacherCount }}</strong>
+          </div>
+
+          <div class="stat-box">
+            <span>Ort. bal</span>
+            <strong>{{ item.averageScore }}</strong>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-outline" type="button" (click)="goToDetail(item.id)">
+            Ətraflı bax
+          </button>
+
+          <button
+            class="btn btn-warning"
+            type="button"
+            (click)="toggleStatus(item)"
+            [disabled]="actionLoadingId() === item.id"
+          >
+            {{
+              actionLoadingId() === item.id
+                ? 'Yenilənir...'
+                : item.status === 'Aktiv'
+                ? 'Passiv et'
+                : 'Aktiv et'
+            }}
+          </button>
+
+          <button
+            class="btn btn-danger"
+            type="button"
+            (click)="deleteClass(item)"
+            [disabled]="actionLoadingId() === item.id || !isSuperAdmin()"
+            [title]="!isSuperAdmin() ? 'Silmək yalnız Super Admin üçün açıqdır' : ''"
+          >
+            Sil
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <div class="pagination-bar" *ngIf="totalItems() > pageSize">
+      <button
+        class="btn btn-secondary"
+        type="button"
+        (click)="previousPage()"
+        [disabled]="currentPage === 1"
+      >
+        ← Əvvəlki
+      </button>
+
+      <div class="page-indicator">
+        Səhifə {{ currentPage }} / {{ totalPages() }}
+      </div>
+
+      <button
+        class="btn btn-secondary"
+        type="button"
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages()"
+      >
+        Növbəti →
+      </button>
+    </div>
+  </ng-container>
+</section>

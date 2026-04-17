@@ -1,0 +1,320 @@
+<div class="teacher-page">
+  <div *ngIf="isLoading" class="state-card">
+    Tapşırıqlar yüklənir...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage" class="tasks-shell">
+    <div class="page-header">
+      <div class="page-header__content">
+        <h2>Tapşırıqlar</h2>
+        <p>Müəllimə aid siniflər üzrə tapşırıq idarəetməsi</p>
+      </div>
+
+      <button class="refresh-btn" type="button" (click)="loadTaskClasses()">
+        Yenilə
+      </button>
+    </div>
+
+    <div *ngIf="successMessage" class="success-banner">
+      {{ successMessage }}
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Siniflər</span>
+        <strong>{{ totalClassesCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Ümumi tasklar</span>
+        <strong>{{ totalTasksCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Davam edən</span>
+        <strong>{{ totalActiveTasksCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Bitmiş</span>
+        <strong>{{ totalCompletedTasksCount }}</strong>
+      </div>
+
+      <div class="summary-card warning">
+        <span class="summary-label">Yoxlanılmalı</span>
+        <strong>{{ totalPendingReviewCount }}</strong>
+      </div>
+    </div>
+
+    <div class="filter-panel">
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Sinif, otaq, akademik il və ya fənn üzrə axtar..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-tabs">
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'all'"
+          (click)="setFilter('all')"
+        >
+          Hamısı
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'active'"
+          (click)="setFilter('active')"
+        >
+          Davam edən
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'completed'"
+          (click)="setFilter('completed')"
+        >
+          Bitmiş
+        </button>
+
+        <button
+          type="button"
+          [class.active]="selectedFilter === 'review'"
+          (click)="setFilter('review')"
+        >
+          Yoxlanılmalı
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="filteredClasses.length; else emptyTemplate" class="class-grid">
+      <div
+        class="class-card"
+        *ngFor="let item of filteredClasses; trackBy: trackByClass"
+      >
+        <div class="class-card__top">
+          <div class="class-title-block">
+            <h3>{{ item.className }}</h3>
+            <p>{{ item.academicYear }}</p>
+          </div>
+
+          <div class="student-badge">
+            <span>{{ item.studentCount }}</span>
+            <small>Şagird</small>
+          </div>
+        </div>
+
+        <div class="class-meta">
+          <div class="meta-row">
+            <span class="meta-label">Otaq</span>
+            <strong>{{ item.room || '-' }}</strong>
+          </div>
+
+          <div class="meta-row">
+            <span class="meta-label">Fənlər</span>
+            <strong>{{ getSubjectsLabel(item) }}</strong>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="mini-stat">
+            <span>{{ item.totalTaskCount }}</span>
+            <small>Ümumi</small>
+          </div>
+
+          <div class="mini-stat active">
+            <span>{{ item.activeTaskCount }}</span>
+            <small>Davam edən</small>
+          </div>
+
+          <div class="mini-stat completed">
+            <span>{{ item.completedTaskCount }}</span>
+            <small>Bitmiş</small>
+          </div>
+
+          <div class="mini-stat review">
+            <span>{{ item.pendingReviewCount }}</span>
+            <small>Yoxlanılmalı</small>
+          </div>
+        </div>
+
+        <div class="class-card__actions">
+          <button
+            type="button"
+            class="secondary-btn"
+            (click)="goToClassTasks(item.classRoomId)"
+          >
+            Ümumi tasklar
+          </button>
+
+          <button
+            type="button"
+            class="primary-btn"
+            (click)="openCreateDrawer(item)"
+          >
+            Task əlavə et
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #emptyTemplate>
+      <div class="empty-state">
+        <h3>Sinif tapılmadı</h3>
+        <p>Axtarış və ya filter nəticəsində uyğun sinif görünmədi.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<div
+  class="drawer-backdrop"
+  *ngIf="isCreateDrawerOpen"
+  (click)="closeCreateDrawer()"
+></div>
+
+<div class="task-drawer" [class.open]="isCreateDrawerOpen">
+  <div class="task-drawer__header">
+    <div>
+      <h3>Yeni task əlavə et</h3>
+      <p *ngIf="selectedClass">
+        {{ selectedClass.className }} • {{ selectedClass.academicYear }}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="icon-close"
+      (click)="closeCreateDrawer()"
+      [disabled]="isSavingTask"
+      aria-label="Bağla"
+    >
+      ✕
+    </button>
+  </div>
+
+  <div class="task-drawer__body" *ngIf="selectedClass">
+    <div *ngIf="createErrorMessage" class="drawer-error">
+      {{ createErrorMessage }}
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-chip-row">
+        <span class="drawer-chip">{{ selectedClass.className }}</span>
+        <span class="drawer-chip">{{ selectedClass.academicYear }}</span>
+        <span class="drawer-chip">{{ selectedClass.studentCount }} şagird</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fənn</label>
+          <select [(ngModel)]="createForm.subjectId" [disabled]="isSavingTask">
+            <option [ngValue]="0">Fənn seçin</option>
+            <option
+              *ngFor="let subject of selectedClass.subjects"
+              [ngValue]="subject.subjectId"
+            >
+              {{ subject.subjectName }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Maksimum bal</label>
+          <input
+            type="number"
+            min="1"
+            [(ngModel)]="createForm.maxScore"
+            [disabled]="isSavingTask"
+          />
+        </div>
+
+        <div class="form-group form-group--full">
+          <label>Task başlığı</label>
+          <input
+            type="text"
+            [(ngModel)]="createForm.title"
+            placeholder="Məsələn: Riyaziyyat ev tapşırığı"
+            [disabled]="isSavingTask"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Başlama vaxtı</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="createForm.assignedDate"
+            [disabled]="isSavingTask"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Son təhvil vaxtı</label>
+          <input
+            type="datetime-local"
+            [(ngModel)]="createForm.dueDate"
+            [disabled]="isSavingTask"
+          />
+        </div>
+
+        <div class="form-group form-group--full">
+          <label>Təsvir</label>
+          <textarea
+            rows="4"
+            [(ngModel)]="createForm.description"
+            placeholder="Taskın qısa izahını yazın..."
+            [disabled]="isSavingTask"
+          ></textarea>
+        </div>
+
+        <div class="form-group form-group--full">
+          <label>Link</label>
+          <input
+            type="text"
+            [(ngModel)]="createForm.link"
+            placeholder="https://..."
+            [disabled]="isSavingTask"
+          />
+        </div>
+
+        <div class="form-group form-group--full">
+          <label>Qeyd</label>
+          <textarea
+            rows="4"
+            [(ngModel)]="createForm.note"
+            placeholder="Əlavə qeydləri yazın..."
+            [disabled]="isSavingTask"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="task-drawer__footer">
+    <button
+      type="button"
+      class="secondary-btn"
+      (click)="closeCreateDrawer()"
+      [disabled]="isSavingTask"
+    >
+      Ləğv et
+    </button>
+
+    <button
+      type="button"
+      class="primary-btn"
+      (click)="submitCreateTask()"
+      [disabled]="isSavingTask"
+    >
+      {{ isSavingTask ? 'Yadda saxlanılır...' : 'Yadda saxla' }}
+    </button>
+  </div>
+</div>

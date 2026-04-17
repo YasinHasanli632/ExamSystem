@@ -1,0 +1,351 @@
+<div class="teacher-attendance-page">
+  <div class="top-bar">
+    <button class="back-btn" type="button" (click)="goBack()">
+      ← Sinif detalına qayıt
+    </button>
+
+    <div class="top-actions">
+      <button class="secondary-btn" type="button" (click)="refreshBoard()">
+        Yenilə
+      </button>
+
+      <button class="primary-btn" type="button" (click)="openCreateSessionModal()">
+        + Yeni dərs tarixi əlavə et
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="loadingMeta || loadingBoard" class="state-card">
+    <div class="loader"></div>
+    <p>Davamiyyət cədvəli yüklənir...</p>
+  </div>
+
+  <ng-container *ngIf="!loadingMeta && !loadingBoard">
+    <div class="hero-card">
+      <div class="hero-left">
+        <p class="hero-kicker">Teacher Panel / Davamiyyət cədvəli</p>
+        <h1>{{ className }}</h1>
+        <p class="hero-subtitle">
+          Müəllimin yaratdığı aylıq dərs session-ları üzrə davamiyyət board-u.
+        </p>
+
+        <div class="hero-meta">
+          <span class="hero-chip">Fənn: {{ subjectName }}</span>
+          <span class="hero-chip">Şagird: {{ totalStudents }}</span>
+          <span class="hero-chip">Session: {{ totalSessions }}</span>
+          <span class="hero-chip">Davamiyyət: {{ boardAttendanceRate | number:'1.0-2' }}%</span>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <button
+          class="save-all-btn"
+          type="button"
+          [disabled]="saving"
+          (click)="saveAllDirtySessions()">
+          {{ saving ? 'Yadda saxlanılır...' : 'Bütün dəyişiklikləri yadda saxla' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-card">
+      <div class="filter-grid">
+        <div class="filter-item">
+          <label>Sinif</label>
+          <input type="text" [value]="className" disabled />
+        </div>
+
+        <div class="filter-item">
+          <label>Fənn seçimi</label>
+          <select [(ngModel)]="selectedSubjectId" (change)="onFilterChanged()">
+            <option [ngValue]="null">Seçin</option>
+            <option *ngFor="let subject of subjectOptions" [ngValue]="subject.id">
+              {{ subject.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Ay seçimi</label>
+          <select [(ngModel)]="selectedMonth" (change)="onFilterChanged()">
+            <option *ngFor="let month of monthOptions" [ngValue]="month.value">
+              {{ month.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>İl seçimi</label>
+          <select [(ngModel)]="selectedYear" (change)="onFilterChanged()">
+            <option *ngFor="let year of yearOptions" [ngValue]="year">
+              {{ year }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="board-wrapper" *ngIf="board; else emptyBoardState">
+      <div class="board-scroll">
+        <table class="attendance-board">
+          <thead>
+            <tr>
+              <th class="sticky-col sticky-head student-col">
+                Şagird
+              </th>
+
+              <th
+                class="session-head"
+                *ngFor="let session of sessions; trackBy: trackBySession">
+                <div class="session-head-card" [class.locked]="session.isLocked">
+                  <div class="session-date">
+                    {{ session.sessionDateText }}
+                  </div>
+
+                  <div class="session-time">
+                    {{ getSessionTimeRange(session) }}
+                  </div>
+
+                  <div class="session-badge-row">
+                    <span
+                      class="session-badge"
+                      [class.extra]="session.isExtraLesson"
+                      [class.regular]="!session.isExtraLesson">
+                      {{ getSessionTypeLabel(session) }}
+                    </span>
+
+                    <span *ngIf="session.isLocked" class="locked-badge">
+                      Locked
+                    </span>
+                  </div>
+
+                  <div class="session-notes" *ngIf="session.notes">
+                    {{ session.notes }}
+                  </div>
+
+                  <button
+                    class="session-save-btn"
+                    type="button"
+                    *ngIf="!session.isLocked"
+                    [disabled]="saving"
+                    (click)="saveSession(session)">
+                    {{
+                      hasDirtySession(session.sessionId)
+                        ? (saving ? 'Yadda saxlanılır...' : 'Yadda saxla')
+                        : 'Saxlanıb'
+                    }}
+                  </button>
+                </div>
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let student of students; trackBy: trackByStudent">
+              <td class="sticky-col student-cell">
+                <div class="student-main">
+                  <div class="student-name">{{ student.studentFullName }}</div>
+                  <div class="student-meta">
+                    <span *ngIf="student.studentNumber">{{ student.studentNumber }}</span>
+                    <span *ngIf="student.studentEmail">{{ student.studentEmail }}</span>
+                  </div>
+                </div>
+
+                <div class="student-stats">
+                  <span class="stat-pill present">İ: {{ student.presentCount }}</span>
+                  <span class="stat-pill absent">Y: {{ student.absentCount }}</span>
+                  <span class="stat-pill late">G: {{ student.lateCount }}</span>
+                  <span class="stat-pill neutral">
+                    {{ student.attendanceRate | number:'1.0-2' }}%
+                  </span>
+                </div>
+              </td>
+
+              <td
+                *ngFor="let session of sessions; let sessionIndex = index; trackBy: trackBySession"
+                class="attendance-cell-td">
+                <button
+                  type="button"
+                  class="attendance-cell"
+                  [class]="getCellClass(student, session, student.cells[sessionIndex])"
+                  [disabled]="isCellLocked(session, student.cells[sessionIndex])"
+                  (click)="openCellModal(student, session, student.cells[sessionIndex])">
+
+                  <span class="cell-text">
+                    {{
+                      getCellStatusLabel(student, session, student.cells[sessionIndex]) || '—'
+                    }}
+                  </span>
+
+                  <span
+                    *ngIf="hasDirtySession(session.sessionId)"
+                    class="dirty-dot">
+                  </span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #emptyBoardState>
+      <div class="empty-box">
+        Bu ay və seçilmiş fənn üzrə session tapılmadı.
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <!-- Yeni session modal -->
+  <div class="modal-backdrop" *ngIf="isCreateSessionModalOpen">
+    <div class="modal-card modal-md">
+      <div class="modal-header">
+        <h2>Yeni dərs tarixi əlavə et</h2>
+        <button type="button" class="close-btn" (click)="closeCreateSessionModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-item">
+            <label>Tarix</label>
+            <input type="date" [(ngModel)]="createSessionForm.sessionDate" />
+          </div>
+
+          <div class="form-item">
+            <label>Başlanğıc saatı</label>
+            <input type="time" [(ngModel)]="createSessionForm.startTime" />
+          </div>
+
+          <div class="form-item">
+            <label>Bitiş saatı</label>
+            <input type="time" [(ngModel)]="createSessionForm.endTime" />
+          </div>
+
+          <div class="form-item">
+            <label>Dərs tipi</label>
+            <select [(ngModel)]="createSessionForm.sessionType">
+              <option [ngValue]="1">Əsas dərs</option>
+              <option [ngValue]="2">Əlavə dərs</option>
+            </select>
+          </div>
+
+          <div class="form-item form-item-full">
+            <label>Qeyd</label>
+            <textarea rows="4" [(ngModel)]="createSessionForm.notes"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="secondary-btn" type="button" (click)="closeCreateSessionModal()">
+          Ləğv et
+        </button>
+
+        <button class="primary-btn" type="button" [disabled]="creatingSession" (click)="createSession()">
+          {{ creatingSession ? 'Yaradılır...' : 'Yadda saxla' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cell edit modal -->
+  <div class="modal-backdrop" *ngIf="isCellModalOpen">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2>Attendance seçimi</h2>
+          <p class="modal-subtitle">
+            {{ selectedStudentRow?.studentFullName }} /
+            {{ selectedSessionColumn?.sessionDateText }}
+          </p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="closeCellModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="status-grid">
+          <button
+            type="button"
+            class="status-option present"
+            [class.active]="cellDraftForm.status === 'Present'"
+            (click)="selectStatus('Present')">
+            İştirak edib
+          </button>
+
+          <button
+            type="button"
+            class="status-option absent"
+            [class.active]="cellDraftForm.status === 'Absent'"
+            (click)="selectStatus('Absent')">
+            İştirak etməyib
+          </button>
+
+          <button
+            type="button"
+            class="status-option late"
+            [class.active]="cellDraftForm.status === 'Late'"
+            (click)="selectStatus('Late')">
+            Gecikib
+          </button>
+
+          <button
+            type="button"
+            class="status-option neutral"
+            (click)="clearCellSelection()">
+            Ləğv et / Təmizlə
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-item" *ngIf="cellDraftForm.status === 'Absent'">
+            <label>Səbəb</label>
+            <select [(ngModel)]="cellDraftForm.absenceReasonType">
+              <option *ngFor="let reason of absenceReasonOptions" [ngValue]="reason">
+                {{ reason || 'Seçin' }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-item form-item-full" *ngIf="cellDraftForm.status === 'Absent'">
+            <label>Əlavə qeyd</label>
+            <textarea rows="3" [(ngModel)]="cellDraftForm.absenceReasonNote"></textarea>
+          </div>
+
+          <div class="form-item" *ngIf="cellDraftForm.status === 'Late'">
+            <label>Gəlmə vaxtı</label>
+            <input type="time" [(ngModel)]="cellDraftForm.lateArrivalTime" />
+          </div>
+
+          <div class="form-item form-item-full" *ngIf="cellDraftForm.status === 'Late'">
+            <label>Qeyd</label>
+            <textarea rows="3" [(ngModel)]="cellDraftForm.lateNote"></textarea>
+          </div>
+
+          <div class="form-item form-item-full" *ngIf="cellDraftForm.status">
+            <label>Ümumi qeyd</label>
+            <textarea rows="3" [(ngModel)]="cellDraftForm.notes"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="secondary-btn" type="button" (click)="closeCellModal()">
+          Bağla
+        </button>
+
+        <button class="primary-btn" type="button" (click)="saveCellDraft()">
+          Lokalda saxla
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

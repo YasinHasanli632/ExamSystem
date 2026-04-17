@@ -1,0 +1,135 @@
+.teacher-profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.state-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+}
+
+.error-state {
+  color: #b91c1c;
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+.profile-hero {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 28px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.05);
+}
+
+.profile-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 28px;
+  object-fit: cover;
+  border: 1px solid #dbeafe;
+}
+
+.profile-main {
+  flex: 1;
+}
+
+.status-badge {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ecfeff;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-main h2 {
+  margin: 0 0 8px;
+  font-size: 30px;
+  color: #0f172a;
+}
+
+.profile-main p {
+  margin: 0 0 16px;
+  color: #64748b;
+}
+
+.info-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.info-chips span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.detail-card {
+  padding: 24px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.05);
+}
+
+.detail-card h3 {
+  margin: 0 0 18px;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.detail-row span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.detail-row strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .profile-hero,
+  .detail-grid {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

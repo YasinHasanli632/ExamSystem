@@ -1,0 +1,181 @@
+<section class="teachers-page">
+  <div class="page-header">
+    <div>
+      <h1>Müəllimlər</h1>
+      <p>Sistem üzrə bütün müəllimləri idarə et, filter et və performansını izlə.</p>
+    </div>
+
+    <a class="primary-btn" routerLink="/admin/users/teachers/new">
+      + Müəllim əlavə et
+    </a>
+  </div>
+
+  <div class="state-card" *ngIf="loading()">
+    Müəllim siyahısı yüklənir...
+  </div>
+
+  <div class="state-card error" *ngIf="!loading() && errorMessage()">
+    {{ errorMessage() }}
+  </div>
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+    <div class="stats-strip">
+      <div class="stat-mini-card">
+        <span>Aktiv müəllimlər</span>
+        <strong>{{ activeTeachersCount() }}</strong>
+      </div>
+
+      <div class="stat-mini-card passive-card">
+        <span>Passiv müəllimlər</span>
+        <strong>{{ passiveTeachersCount() }}</strong>
+      </div>
+
+      <div class="stat-mini-card deleted-card">
+        <span>Silinmiş müəllimlər</span>
+        <strong>{{ deletedTeachersCount() }}</strong>
+      </div>
+    </div>
+
+    <div class="filter-card">
+      <div class="filter-group search-group">
+        <label for="teacherSearch">Axtarış</label>
+        <input
+          id="teacherSearch"
+          type="text"
+          placeholder="Ad, soyad, email, nömrə, fənn..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearch($event)"
+        />
+      </div>
+
+      <div class="filter-group status-group">
+        <label for="teacherStatus">Status</label>
+        <select
+          id="teacherStatus"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="onStatusChange($event)"
+        >
+          <option value="Hamısı">Hamısı</option>
+          <option value="Aktiv">Aktiv</option>
+          <option value="Passiv">Passiv</option>
+          <option value="Məzuniyyət">Məzuniyyət</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Müəllim</th>
+              <th>Status</th>
+              <th>Fənlər</th>
+              <th>Sinif sayı</th>
+              <th>Tələbə sayı</th>
+              <th>İmtahan sayı</th>
+              <th>Uğur faizi</th>
+              <th class="actions-col">Əməliyyat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let teacher of teachers(); trackBy: trackByTeacher">
+              <td>
+                <div class="teacher-cell">
+                  <img [src]="teacher.photoUrl" [alt]="teacher.firstName + ' ' + teacher.lastName" />
+                  <div>
+                    <strong>{{ teacher.firstName }} {{ teacher.lastName }}</strong>
+                    <span>{{ teacher.email }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                <span [class]="getStatusClass(teacher.status)">
+                  {{ teacher.status }}
+                </span>
+              </td>
+
+              <td>
+                <div class="subject-tags">
+                  <span class="tag" *ngFor="let subject of teacher.subjects">{{ subject }}</span>
+                </div>
+              </td>
+
+              <td>{{ teacher.classes.length }}</td>
+              <td>{{ teacher.performance.studentCount }}</td>
+              <td>{{ teacher.performance.examCount }}</td>
+              <td>{{ teacher.performance.successRate }}%</td>
+
+              <td class="actions-col">
+                <div class="action-buttons">
+                  <button type="button" class="secondary-btn" (click)="openClassesDialog(teacher)">
+                    Siniflər
+                  </button>
+
+                  <button type="button" class="ghost-btn" (click)="goToTeacherDetail(teacher.id)">
+                    Ətraflı bax
+                  </button>
+
+                  <button type="button" class="danger-btn" (click)="deleteTeacher(teacher)">
+                    Sil
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="teachers().length === 0">
+              <td colspan="8">
+                <div class="empty-state">
+                  Axtarış və filter nəticəsinə uyğun müəllim tapılmadı.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</section>
+
+<div class="dialog-backdrop" *ngIf="selectedTeacherForDialog()" (click)="closeClassesDialog()">
+  <div class="dialog-card" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <div>
+        <h2>Siniflər</h2>
+        <p>
+          {{ selectedTeacherForDialog()?.firstName }}
+          {{ selectedTeacherForDialog()?.lastName }} müəlliminin dərs keçdiyi siniflər
+        </p>
+      </div>
+
+      <button type="button" class="dialog-close" (click)="closeClassesDialog()">×</button>
+    </div>
+
+    <div class="dialog-body">
+      <div
+        class="class-item"
+        *ngFor="let classItem of selectedTeacherForDialog()?.classes; trackBy: trackByClass"
+      >
+        <div class="class-item-left">
+          <h3>{{ classItem.name }}</h3>
+          <p>{{ classItem.studentCount }} tələbə</p>
+
+          <div class="subject-tags">
+            <span class="tag" *ngFor="let subject of classItem.subjectNames">{{ subject }}</span>
+          </div>
+        </div>
+
+        <div class="class-item-right">
+          <button
+            type="button"
+            class="primary-btn small-btn"
+            (click)="goToTeacherDetail(selectedTeacherForDialog()!.id)"
+          >
+            Ətraflı bax
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,202 @@
+<section class="teacher-create-page">
+  <div class="top-bar">
+    <div>
+      <a class="back-link" routerLink="/admin/users/teachers">← Müəllimlər siyahısına qayıt</a>
+      <h1>Yeni müəllim əlavə et</h1>
+      <p>Müəllim account və teacher profile bu formdan birlikdə yaradılır.</p>
+    </div>
+  </div>
+
+  <div class="form-alert error-alert" *ngIf="hasError">
+    <div class="alert-icon">⚠</div>
+
+    <div class="alert-content">
+      <strong>{{ errorTitle || 'Xəta baş verdi' }}</strong>
+      <p>{{ errorMessage }}</p>
+
+      <ul *ngIf="errorDetails.length > 0">
+        <li *ngFor="let detail of errorDetails">{{ detail }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="form-alert success-alert" *ngIf="successMessage">
+    <div class="alert-icon">✓</div>
+
+    <div class="alert-content">
+      <strong>Uğurlu əməliyyat</strong>
+      <p>{{ successMessage }}</p>
+    </div>
+  </div>
+
+  <form class="teacher-form" [formGroup]="teacherForm" (ngSubmit)="submit()">
+    <div class="form-layout">
+      <div class="main-column">
+        <div class="card">
+          <div class="card-header">
+            <h3>Login məlumatları</h3>
+            <p>Save edəndə sistem əvvəl user, sonra teacher profile yaradır.</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" formControlName="username" placeholder="teacher.username" />
+            </div>
+
+            <div class="form-group">
+              <label>Şifrə</label>
+              <input type="password" formControlName="password" placeholder="Minimum 6 simvol" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Əsas məlumatlar</h3>
+            <p>Müəllimin şəxsi və əlaqə məlumatları</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Ad</label>
+              <input type="text" formControlName="firstName" placeholder="Müəllimin adı" />
+            </div>
+
+            <div class="form-group">
+              <label>Soyad</label>
+              <input type="text" formControlName="lastName" placeholder="Müəllimin soyadı" />
+            </div>
+
+            <div class="form-group">
+              <label>Ata adı</label>
+              <input type="text" formControlName="fatherName" placeholder="Ata adı" />
+            </div>
+
+            <div class="form-group">
+              <label>Yaş</label>
+              <input type="number" formControlName="age" placeholder="Yaş" />
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" formControlName="email" placeholder="example@mail.com" />
+            </div>
+
+            <div class="form-group">
+              <label>Telefon</label>
+              <input type="text" formControlName="phone" placeholder="+994 50 000 00 00" />
+            </div>
+
+            <div class="form-group">
+              <label>Ölkə</label>
+              <input type="text" formControlName="country" placeholder="Ölkə" />
+            </div>
+
+            <div class="form-group">
+              <label>Status</label>
+              <select formControlName="status">
+                <option value="Aktiv">Aktiv</option>
+                <option value="Passiv">Passiv</option>
+                <option value="Məzuniyyət">Məzuniyyət</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Department</label>
+              <input type="text" formControlName="department" placeholder="Məs: Təbiət elmləri" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Profil şəkli URL</label>
+              <input type="text" formControlName="photoUrl" placeholder="https://..." />
+            </div>
+
+            <div class="form-group full-width">
+              <label>İxtisas</label>
+              <input type="text" formControlName="specialization" placeholder="Məsələn: Riyaziyyat müəllimi" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Əlavə qeyd</label>
+              <textarea rows="5" formControlName="details" placeholder="Müəllim haqqında əlavə məlumat..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Keçəcəyi fənlər</h3>
+            <p>Müəllimin keçəcəyi fənləri seç.</p>
+          </div>
+
+          <div *ngIf="loadingLookups" class="empty-state">
+            Fənn siyahısı yüklənir...
+          </div>
+
+          <div class="selection-grid" *ngIf="!loadingLookups && subjectOptions.length > 0">
+            <button
+              type="button"
+              class="select-chip"
+              *ngFor="let subject of subjectOptions"
+              [class.active]="isSubjectSelected(subject.id)"
+              (click)="toggleSubject(subject.id)">
+              {{ subject.name }}
+            </button>
+          </div>
+
+          <div class="empty-state" *ngIf="!loadingLookups && subjectOptions.length === 0">
+            Heç bir fənn tapılmadı. Əvvəl subject yaratmaq lazımdır.
+          </div>
+
+          <div class="selected-preview" *ngIf="selectedSubjectNames.length > 0">
+            <span *ngFor="let subject of selectedSubjectNames">{{ subject }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-column">
+        <div class="card preview-card">
+          <div class="card-header">
+            <h3>Canlı önizləmə</h3>
+            <p>Daxil etdiyin məlumatların görünüşü</p>
+          </div>
+
+          <div class="teacher-preview">
+            <img [src]="teacherForm.value.photoUrl || 'https://i.pravatar.cc/300?img=32'" alt="teacher-preview" />
+
+            <h4>
+              {{ teacherForm.value.firstName || 'Ad' }}
+              {{ teacherForm.value.lastName || 'Soyad' }}
+            </h4>
+
+            <p>{{ teacherForm.value.specialization || 'İxtisas' }}</p>
+
+            <div class="preview-meta">
+              <span>{{ teacherForm.value.status || 'Status' }}</span>
+              <span>{{ teacherForm.value.country || 'Ölkə' }}</span>
+            </div>
+
+            <div class="preview-block">
+              <label>Seçilən fənlər</label>
+              <div class="mini-tags">
+                <span *ngFor="let subject of selectedSubjectNames">{{ subject }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card submit-card">
+          <div class="card-header">
+            <h3>Əməliyyat</h3>
+            <p>Müəllim məlumatlarını sistemə əlavə et</p>
+          </div>
+
+          <button class="submit-btn" type="submit" [disabled]="isSubmitting || loadingLookups">
+            {{ isSubmitting ? 'Yadda saxlanılır...' : 'Müəllimi əlavə et' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>

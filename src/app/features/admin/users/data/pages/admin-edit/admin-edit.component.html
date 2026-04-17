@@ -1,0 +1,205 @@
+<section class="admin-form-page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a routerLink="/admin/users/admins" class="back-link">
+        <span>←</span>
+        <span>Admin siyahısına qayıt</span>
+      </a>
+
+      <div class="title-block">
+        <div class="title-row">
+          <h1>Admin düzəliş et</h1>
+          <span class="unsaved-badge" *ngIf="canShowUnsavedBadge">Dəyişiklik var</span>
+        </div>
+        <p>Mövcud admin hesabını backend DTO-lara uyğun yenilə</p>
+      </div>
+    </div>
+
+    <div class="page-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="refresh()"
+        [disabled]="loading || isSubmitting"
+      >
+        Yenilə
+      </button>
+
+      <a
+        *ngIf="userId"
+        class="btn btn-light"
+        [routerLink]="['/admin/users/admins', userId]"
+      >
+        Detala keç
+      </a>
+    </div>
+  </div>
+
+  <div class="state-card loading" *ngIf="loading">
+    <div class="loader"></div>
+    <div>
+      <strong>Məlumat yüklənir...</strong>
+      <p>Admin məlumatları backend-dən oxunur</p>
+    </div>
+  </div>
+
+  <div class="state-card error" *ngIf="!loading && errorMessage">
+    <div class="state-icon">!</div>
+    <div>
+      <strong>Xəta baş verdi</strong>
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+
+  <div class="layout-grid" *ngIf="!loading && !errorMessage">
+    <form class="form-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="card-header">
+        <h2>Admin məlumatlarını yenilə</h2>
+        <p>Formu dəyiş və yadda saxla</p>
+      </div>
+
+      <div class="role-info-card">
+        <div class="role-info-label">Rol</div>
+        <div class="role-info-value">{{ previewRole }}</div>
+        <div class="role-info-text">
+          Bu istifadəçinin rolu sabitdir, edit zamanı dəyişdirilmir.
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="firstName">Ad</label>
+          <input
+            id="firstName"
+            type="text"
+            formControlName="firstName"
+            placeholder="Ad daxil et"
+          />
+          <small class="field-error" *ngIf="hasError('firstName', 'required')">
+            Ad mütləqdir.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Soyad</label>
+          <input
+            id="lastName"
+            type="text"
+            formControlName="lastName"
+            placeholder="Soyad daxil et"
+          />
+          <small class="field-error" *ngIf="hasError('lastName', 'required')">
+            Soyad mütləqdir.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            placeholder="Username daxil et"
+          />
+          <small class="field-error" *ngIf="hasError('username', 'required')">
+            Username mütləqdir.
+          </small>
+          <small class="field-error" *ngIf="hasError('username', 'minlength')">
+            Username minimum 3 simvol olmalıdır.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Email daxil et"
+          />
+          <small class="field-error" *ngIf="hasError('email', 'required')">
+            Email mütləqdir.
+          </small>
+          <small class="field-error" *ngIf="hasError('email', 'email')">
+            Email formatı düzgün deyil.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="birthDate">Doğum tarixi</label>
+          <input id="birthDate" type="date" formControlName="birthDate" />
+        </div>
+
+        <div class="form-group">
+          <label for="phoneNumber">Telefon</label>
+          <input
+            id="phoneNumber"
+            type="text"
+            formControlName="phoneNumber"
+            placeholder="+994 xx xxx xx xx"
+          />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="photoUrl">Şəkil linki</label>
+          <input
+            id="photoUrl"
+            type="text"
+            formControlName="photoUrl"
+            placeholder="https://..."
+          />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="details">Əlavə məlumat</label>
+          <textarea
+            id="details"
+            rows="6"
+            formControlName="details"
+            placeholder="Admin haqqında əlavə qeyd..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="message error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="message success" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-light" [routerLink]="['/admin/users/admins', userId]">
+          Geri
+        </a>
+
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Yenilənir...' : 'Yadda saxla' }}
+        </button>
+      </div>
+    </form>
+
+    <aside class="preview-card">
+      <div class="card-header">
+        <h2>Canlı preview</h2>
+        <p>Formun hazırkı görünüşü</p>
+      </div>
+
+      <div class="preview-profile">
+        <img [src]="previewImage" alt="preview" />
+        <h3>{{ previewName }}</h3>
+        <span class="role-badge">{{ previewRole }}</span>
+      </div>
+
+      <div class="preview-info">
+        <div><strong>Rol:</strong> {{ previewRole }}</div>
+        <div><strong>Username:</strong> {{ form.controls.username.value || '-' }}</div>
+        <div><strong>Email:</strong> {{ form.controls.email.value || '-' }}</div>
+        <div><strong>Telefon:</strong> {{ form.controls.phoneNumber.value || '-' }}</div>
+        <div><strong>Doğum tarixi:</strong> {{ form.controls.birthDate.value || '-' }}</div>
+        <div><strong>Qeyd:</strong> {{ form.controls.details.value || '-' }}</div>
+      </div>
+    </aside>
+  </div>
+</section>

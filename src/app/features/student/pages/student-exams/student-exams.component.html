@@ -1,0 +1,317 @@
+<div class="student-exams-page">
+  <section class="page-hero">
+    <span class="hero-chip">Student Panel</span>
+    <h1>İmtahanlarım</h1>
+    <p>
+      Aktiv, gələcək və tamamlanmış imtahanlarını burada görürsən. İmtahan parolu
+      sistem ayarlarında təyin olunan vaxta uyğun aktiv olur. Aktiv olduqda
+      “Daxil ol” düyməsi ilə davam edə bilərsən.
+    </p>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span class="summary-card__label">Ümumi imtahan</span>
+      <strong class="summary-card__value">{{ stats.totalCount }}</strong>
+      <span class="summary-card__hint">Bütün imtahan axını</span>
+    </article>
+
+    <article class="summary-card summary-card--upcoming">
+      <span class="summary-card__label">Başlamayan</span>
+      <strong class="summary-card__value">{{ stats.upcomingCount }}</strong>
+      <span class="summary-card__hint">Gələcək tarixli imtahanlar</span>
+    </article>
+
+    <article class="summary-card summary-card--active">
+      <span class="summary-card__label">Aktiv</span>
+      <strong class="summary-card__value">{{ stats.activeCount }}</strong>
+      <span class="summary-card__hint">Davam edən və hazır imtahanlar</span>
+    </article>
+
+    <article class="summary-card summary-card--completed">
+      <span class="summary-card__label">Bitmiş</span>
+      <strong class="summary-card__value">{{ stats.completedCount }}</strong>
+      <span class="summary-card__hint">Təhvil verilmiş və tamamlanmış imtahanlar</span>
+    </article>
+  </section>
+
+  <section class="filter-card">
+    <div class="filter-card__header">
+      <div>
+        <h2>Filtrlər</h2>
+        <p>Axtarış, tab və status üzrə imtahanları süz.</p>
+      </div>
+
+      <button type="button" class="secondary-btn" (click)="resetFilters()">
+        Filterləri təmizlə
+      </button>
+    </div>
+
+    <div class="tab-row">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="filter.tab === 'all'"
+        (click)="setTab('all')">
+        Hamısı
+        <span>{{ getTabCount('all') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="filter.tab === 'upcoming'"
+        (click)="setTab('upcoming')">
+        Başlamayan
+        <span>{{ getTabCount('upcoming') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="filter.tab === 'active'"
+        (click)="setTab('active')">
+        Aktiv
+        <span>{{ getTabCount('active') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="filter.tab === 'completed'"
+        (click)="setTab('completed')">
+        Bitmiş
+        <span>{{ getTabCount('completed') }}</span>
+      </button>
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group form-group--wide">
+        <label for="examSearch">Axtarış</label>
+        <input
+          id="examSearch"
+          type="text"
+          [(ngModel)]="filter.searchText"
+          (ngModelChange)="applyFilters()"
+          placeholder="İmtahan, müəllim və ya qeyd üzrə axtar..." />
+      </div>
+
+      <div class="form-group">
+        <label for="subjectFilter">Fənn</label>
+        <input
+          id="subjectFilter"
+          type="text"
+          [(ngModel)]="filter.subjectName"
+          (ngModelChange)="applyFilters()"
+          placeholder="Məs: Riyaziyyat" />
+      </div>
+
+      <div class="form-group">
+        <label for="statusFilter">Status</label>
+        <input
+          id="statusFilter"
+          type="text"
+          [(ngModel)]="filter.status"
+          (ngModelChange)="applyFilters()"
+          placeholder="Məs: InProgress" />
+      </div>
+    </div>
+  </section>
+
+  <section class="exams-card">
+    <div class="exams-card__header">
+      <div>
+        <h2>İmtahan siyahısı</h2>
+        <p>{{ visibleExams.length }} nəticə göstərilir</p>
+      </div>
+
+      <button type="button" class="primary-btn" (click)="loadExams()">
+        Yenilə
+      </button>
+    </div>
+
+    <div *ngIf="isLoading" class="state-box">
+      <div class="loader"></div>
+      <p>İmtahanlar yüklənir...</p>
+    </div>
+
+    <div *ngIf="!isLoading && errorMessage" class="state-box state-box--error">
+      <strong>Xəta</strong>
+      <p>{{ errorMessage }}</p>
+
+      <button type="button" class="primary-btn" (click)="loadExams()">
+        Yenidən yoxla
+      </button>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage && isFilterLoading" class="state-box state-box--inline">
+      <div class="loader loader--small"></div>
+      <p>Nəticələr yenilənir...</p>
+    </div>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && !visibleExams.length"
+      class="empty-state">
+      <div class="empty-state__icon">🧾</div>
+      <h3>{{ emptyStateTitle }}</h3>
+      <p>{{ emptyStateDescription }}</p>
+
+      <button
+        *ngIf="hasActiveFilters"
+        type="button"
+        class="secondary-btn"
+        (click)="resetFilters()">
+        Filterləri təmizlə
+      </button>
+    </div>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && visibleExams.length"
+      class="exam-grid">
+      <article
+        *ngFor="let exam of visibleExams; trackBy: trackByExam"
+        class="exam-card">
+        <div class="exam-card__top">
+          <span class="status-badge" [ngClass]="getStatusClass(exam.status)">
+            {{ getStatusLabel(exam.status) }}
+          </span>
+
+          <span class="score-chip">
+            {{ exam.score }} / {{ exam.maxScore }}
+          </span>
+        </div>
+
+        <div class="exam-card__body">
+          <h3>{{ exam.examTitle }}</h3>
+
+          <div class="meta-list">
+            <div class="meta-item">
+              <span>Fənn</span>
+              <strong>{{ exam.subjectName }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Müəllim</span>
+              <strong>{{ exam.teacherName || 'Təyin edilməyib' }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Başlama vaxtı</span>
+              <strong>{{ formatDateTime(exam.examStartTime) }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Bitmə vaxtı</span>
+              <strong>{{ formatDateTime(exam.examEndTime) }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Müddət</span>
+              <strong>{{ exam.durationMinutes }} dəqiqə</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Növ</span>
+              <strong>{{ exam.examType || '-' }}</strong>
+            </div>
+          </div>
+
+          <div class="note-box" *ngIf="exam.note">
+            <span>Qeyd</span>
+            <p>{{ exam.note }}</p>
+          </div>
+
+          <div class="access-box">
+            <div class="access-box__header">
+              <strong>İmtahan girişi</strong>
+              <span
+                class="access-box__badge"
+                [class.access-box__badge--active]="canOpenAccess(exam)">
+                {{ canOpenAccess(exam) ? 'Aktiv' : 'Bağlı' }}
+              </span>
+            </div>
+
+            <p>{{ getAccessHint(exam) }}</p>
+
+            <ng-container *ngIf="shouldShowAccessCodeArea(exam)">
+              <div class="note-box" *ngIf="exam.accessCode; else hiddenAccessCodeBlock">
+                <span>İmtahan parolu</span>
+                <p>{{ exam.accessCode }}</p>
+              </div>
+
+              <ng-template #hiddenAccessCodeBlock>
+                <div class="note-box">
+                  <span>İmtahan parolu</span>
+                  <p>Parol aktiv olduğu anda burada görünəcək.</p>
+                </div>
+              </ng-template>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="exam-card__footer exam-card__footer--single">
+          <button
+            type="button"
+            class="detail-btn detail-btn--full"
+            [disabled]="isPrimaryButtonDisabled(exam)"
+            (click)="handlePrimaryAction(exam)">
+            {{ getPrimaryActionLabel(exam) }}
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="accessModal.isOpen" (click)="closeAccessModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-card__header">
+      <div>
+        <h3>İmtahana giriş</h3>
+        <p>{{ accessModal.examTitle }}</p>
+      </div>
+
+      <button type="button" class="modal-close" (click)="closeAccessModal()">✕</button>
+    </div>
+
+    <div class="modal-card__body">
+      <div class="modal-info">
+        İmtahan parolunu daxil et. Parol təsdiqlənəndən sonra qaydalar və şərtlər
+        səhifəsinə keçəcəksən.
+      </div>
+
+      <div class="note-box" *ngIf="accessModal.visibleAccessCode">
+        <span>Sənə göstərilən imtahan parolu</span>
+        <p>{{ accessModal.visibleAccessCode }}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="accessCode">İmtahan parolu</label>
+        <input
+          id="accessCode"
+          type="text"
+          [(ngModel)]="accessModal.enteredAccessCode"
+          placeholder="Parolu daxil et"
+          autocomplete="off" />
+      </div>
+
+      <div *ngIf="accessModal.errorMessage" class="inline-error">
+        {{ accessModal.errorMessage }}
+      </div>
+    </div>
+
+    <div class="modal-card__footer">
+      <button type="button" class="secondary-btn" (click)="closeAccessModal()">
+        Bağla
+      </button>
+
+      <button
+        type="button"
+        class="primary-btn"
+        [disabled]="accessModal.isSubmitting"
+        (click)="submitAccessCode()">
+        {{ accessModal.isSubmitting ? 'Yoxlanılır...' : 'Davam et' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,220 @@
+<div class="student-task-detail-page">
+  <div *ngIf="isLoading" class="state-box">
+    <div class="loader"></div>
+    <div>
+      <strong>Yüklənir...</strong>
+      <p>Task detalı backenddən gətirilir.</p>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-box state-box--error">
+    <strong>Xəta baş verdi</strong>
+    <p>{{ errorMessage }}</p>
+    <button type="button" class="primary-btn" (click)="loadTaskDetail()">
+      Yenidən yoxla
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && task && !errorMessage" class="detail-shell">
+    <section class="detail-header">
+      <div class="detail-header__left">
+        <button type="button" class="back-btn" (click)="goBack()">Geri</button>
+
+        <div class="title-block">
+          <div class="title-row">
+            <span class="status-badge" [ngClass]="getStatusClass(task.statusKey)">
+              {{ task.statusLabel }}
+            </span>
+
+            <span class="score-chip">{{ task.score }} / {{ task.maxScore }}</span>
+          </div>
+
+          <h1>{{ task.title }}</h1>
+
+          <p>
+            {{ task.subjectName }} • {{ task.teacherName }}
+            <span *ngIf="task.className"> • {{ task.className }}</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div *ngIf="successMessage" class="success-banner">
+      {{ successMessage }}
+    </div>
+
+    <section class="summary-grid">
+      <article class="summary-card">
+        <span>Tapşırıq tarixi</span>
+        <strong>{{ formatDate(task.assignedDate) }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Son tarix</span>
+        <strong>{{ formatDate(task.dueDate) }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Status</span>
+        <strong>{{ task.statusLabel }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Nəticə</span>
+        <strong>{{ task.score }} / {{ task.maxScore }}</strong>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel-card">
+        <div class="panel-card__header">
+          <h2>Tapşırıq məlumatları</h2>
+        </div>
+
+        <div class="info-list">
+          <div class="info-row">
+            <span>Təsvir</span>
+            <strong>{{ task.description || '-' }}</strong>
+          </div>
+
+          <div class="info-row">
+            <span>Link</span>
+            <strong>
+              <a *ngIf="task.link" [href]="task.link" target="_blank" rel="noopener noreferrer">
+                {{ task.link }}
+              </a>
+              <ng-container *ngIf="!task.link">-</ng-container>
+            </strong>
+          </div>
+
+          <div class="info-row">
+            <span>Qeyd</span>
+            <strong>{{ task.note || '-' }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel-card" *ngIf="canShowSubmitForm">
+        <div class="panel-card__header">
+          <h2>Cavabını göndər</h2>
+          <p>Hazır backendə görə mətn, link və fayl linki göndərilə bilər.</p>
+        </div>
+
+        <div *ngIf="submitValidationError" class="inline-error">
+          {{ submitValidationError }}
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label for="submissionText">Cavab mətni</label>
+            <textarea
+              id="submissionText"
+              name="submissionText"
+              rows="7"
+              [(ngModel)]="submitForm.submissionText"
+              placeholder="Tapşırıq cavabını burada yaz..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="submissionLink">Link</label>
+            <input
+              id="submissionLink"
+              name="submissionLink"
+              type="text"
+              [(ngModel)]="submitForm.submissionLink"
+              placeholder="https://..." />
+          </div>
+
+          <div class="form-group">
+            <label for="submissionFileUrl">Fayl linki</label>
+            <input
+              id="submissionFileUrl"
+              name="submissionFileUrl"
+              type="text"
+              [(ngModel)]="submitForm.submissionFileUrl"
+              placeholder="Drive və ya digər fayl linki" />
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button
+            type="button"
+            class="primary-btn"
+            (click)="submitTask()"
+            [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Göndərilir...' : 'Göndər' }}
+          </button>
+        </div>
+      </article>
+
+      <article class="panel-card" *ngIf="task.isSubmitted || task.submittedAt">
+        <div class="panel-card__header">
+          <h2>Göndərilən cavab</h2>
+        </div>
+
+        <div class="info-list">
+          <div class="info-row">
+            <span>Cavab mətni</span>
+            <strong>{{ task.submissionText || '-' }}</strong>
+          </div>
+
+          <div class="info-row">
+            <span>Link</span>
+            <strong>
+              <a
+                *ngIf="task.submissionLink"
+                [href]="task.submissionLink"
+                target="_blank"
+                rel="noopener noreferrer">
+                {{ task.submissionLink }}
+              </a>
+              <ng-container *ngIf="!task.submissionLink">-</ng-container>
+            </strong>
+          </div>
+
+          <div class="info-row">
+            <span>Fayl linki</span>
+            <strong>
+              <a
+                *ngIf="task.submissionFileUrl"
+                [href]="task.submissionFileUrl"
+                target="_blank"
+                rel="noopener noreferrer">
+                {{ task.submissionFileUrl }}
+              </a>
+              <ng-container *ngIf="!task.submissionFileUrl">-</ng-container>
+            </strong>
+          </div>
+
+          <div class="info-row">
+            <span>Göndərilmə vaxtı</span>
+            <strong>{{ formatDateTime(task.submittedAt) }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel-card" *ngIf="task.isReviewed || task.feedback || task.checkedAt">
+        <div class="panel-card__header">
+          <h2>Yoxlanma nəticəsi</h2>
+        </div>
+
+        <div class="review-grid">
+          <div class="review-box">
+            <span>Bal</span>
+            <strong>{{ task.score }} / {{ task.maxScore }}</strong>
+          </div>
+
+          <div class="review-box">
+            <span>Yoxlanma vaxtı</span>
+            <strong>{{ formatDateTime(task.checkedAt) }}</strong>
+          </div>
+        </div>
+
+        <div class="feedback-box">
+          <span>Müəllim rəyi</span>
+          <p>{{ task.feedback || '-' }}</p>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>

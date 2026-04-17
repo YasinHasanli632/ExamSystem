@@ -1,0 +1,532 @@
+<section class="exam-page">
+  <div class="page-header">
+    <div>
+      <h1>İmtahan idarəetməsi</h1>
+      <p>İmtahan yarat, filtr et, sual qur, düzgün cavabı seç və planı tam idarə et.</p>
+    </div>
+
+    <button class="btn btn-primary" type="button" (click)="openDrawer()">
+      + İmtahan əlavə et
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Ümumi imtahan</span>
+      <strong>{{ stats.totalExams }}</strong>
+    </div>
+    <div class="summary-card">
+      <span>Planlaşdırılıb</span>
+      <strong>{{ stats.plannedExams }}</strong>
+    </div>
+    <div class="summary-card">
+      <span>Aktiv</span>
+      <strong>{{ stats.activeExams }}</strong>
+    </div>
+    <div class="summary-card">
+      <span>Tamamlanıb</span>
+      <strong>{{ stats.completedExams }}</strong>
+    </div>
+    <div class="summary-card">
+      <span>Ümumi sual</span>
+      <strong>{{ stats.totalQuestions }}</strong>
+    </div>
+  </div>
+
+  <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+  <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="filter-card">
+    <div class="card-header">
+      <div>
+        <h2>Filter paneli</h2>
+        <p>Sinif, fənn, müəllim və statusa görə imtahanları süz.</p>
+      </div>
+      <button class="btn btn-ghost" type="button" (click)="resetFilters()">Sıfırla</button>
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group">
+        <label>Axtarış</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.search"
+          name="filterSearch"
+          (ngModelChange)="onSearchChange()"
+          placeholder="İmtahan adı, müəllim, sinif..." />
+      </div>
+
+      <div class="form-group">
+        <label>Sinif</label>
+        <select [(ngModel)]="filter.classId" name="filterClassId" (ngModelChange)="applyFilters()">
+          <option [ngValue]="null">Hamısı</option>
+          <option *ngFor="let classItem of classes" [ngValue]="classItem.id">
+            {{ classItem.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fənn</label>
+        <select [(ngModel)]="filter.subjectId" name="filterSubjectId" (ngModelChange)="applyFilters()">
+          <option [ngValue]="null">Hamısı</option>
+          <option *ngFor="let subject of subjects" [ngValue]="subject.id">
+            {{ subject.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Müəllim</label>
+        <select [(ngModel)]="filter.teacherId" name="filterTeacherId" (ngModelChange)="applyFilters()">
+          <option [ngValue]="null">Hamısı</option>
+          <option *ngFor="let teacher of teachers" [ngValue]="teacher.id">
+            {{ teacher.fullName }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status" name="filterStatus" (ngModelChange)="applyFilters()">
+          <option value="">Hamısı</option>
+          <option value="Draft">Qaralama</option>
+          <option value="Published">Yayımlanıb</option>
+          <option value="Active">Aktiv</option>
+          <option value="Completed">Tamamlanıb</option>
+          <option value="Cancelled">Ləğv edilib</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="exam-list">
+    <div class="exam-card" *ngFor="let exam of filteredExams; trackBy: trackByExamId">
+      <div class="exam-card-top">
+        <div class="exam-main-info">
+          <div class="title-row">
+            <h3>{{ exam.title }}</h3>
+            <span class="status-badge" [ngClass]="getStatusClass(exam.status)">
+              {{ getStatusLabel(exam.status) }}
+            </span>
+          </div>
+
+          <div class="meta-row">
+            <span>{{ exam.className }}</span>
+            <span>{{ exam.subjectName }}</span>
+            <span>{{ getExamDate(exam) | date:'dd.MM.yyyy HH:mm' }}</span>
+            <span>{{ exam.questions.length || exam.totalQuestionCount }} sual</span>
+            <span>{{ exam.totalScore }} bal</span>
+          </div>
+
+          <p>{{ exam.description }}</p>
+        </div>
+
+        <div class="teacher-box">
+          <img [src]="getTeacherAvatar(exam)" [alt]="exam.teacherName" />
+          <div>
+            <strong>{{ exam.teacherName }}</strong>
+            <span>Məsul müəllim</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exam-detail-grid">
+        <div class="detail-card">
+          <small>Ümumi sual</small>
+          <strong>{{ exam.totalQuestionCount }}</strong>
+        </div>
+        <div class="detail-card">
+          <small>Açıq sual</small>
+          <strong>{{ exam.openQuestionCount }}</strong>
+        </div>
+        <div class="detail-card">
+          <small>Qapalı sual</small>
+          <strong>{{ exam.closedQuestionCount }}</strong>
+        </div>
+        <div class="detail-card">
+          <small>Qapalı sual balı</small>
+          <strong>{{ exam.closedQuestionScore }}</strong>
+        </div>
+      </div>
+
+      <div class="question-preview" *ngIf="exam.questions.length">
+        <h4>Suallar preview</h4>
+
+        <div class="question-item" *ngFor="let question of exam.questions">
+          <div class="question-item-top">
+            <div>
+              <strong>{{ question.orderNumber }}. {{ question.questionText }}</strong>
+              <p>{{ getQuestionDisplayType(question) }} • {{ question.points }} bal</p>
+            </div>
+          </div>
+
+          <div class="option-list" *ngIf="isClosedQuestion(question) && question.options?.length">
+            <div
+              class="option-chip"
+              *ngFor="let option of question.options; let optionIndex = index"
+              [class.correct]="option.isCorrect">
+              <span>{{ option.optionKey || getOptionLabel(optionIndex) }}</span>
+              <strong>{{ option.optionText }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="exam-actions">
+        <button class="btn btn-ghost" type="button" (click)="cycleStatus(exam)">Status dəyiş</button>
+        <button class="btn btn-danger" type="button" (click)="deleteExam(exam.id)">Sil</button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!filteredExams.length && !isLoading">
+      <h3>Nəticə tapılmadı</h3>
+      <p>Seçilən filterlərə uyğun imtahan yoxdur.</p>
+    </div>
+  </div>
+
+  <div class="drawer-overlay" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
+
+  <aside class="drawer" [class.open]="isDrawerOpen">
+    <div class="drawer-header">
+      <div>
+        <h2>İmtahan yaradılması</h2>
+        <p *ngIf="drawerStep === 1">1-ci addım: İmtahan məlumatları</p>
+        <p *ngIf="drawerStep === 2">2-ci addım: Sualların qurulması</p>
+      </div>
+
+      <button class="icon-close" type="button" (click)="closeDrawer()">×</button>
+    </div>
+
+    <div class="drawer-body" *ngIf="drawerStep === 1">
+      <div class="step-badge-row">
+        <span class="step-badge active">1</span>
+        <span class="step-line"></span>
+        <span class="step-badge">2</span>
+      </div>
+
+      <div class="form-grid single-column">
+        <div class="form-group">
+          <label>İmtahan adı</label>
+          <input type="text" [(ngModel)]="examForm.title" name="title" placeholder="Məs: 10A Riyaziyyat sınaq imtahanı" />
+        </div>
+
+        <div class="form-group">
+          <label>Sinif</label>
+          <select [(ngModel)]="examForm.classId" name="classId" (ngModelChange)="onExamClassOrSubjectChange()">
+            <option [ngValue]="null">Sinif seç</option>
+            <option *ngFor="let classItem of classes" [ngValue]="classItem.id">
+              {{ getClassDisplay(classItem) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fənn</label>
+          <select [(ngModel)]="examForm.subjectId" name="subjectId" (ngModelChange)="onExamClassOrSubjectChange()">
+            <option [ngValue]="null">Fənn seç</option>
+            <option *ngFor="let subject of subjects" [ngValue]="subject.id">
+              {{ getSubjectDisplay(subject) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Müəllim</label>
+          <select [(ngModel)]="examForm.teacherId" name="teacherId">
+            <option [ngValue]="null">Müəllim seç</option>
+            <option *ngFor="let teacher of availableTeachers; trackBy: trackByTeacherId" [ngValue]="teacher.id">
+              {{ getTeacherDisplay(teacher) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Vaxt</label>
+          <input type="datetime-local" [(ngModel)]="examForm.examDate" name="examDate" />
+        </div>
+
+        <div class="two-col-grid">
+          <div class="form-group">
+            <label>Ümumi sual sayı</label>
+            <input type="number" [(ngModel)]="examForm.totalQuestionCount" name="totalQuestionCount" />
+          </div>
+
+          <div class="form-group">
+            <label>Açıq sual sayı</label>
+            <input type="number" [(ngModel)]="examForm.openQuestionCount" name="openQuestionCount" />
+          </div>
+
+          <div class="form-group">
+            <label>Qapalı sual sayı</label>
+            <input type="number" [(ngModel)]="examForm.closedQuestionCount" name="closedQuestionCount" />
+          </div>
+
+          <div class="form-group">
+            <label>Ümumi qiymətləndirmə</label>
+            <input type="number" [(ngModel)]="examForm.totalScore" name="totalScore" max="100" />
+          </div>
+
+          <div class="form-group">
+            <label>Qapalı sual balı</label>
+            <input type="number" [(ngModel)]="examForm.closedQuestionScore" name="closedQuestionScore" />
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="examForm.status" name="status">
+              <option value="Draft">Qaralama</option>
+              <option value="Published">Yayımlanıb</option>
+              <option value="Active">Aktiv</option>
+              <option value="Completed">Tamamlanıb</option>
+              <option value="Cancelled">Ləğv edilib</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Açıqlama</label>
+          <textarea rows="4" [(ngModel)]="examForm.description" name="description"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Təlimat</label>
+          <textarea rows="3" [(ngModel)]="examForm.instructions" name="instructions"></textarea>
+        </div>
+      </div>
+
+      <div class="preview-strip">
+        <div><strong>Sinif:</strong> {{ selectedClassName }}</div>
+        <div><strong>Fənn:</strong> {{ selectedSubjectName }}</div>
+        <div><strong>Müəllim:</strong> {{ selectedTeacherName }}</div>
+      </div>
+
+      <div class="drawer-actions">
+        <button class="btn btn-primary" type="button" (click)="proceedToQuestions()">
+          İmtahan yarat və suallara keç
+        </button>
+      </div>
+    </div>
+
+    <div class="drawer-body" *ngIf="drawerStep === 2">
+      <div class="step-badge-row">
+        <span class="step-badge done">1</span>
+        <span class="step-line"></span>
+        <span class="step-badge active">2</span>
+      </div>
+
+      <div class="question-plan-card">
+        <h3>İmtahan planı</h3>
+        <div class="plan-grid">
+          <div><small>Ümumi plan</small><strong>{{ examForm.totalQuestionCount }}</strong></div>
+          <div><small>Açıq plan</small><strong>{{ examForm.openQuestionCount }}</strong></div>
+          <div><small>Qapalı plan</small><strong>{{ examForm.closedQuestionCount }}</strong></div>
+          <div><small>Hazır sual</small><strong>{{ questionDrafts.length }}</strong></div>
+          <div><small>Hazır açıq</small><strong>{{ currentOpenDraftCount }}</strong></div>
+          <div><small>Hazır qapalı</small><strong>{{ currentClosedDraftCount }}</strong></div>
+          <div><small>Bal cəmi</small><strong>{{ totalDraftScore }}</strong></div>
+          <div><small>Maksimum</small><strong>{{ examForm.totalScore }}</strong></div>
+        </div>
+      </div>
+
+      <div class="question-toolbar">
+        <button class="btn btn-secondary" type="button" (click)="openQuestionModal('Closed')">
+          + Qapalı sual əlavə et
+        </button>
+        <button class="btn btn-secondary" type="button" (click)="openQuestionModal('Open')">
+          + Açıq sual əlavə et
+        </button>
+      </div>
+
+      <div class="question-draft-list" *ngIf="questionDrafts.length; else noQuestionsYet">
+        <div class="draft-card" *ngFor="let question of questionDrafts; let i = index; trackBy: trackByQuestionId">
+          <div class="draft-card-top">
+            <div>
+              <div class="draft-title-row">
+                <span class="question-order">{{ question.orderNumber }}</span>
+                <h4>{{ question.questionText }}</h4>
+              </div>
+              <p>{{ getQuestionDisplayType(question) }} • {{ question.points }} bal</p>
+            </div>
+
+            <div class="draft-actions">
+              <button class="btn btn-ghost" type="button" (click)="moveQuestionUp(i)">↑</button>
+              <button class="btn btn-ghost" type="button" (click)="moveQuestionDown(i)">↓</button>
+              <button class="btn btn-ghost" type="button" (click)="editQuestion(question)">Edit</button>
+              <button class="btn btn-danger" type="button" (click)="removeQuestion(question.id)">Sil</button>
+            </div>
+          </div>
+
+          <div class="option-list" *ngIf="isClosedQuestion(question) && question.options?.length">
+            <div
+              class="option-chip"
+              *ngFor="let option of question.options; let optionIndex = index"
+              [class.correct]="option.isCorrect">
+              <span>{{ option.optionKey || getOptionLabel(optionIndex) }}</span>
+              <strong>{{ option.optionText }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noQuestionsYet>
+        <div class="empty-mini-state">
+          Hələ sual əlavə edilməyib.
+        </div>
+      </ng-template>
+
+      <div class="drawer-actions sticky-actions">
+        <button class="btn btn-ghost" type="button" (click)="backToMetaStep()">Geri</button>
+        <button class="btn btn-primary" type="button" [disabled]="isSaving" (click)="finalizeExam()">
+          {{ isSaving ? 'Yaradılır...' : 'İmtahanı tamamla' }}
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="modal-overlay" *ngIf="isQuestionModalOpen">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <div>
+          <h3>{{ editingQuestionId ? 'Sualı yenilə' : 'Sual əlavə et' }}</h3>
+          <p>Sual tipini seç, mətni yaz, bal təyin et və təsdiqlə.</p>
+        </div>
+        <button class="icon-close" type="button" (click)="closeQuestionModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid single-column">
+          <div class="form-group">
+            <label>Sual tipi</label>
+            <select [(ngModel)]="questionModalForm.type" name="questionType">
+              <option value="Closed">Qapalı sual</option>
+              <option value="Open">Açıq sual</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Sual mətni</label>
+            <textarea rows="4" [(ngModel)]="questionModalForm.title" name="questionTitle"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Əlavə qeyd</label>
+            <textarea rows="2" [(ngModel)]="questionModalForm.description" name="questionDescription"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Suala bal təyin edin (max 100)</label>
+            <input type="number" [(ngModel)]="questionModalForm.score" name="questionScore" max="100" />
+          </div>
+        </div>
+
+        <div *ngIf="questionModalForm.type === 'Closed'" class="closed-builder">
+          <div class="inline-form-row">
+            <div class="form-group">
+              <label>Variant seçimi</label>
+              <select [(ngModel)]="questionModalForm.selectionMode" name="selectionMode">
+                <option value="single">1 düzgün cavab</option>
+                <option value="multiple">Çox düzgün cavab</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="option-builder">
+            <div class="form-group flex-1">
+              <label>Variant əlavə et</label>
+              <input
+                type="text"
+                [(ngModel)]="pendingOptionValue"
+                name="pendingOptionValue"
+                placeholder="Məs: 16" />
+            </div>
+            <button class="btn btn-secondary" type="button" (click)="addOption()">+ Variant əlavə et</button>
+          </div>
+
+          <div class="option-list" *ngIf="questionModalForm.options.length; else noOptionsYet">
+            <div class="option-chip" *ngFor="let option of questionModalForm.options">
+              <span>{{ option.label }}</span>
+              <strong>{{ option.value }}</strong>
+              <button type="button" class="tiny-remove" (click)="removeOption(option.id)">×</button>
+            </div>
+          </div>
+
+          <ng-template #noOptionsYet>
+            <div class="empty-mini-state">Hələ variant əlavə edilməyib.</div>
+          </ng-template>
+
+          <div class="question-sub-actions">
+            <button class="btn btn-ghost" type="button" (click)="openCorrectAnswerModal()">
+              Cavabları əlavə edin / düzgün cavabı seçin
+            </button>
+          </div>
+
+          <div class="selected-answer-summary" *ngIf="questionModalForm.correctOptionIds.length">
+            <strong>Düzgün cavab seçilib:</strong>
+            <span *ngFor="let option of questionModalForm.options">
+              <ng-container *ngIf="questionModalForm.correctOptionIds.includes(option.id)">
+                {{ option.label }}{{ option.value ? ' - ' + option.value : '' }}
+              </ng-container>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" type="button" (click)="closeQuestionModal()">Ləğv et</button>
+        <button class="btn btn-primary" type="button" (click)="saveQuestion()">Sualı təsdiqlə</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="isCorrectAnswerModalOpen">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>Düzgün cavabı seç</h3>
+          <p>
+            {{ questionModalForm.selectionMode === 'single'
+              ? '1 düzgün variant seç.'
+              : 'Bir və ya bir neçə düzgün variant seç.' }}
+          </p>
+        </div>
+        <button class="icon-close" type="button" (click)="closeCorrectAnswerModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="correct-select-list">
+          <label
+            class="correct-option-row"
+            *ngFor="let option of questionModalForm.options; let i = index"
+            [class.selected]="questionModalForm.correctOptionIds.includes(option.id)">
+            <div class="correct-option-left">
+              <span class="number-badge">{{ i + 1 }}</span>
+              <div>
+                <strong>{{ option.label }}</strong>
+                <span>{{ option.value }}</span>
+              </div>
+            </div>
+
+            <input
+              *ngIf="questionModalForm.selectionMode === 'single'"
+              type="radio"
+              name="correctSingle"
+              [checked]="questionModalForm.correctOptionIds.includes(option.id)"
+              (change)="toggleCorrectOption(option.id)" />
+
+            <input
+              *ngIf="questionModalForm.selectionMode === 'multiple'"
+              type="checkbox"
+              [checked]="questionModalForm.correctOptionIds.includes(option.id)"
+              (change)="toggleCorrectOption(option.id)" />
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" type="button" (click)="closeCorrectAnswerModal()">Bağla</button>
+        <button class="btn btn-primary" type="button" (click)="confirmCorrectAnswers()">Təsdiqlə</button>
+      </div>
+    </div>
+  </div>
+</section>

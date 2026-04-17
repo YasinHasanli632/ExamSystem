@@ -1,0 +1,288 @@
+<section class="subject-page">
+  <div class="page-header">
+    <div>
+      <h1>Fənn idarəetməsi</h1>
+      <p>Fənn əlavə et, müəllim təyin et, müəllimi çıxart və fənni update et.</p>
+    </div>
+
+    <div class="header-badge">
+      <span>{{ filteredSubjects.length }}</span>
+      <small>Göstərilən fənn</small>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="summary-label">Ümumi fənn</span>
+      <strong>{{ stats.totalSubjects }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span class="summary-label">Aktiv</span>
+      <strong>{{ stats.activeSubjects }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span class="summary-label">Passiv</span>
+      <strong>{{ stats.passiveSubjects }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span class="summary-label">Təyin edilmiş müəllim</span>
+      <strong>{{ stats.totalAssignments }}</strong>
+    </div>
+  </div>
+
+  <div class="management-layout">
+    <div class="form-panel card">
+      <div class="card-header">
+        <div>
+          <h2>{{ isEditMode ? 'Fənni yenilə' : 'Yeni fənn əlavə et' }}</h2>
+          <p>
+            {{ isEditMode
+              ? 'Seçilmiş fənnin məlumatlarını redaktə et.'
+              : 'Yeni fənn yarat və uyğun müəllimləri bağla.' }}
+          </p>
+        </div>
+
+        <button
+          *ngIf="isEditMode"
+          type="button"
+          class="btn btn-ghost"
+          (click)="cancelEdit()">
+          Ləğv et
+        </button>
+      </div>
+
+      <div class="alert success" *ngIf="successMessage">{{ successMessage }}</div>
+      <div class="alert error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fənn adı</label>
+          <input
+            type="text"
+            [(ngModel)]="form.name"
+            name="name"
+            placeholder="Məs: Riyaziyyat" />
+        </div>
+
+        <div class="form-group">
+          <label>Fənn kodu</label>
+          <input
+            type="text"
+            [(ngModel)]="form.code"
+            name="code"
+            placeholder="Məs: MATH-101" />
+        </div>
+
+        <div class="form-group">
+          <label>Həftəlik saat</label>
+          <input
+            type="number"
+            [(ngModel)]="form.weeklyHours"
+            name="weeklyHours"
+            placeholder="Məs: 4" />
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="form.status" name="status">
+            <option value="Aktiv">Aktiv</option>
+            <option value="Passiv">Passiv</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Açıqlama</label>
+          <textarea
+            rows="4"
+            [(ngModel)]="form.description"
+            name="description"
+            placeholder="Fənn haqqında qısa məlumat yaz..."></textarea>
+        </div>
+      </div>
+
+      <div class="teacher-assignment card-lite">
+        <div class="section-title-row">
+          <div>
+            <h3>Müəllim təyinatı</h3>
+            <p>Fənnə bir və ya bir neçə müəllim bağlaya bilərsən.</p>
+          </div>
+        </div>
+
+        <div class="teacher-add-row">
+          <select [(ngModel)]="selectedTeacherIdToAdd" name="selectedTeacherIdToAdd">
+            <option [ngValue]="null">Müəllim seç</option>
+            <option
+              *ngFor="let teacher of availableTeachersForAdd; trackBy: trackByTeacherId"
+              [ngValue]="teacher.id">
+              {{ teacher.fullName }} — {{ teacher.status }}
+            </option>
+          </select>
+
+          <button type="button" class="btn btn-secondary" (click)="addTeacherToDraft()">
+            + Müəllim əlavə et
+          </button>
+        </div>
+
+        <div class="teacher-selected-list" *ngIf="selectedTeachers.length; else emptyTeacherState">
+          <div class="teacher-chip" *ngFor="let teacher of selectedTeachers; trackBy: trackByTeacherId">
+            <div class="teacher-chip-left">
+              <img [src]="teacher.photoUrl" [alt]="teacher.fullName" />
+              <div>
+                <strong>{{ teacher.fullName }}</strong>
+                <span>{{ teacher.email }}</span>
+              </div>
+            </div>
+
+            <div class="teacher-chip-right">
+              <span class="status-pill" [class.passive]="teacher.status !== 'Aktiv'">
+                {{ teacher.status }}
+              </span>
+              <button type="button" class="icon-btn danger" (click)="removeTeacherFromDraft(teacher.id)">
+                Sil
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #emptyTeacherState>
+          <div class="empty-mini-state">
+            Hələ müəllim seçilməyib.
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" (click)="submitForm()">
+          {{ isEditMode ? 'Fənni yenilə' : 'Fənni əlavə et' }}
+        </button>
+
+        <button type="button" class="btn btn-ghost" (click)="cancelEdit()">
+          Formu sıfırla
+        </button>
+      </div>
+    </div>
+
+    <div class="list-panel">
+      <div class="filter-panel card">
+        <div class="card-header">
+          <div>
+            <h2>Filter paneli</h2>
+            <p>Fənnləri ada, statusa və müəllimə görə süz.</p>
+          </div>
+
+          <button class="btn btn-ghost" type="button" (click)="resetFilters()">Sıfırla</button>
+        </div>
+
+        <div class="filter-grid">
+          <div class="form-group">
+            <label>Axtarış</label>
+            <input
+              type="text"
+              [(ngModel)]="filter.search"
+              name="search"
+              (ngModelChange)="applyFilters()"
+              placeholder="Fənn adı, kod, müəllim..." />
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="filter.status" name="filterStatus" (ngModelChange)="applyFilters()">
+              <option value="">Hamısı</option>
+              <option value="Aktiv">Aktiv</option>
+              <option value="Passiv">Passiv</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Müəllim</label>
+            <select [(ngModel)]="filter.teacherId" name="filterTeacherId" (ngModelChange)="applyFilters()">
+              <option [ngValue]="null">Hamısı</option>
+              <option *ngFor="let teacher of teachers; trackBy: trackByTeacherId" [ngValue]="teacher.id">
+                {{ teacher.fullName }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="subject-list">
+        <div class="subject-card card" *ngFor="let subject of filteredSubjects; trackBy: trackBySubjectId">
+          <div class="subject-top">
+            <div class="subject-info">
+              <div class="subject-name-row">
+                <h3>{{ subject.name }}</h3>
+                <span class="status-badge" [class.passive]="subject.status === 'Passiv'">
+                  {{ subject.status }}
+                </span>
+              </div>
+
+              <div class="subject-meta">
+                <span>{{ subject.code }}</span>
+                <span>{{ subject.weeklyHours }} saat / həftə</span>
+                <span>{{ subject.teachers.length }} müəllim</span>
+              </div>
+
+              <p class="subject-description">
+                {{ subject.description }}
+              </p>
+            </div>
+
+            <div class="subject-actions">
+              <button class="btn btn-secondary" type="button" (click)="editSubject(subject)">
+                Update et
+              </button>
+              <button class="btn btn-ghost" type="button" (click)="toggleStatus(subject)">
+                Status dəyiş
+              </button>
+              <button class="btn btn-danger" type="button" (click)="deleteSubject(subject.id)">
+                Sil
+              </button>
+            </div>
+          </div>
+
+          <div class="teacher-section">
+            <div class="teacher-section-header">
+              <h4>Təyin edilmiş müəllimlər</h4>
+            </div>
+
+            <div class="teacher-grid" *ngIf="subject.teachers.length; else noTeacherAssigned">
+              <div class="teacher-card" *ngFor="let teacher of subject.teachers">
+                <div class="teacher-card-left">
+                  <img [src]="teacher.teacherPhotoUrl" [alt]="teacher.teacherName" />
+                  <div>
+                    <strong>{{ teacher.teacherName }}</strong>
+                    <span>{{ teacher.teacherEmail }}</span>
+                  </div>
+                </div>
+
+                <div class="teacher-card-right">
+                  <span class="status-pill" [class.passive]="teacher.teacherStatus !== 'Aktiv'">
+                    {{ teacher.teacherStatus }}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="icon-btn danger"
+                    (click)="removeTeacherFromExistingSubject(subject.id, teacher.teacherId)">
+                    Sil
+                  </button>
+                </div>
+              </div>
+            </div>
+ 
+            <ng-template #noTeacherAssigned>
+              <div class="empty-mini-state">Bu fənnə hələ müəllim bağlanmayıb.</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="empty-main-state card" *ngIf="!filteredSubjects.length">
+          Filter nəticəsinə uyğun fənn tapılmadı.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

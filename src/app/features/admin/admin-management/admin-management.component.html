@@ -1,0 +1,347 @@
+<section class="admin-management-page">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">Admin Management</span>
+      <h1>Adminlərin idarə olunması</h1>
+      <p>
+        Sistem administratorlarını görüntülə, filter et, yeni admin yarat və statuslarını idarə et.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-light" type="button" (click)="toggleFilters()">
+        {{ showFilters() ? 'Filteri gizlət' : 'Filteri göstər' }}
+      </button>
+
+      <a
+        class="btn btn-outline"
+        routerLink="/admin/users/admins/new"
+        *ngIf="isCurrentUserSuperAdmin()"
+      >
+        Ayrı səhifədə yarat
+      </a>
+
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="openCreateDrawer()"
+        *ngIf="isCurrentUserSuperAdmin()"
+      >
+        + Yeni admin
+      </button>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <span class="summary-label">Ümumi admin</span>
+      <strong>{{ totalCount() }}</strong>
+      <small>Filter nəticəsi</small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Aktiv</span>
+      <strong>{{ activeCount() }}</strong>
+      <small>Aktiv hesablar</small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Passiv</span>
+      <strong>{{ inactiveCount() }}</strong>
+      <small>Bağlı hesablar</small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Super Admin</span>
+      <strong>{{ superAdminCount() }}</strong>
+      <small>Yüksək səlahiyyət</small>
+    </article>
+  </div>
+
+  <section class="filter-panel" *ngIf="showFilters()">
+    <div class="filter-grid">
+      <div class="filter-group search-group">
+        <label for="searchText">Axtarış</label>
+        <input
+          id="searchText"
+          type="text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          placeholder="Ad, username, email, telefon..."
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="roleFilter">Rol</label>
+        <select
+          id="roleFilter"
+          [ngModel]="selectedRole()"
+          (ngModelChange)="selectedRole.set($event)"
+        >
+          <option value="">Hamısı</option>
+          <option value="Admin">Admin</option>
+          <option value="IsSuperAdmin">Super Admin</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="statusFilter">Status</label>
+        <select
+          id="statusFilter"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+        >
+          <option value="">Hamısı</option>
+          <option value="active">Aktiv</option>
+          <option value="inactive">Passiv</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-light" type="button" (click)="resetFilters()">
+          Sıfırla
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="message error" *ngIf="errorMessage()">
+    {{ errorMessage() }}
+  </div>
+
+  <div class="message success" *ngIf="successMessage()">
+    {{ successMessage() }}
+  </div>
+
+  <section class="table-card">
+    <div class="table-head">
+      <div>
+        <h2>Admin siyahısı</h2>
+        <p>Backend-dən gələn admin və super admin istifadəçiləri</p>
+      </div>
+
+      <button class="refresh-btn" type="button" (click)="loadAdmins()" [disabled]="loading()">
+        {{ loading() ? 'Yüklənir...' : 'Yenilə' }}
+      </button>
+    </div>
+
+    <div class="loading-state" *ngIf="loading()">
+      Məlumatlar yüklənir...
+    </div>
+
+    <div class="empty-state" *ngIf="!loading() && !filteredAdmins().length">
+      Filterə uyğun admin tapılmadı.
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading() && filteredAdmins().length">
+      <table>
+        <thead>
+          <tr>
+            <th>İstifadəçi</th>
+            <th>Rol</th>
+            <th>Əlaqə</th>
+            <th>Yaş</th>
+            <th>Status</th>
+            <th>Yaradılıb</th>
+            <th class="actions-column">Əməliyyatlar</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let admin of filteredAdmins(); trackBy: trackByUserId">
+            <td>
+              <div class="user-cell">
+                <ng-container *ngIf="admin.photoUrl; else initialsAvatar">
+                  <img [src]="admin.photoUrl!" [alt]="admin.fullName" />
+                </ng-container>
+
+                <ng-template #initialsAvatar>
+                  <div class="avatar-fallback">
+                    {{ getInitials(admin.fullName) }}
+                  </div>
+                </ng-template>
+
+                <div class="user-meta">
+                  <strong>{{ admin.fullName }}</strong>
+                  <span>{{ admin.username }}</span>
+                  <small>{{ admin.email }}</small>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span
+                class="role-chip"
+                [class.super-admin]="admin.role === 'IsSuperAdmin'"
+              >
+                {{ getRoleBadgeText(admin.role) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="contact-cell">
+                <span>{{ admin.phoneNumber || '-' }}</span>
+              </div>
+            </td>
+
+            <td>{{ admin.age ?? '-' }}</td>
+
+            <td>
+              <span class="status-chip" [class.inactive]="!admin.isActive">
+                {{ getStatusText(admin.isActive) }}
+              </span>
+            </td>
+
+            <td>{{ admin.createdAt | date: 'dd.MM.yyyy' }}</td>
+
+            <td class="actions-column">
+              <div class="row-actions">
+                <button class="action-btn view" type="button" (click)="goToDetail(admin)">
+                  Ətraflı bax
+                </button>
+
+                <button
+                  class="action-btn edit"
+                  type="button"
+                  (click)="goToEdit(admin)"
+                  *ngIf="canEdit(admin)"
+                >
+                  Düzəliş et
+                </button>
+
+                <button
+                  class="action-btn status"
+                  type="button"
+                  (click)="toggleStatus(admin)"
+                  *ngIf="canToggleStatus(admin)"
+                >
+                  {{ admin.isActive ? 'Passiv et' : 'Aktiv et' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="drawer-backdrop" *ngIf="showCreateDrawer()" (click)="closeCreateDrawer()"></div>
+
+  <aside class="drawer" [class.open]="showCreateDrawer()">
+    <div class="drawer-header">
+      <div>
+        <h2>Yeni admin yarat</h2>
+        <p>Bu paneldən birbaşa yeni admin yarada bilərsən</p>
+      </div>
+
+      <button class="drawer-close" type="button" (click)="closeCreateDrawer()">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="firstName">Ad</label>
+          <input id="firstName" type="text" [(ngModel)]="adminForm.firstName" />
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Soyad</label>
+          <input id="lastName" type="text" [(ngModel)]="adminForm.lastName" />
+        </div>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input id="username" type="text" [(ngModel)]="adminForm.username" />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" [(ngModel)]="adminForm.email" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Şifrə</label>
+          <input id="password" type="password" [(ngModel)]="adminForm.password" />
+        </div>
+
+        <div class="form-group">
+          <label for="role">Rol</label>
+          <select id="role" [(ngModel)]="adminForm.role">
+            <option *ngFor="let role of roleOptions" [value]="role">
+              {{ getRoleBadgeText(role) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="birthDate">Doğum tarixi</label>
+          <input id="birthDate" type="date" [(ngModel)]="adminForm.birthDate" />
+        </div>
+
+        <div class="form-group">
+          <label for="phoneNumber">Telefon</label>
+          <input id="phoneNumber" type="text" [(ngModel)]="adminForm.phoneNumber" />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="photoUrl">Şəkil linki</label>
+          <input id="photoUrl" type="text" [(ngModel)]="adminForm.photoUrl" />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="details">Əlavə məlumat</label>
+          <textarea
+            id="details"
+            rows="4"
+            [(ngModel)]="adminForm.details"
+          ></textarea>
+        </div>
+
+        <div class="form-group checkbox-group full-width">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="adminForm.isActive" />
+            Aktiv olaraq yaradılsın
+          </label>
+        </div>
+      </div>
+
+      <div class="preview-card">
+        <div class="preview-top">
+          <ng-container *ngIf="adminForm.photoUrl; else previewFallback">
+            <img [src]="adminForm.photoUrl" alt="preview" />
+          </ng-container>
+
+          <ng-template #previewFallback>
+            <div class="avatar-fallback large">
+              {{ getInitials((adminForm.firstName + ' ' + adminForm.lastName).trim() || 'Admin') }}
+            </div>
+          </ng-template>
+
+          <div>
+            <h3>{{ (adminForm.firstName + ' ' + adminForm.lastName).trim() || 'Yeni Admin' }}</h3>
+            <span class="role-chip" [class.super-admin]="adminForm.role === 'IsSuperAdmin'">
+              {{ getRoleBadgeText(adminForm.role) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="preview-list">
+          <div><strong>Username:</strong> {{ adminForm.username || '-' }}</div>
+          <div><strong>Email:</strong> {{ adminForm.email || '-' }}</div>
+          <div><strong>Telefon:</strong> {{ adminForm.phoneNumber || '-' }}</div>
+          <div><strong>Status:</strong> {{ adminForm.isActive ? 'Aktiv' : 'Passiv' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button class="btn btn-light" type="button" (click)="closeCreateDrawer()">
+        Ləğv et
+      </button>
+
+      <button class="btn btn-primary" type="button" (click)="saveAdmin()" [disabled]="submitting()">
+        {{ submitting() ? 'Yaradılır...' : 'Yadda saxla' }}
+      </button>
+    </div>
+  </aside>
+</section>

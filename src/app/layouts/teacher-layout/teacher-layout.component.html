@@ -1,0 +1,111 @@
+<div class="teacher-shell">
+  <aside class="sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-top">
+      <div class="brand-row">
+        <div class="brand-mark">T</div>
+
+        <div class="brand-meta" *ngIf="!isCollapsed">
+          <h2>Exam System</h2>
+          <p>Teacher Panel</p>
+        </div>
+
+        <button class="sidebar-toggle" type="button" (click)="toggleSidebar()">
+          {{ isCollapsed ? '→' : '←' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <div class="workspace-card" *ngIf="!isCollapsed">
+        <span class="workspace-label">Teacher Workspace</span>
+        <strong>Dərs və imtahan idarəetməsi</strong>
+        <small>Şəxsi müəllim paneli aktivdir</small>
+      </div>
+
+      <nav class="menu-list">
+        <a
+          *ngFor="let item of menuItems"
+          [routerLink]="item.route"
+          class="menu-item"
+          [class.active]="isActive(item.route)">
+          <div class="menu-main">
+            <span class="menu-icon">{{ item.icon }}</span>
+
+            <span class="menu-text" *ngIf="!isCollapsed">
+              {{ item.label }}
+            </span>
+          </div>
+
+          <span class="menu-badge" *ngIf="!isCollapsed && item.badge">
+            {{ item.badge }}
+          </span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-panel" [class.compact]="isCollapsed">
+        <div class="user-avatar">
+          {{ currentUserName.charAt(0) }}
+        </div>
+
+        <div class="user-info" *ngIf="!isCollapsed">
+          <strong>{{ currentUserName }}</strong>
+          <span>{{ currentUserRole }}</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="page-info">
+          <h1>{{ pageTitle }}</h1>
+          <p>{{ pageDescription }}</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+          <input
+            type="text"
+            name="teacherSearch"
+            [(ngModel)]="searchText"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Panel daxilində axtarış..."
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false" />
+        </div>
+
+        <button
+          type="button"
+          class="icon-btn notification-btn"
+          (click)="goToNotifications()"
+          title="Bildirişlər">
+          🔔
+          <span class="notification-count" *ngIf="notificationCount > 0">
+            {{ notificationCount > 99 ? '99+' : notificationCount }}
+          </span>
+        </button>
+
+        <button type="button" class="profile-btn" (click)="goToProfile()">
+          <div class="profile-avatar">{{ currentUserName.charAt(0) }}</div>
+          <div class="profile-meta">
+            <strong>{{ currentUserName }}</strong>
+            <span>{{ currentUserEmail }}</span>
+          </div>
+        </button>
+
+        <button type="button" class="logout-btn" (click)="logout()">Çıxış</button>
+      </div>
+    </header>
+
+    <section class="content-area">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

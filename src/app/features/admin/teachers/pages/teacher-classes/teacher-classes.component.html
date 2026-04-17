@@ -1,0 +1,228 @@
+<section class="teacher-classes-page">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Teacher Panel / Siniflərim</p>
+      <h1>Siniflərim</h1>
+      <p class="page-description">
+        Yalnız sizə aid siniflər göstərilir. Buradan davamiyyət cədvəli, task bölməsi
+        və imtahan yaratma axınına keçid edə bilərsiniz.
+      </p>
+    </div>
+
+    <button class="refresh-btn" type="button" (click)="loadMyClasses()">
+      Yenilə
+    </button>
+  </header>
+
+  <div *ngIf="isLoading" class="state-card loading-state">
+    <div class="state-icon">⏳</div>
+    <div>
+      <strong>Siniflər yüklənir...</strong>
+      <span>Müəllimə aid sinif məlumatları hazırlanır.</span>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">
+    <div class="state-icon">⚠️</div>
+    <div>
+      <strong>Xəta baş verdi</strong>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage">
+    <section class="summary-grid">
+      <article class="summary-card">
+        <span class="summary-label">Ümumi sinif sayı</span>
+        <strong>{{ classCards.length }}</strong>
+        <small>Sizə təyin edilmiş siniflər</small>
+      </article>
+
+      <article class="summary-card">
+        <span class="summary-label">Ümumi şagird sayı</span>
+        <strong>{{ totalStudents }}</strong>
+        <small>Bütün siniflər üzrə cəm</small>
+      </article>
+
+      <article class="summary-card">
+        <span class="summary-label">Orta davamiyyət faizi</span>
+        <strong>{{ formatPercent(averageAttendanceRate) }}</strong>
+        <small>Present + Late göstəricisi</small>
+      </article>
+
+      <article class="summary-card">
+        <span class="summary-label">Orta imtahan faizi</span>
+        <strong>{{ formatScore(averageExamScore) }}</strong>
+        <small>Siniflər üzrə orta nəticə</small>
+      </article>
+    </section>
+
+    <section class="filter-card">
+      <div class="filter-head">
+        <div>
+          <h2>Filter və axtarış</h2>
+          <p>Sinif adı, fənn və ya ən yüksək nəticəli tələbəyə görə axtarış et.</p>
+        </div>
+
+        <button class="clear-btn" type="button" (click)="clearFilters()">
+          Filterləri sıfırla
+        </button>
+      </div>
+
+      <div class="filter-grid">
+        <div class="field-group field-group--wide">
+          <label for="searchText">Axtarış</label>
+          <input
+            id="searchText"
+            type="text"
+            [(ngModel)]="searchText"
+            (ngModelChange)="applyFilters()"
+            placeholder="Sinif adı, fənn və ya ən yaxşı tələbə..."
+          />
+        </div>
+
+        <div class="field-group">
+          <label for="selectedSubject">Fənn</label>
+          <select
+            id="selectedSubject"
+            [(ngModel)]="selectedSubject"
+            (ngModelChange)="applyFilters()"
+          >
+            <option value="">Bütün fənlər</option>
+            <option *ngFor="let subject of subjectOptions" [value]="subject">
+              {{ subject }}
+            </option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="sortBy">Sıralama</label>
+          <select
+            id="sortBy"
+            [(ngModel)]="sortBy"
+            (ngModelChange)="applyFilters()"
+          >
+            <option value="name-asc">Ada görə (A-Z)</option>
+            <option value="name-desc">Ada görə (Z-A)</option>
+            <option value="student-desc">Şagird sayına görə</option>
+            <option value="attendance-desc">Davamiyyət faizinə görə</option>
+            <option value="exam-desc">İmtahan faizinə görə</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="filteredClassCards.length; else emptyState" class="class-grid">
+      <article
+        class="class-card"
+        *ngFor="let classItem of filteredClassCards; trackBy: trackByClass"
+      >
+        <div class="class-card__header">
+          <div>
+            <p class="class-card__eyebrow">Sinif kartı</p>
+            <h3>{{ classItem.classRoomName }}</h3>
+          </div>
+
+          <span
+            class="attendance-badge"
+            [ngClass]="{
+              'attendance-badge--good': getAttendanceState(classItem.attendanceRate) === 'good',
+              'attendance-badge--medium': getAttendanceState(classItem.attendanceRate) === 'medium',
+              'attendance-badge--low': getAttendanceState(classItem.attendanceRate) === 'low'
+            }"
+          >
+            {{ formatPercent(classItem.attendanceRate) }}
+          </span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span>Şagird sayı</span>
+            <strong>{{ classItem.studentCount }}</strong>
+          </div>
+
+          <div class="stat-box">
+            <span>Davamiyyət faizi</span>
+            <strong>{{ formatPercent(classItem.attendanceRate) }}</strong>
+          </div>
+
+          <div class="stat-box">
+            <span>İmtahan faizi</span>
+            <strong>{{ formatScore(classItem.averageScore) }}</strong>
+          </div>
+
+          <div class="stat-box">
+            <span>İmtahan sayı</span>
+            <strong>{{ classItem.examCount }}</strong>
+          </div>
+        </div>
+
+        <div class="subject-block">
+          <p class="block-title">Fənlər</p>
+
+          <div class="subject-list" *ngIf="classItem.subjectNames.length; else noSubjectBlock">
+            <span class="subject-chip" *ngFor="let subject of classItem.subjectNames">
+              {{ subject }}
+            </span>
+          </div>
+
+          <ng-template #noSubjectBlock>
+            <div class="info-empty">Bu sinifə bağlı fənn tapılmadı.</div>
+          </ng-template>
+        </div>
+
+        <div class="top-student" *ngIf="classItem.topStudentName; else noTopStudent">
+          <p class="block-title">Ən yüksək nəticəli tələbə</p>
+          <div class="top-student__card">
+            <div>
+              <strong>{{ classItem.topStudentName }}</strong>
+              <small>Sinif üzrə ən yaxşı nəticə</small>
+            </div>
+
+            <span>{{ formatScore(classItem.topStudentScore) }}</span>
+          </div>
+        </div>
+
+        <ng-template #noTopStudent>
+          <div class="info-empty info-empty--small">
+            Bu sinif üzrə ən yüksək nəticə məlumatı yoxdur.
+          </div>
+        </ng-template>
+
+        <div class="actions">
+          <button
+            class="action-btn action-btn--primary"
+            type="button"
+            (click)="goToAttendance(classItem)"
+          >
+            Davamiyyət cədvəli
+          </button>
+
+          <button
+            class="action-btn action-btn--secondary"
+            type="button"
+            (click)="goToTasks(classItem)"
+          >
+            Taskları yoxla
+          </button>
+
+          <button
+            class="action-btn action-btn--dark"
+            type="button"
+            (click)="goToExamCreate(classItem)"
+          >
+            İmtahan yarat
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <ng-template #emptyState>
+      <section class="empty-state">
+        <div class="empty-state__icon">📚</div>
+        <h3>Sinif tapılmadı</h3>
+        <p>Filter nəticəsinə uyğun sinif yoxdur və ya sizə hələ sinif təyin edilməyib.</p>
+      </section>
+    </ng-template>
+  </ng-container>
+</section>

@@ -1,0 +1,281 @@
+<section class="exam-list-page">
+  <div class="page-header">
+    <div>
+      <h1>İmtahan siyahısı</h1>
+      <p>
+        Bütün imtahanları sinif, fənn, müəllim, status və tarix üzrə izlə.
+        Buradan təxirə sal, ətraflı bax və sil əməliyyatlarını idarə et.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <a class="btn btn-primary" routerLink="/admin/exams/create">+ Yeni imtahan</a>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="summary-label">Ümumi imtahan</span>
+      <strong>{{ filteredExams.length }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Qaralama</span>
+      <strong>{{ getStatusCount('Draft') }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Aktiv</span>
+      <strong>{{ getStatusCount('Active') }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Tamamlanıb</span>
+      <strong>{{ getStatusCount('Completed') }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Ləğv edilib</span>
+      <strong>{{ getStatusCount('Cancelled') }}</strong>
+    </div>
+  </div>
+
+  <div class="toast" *ngIf="toastMessage" [ngClass]="toastType">
+    {{ toastMessage }}
+  </div>
+
+  <div class="state-card error" *ngIf="pageError">
+    {{ pageError }}
+  </div>
+
+  <section class="filter-card">
+    <div class="card-header">
+      <div>
+        <h2>Filter paneli</h2>
+        <p>İmtahanları sürətli şəkildə tapmaq və idarə etmək üçün filtrlərdən istifadə et.</p>
+      </div>
+
+      <button class="btn btn-ghost" type="button" (click)="resetFilters()">Sıfırla</button>
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group">
+        <label>Axtarış</label>
+        <input
+          type="text"
+          [(ngModel)]="filter.search"
+          (ngModelChange)="onSearchChange()"
+          placeholder="İmtahan adı, müəllim, sinif..." />
+      </div>
+
+      <div class="form-group">
+        <label>Sinif</label>
+        <select [(ngModel)]="filter.classId" (ngModelChange)="applyFilters()">
+          <option [ngValue]="null">Hamısı</option>
+          <option *ngFor="let classItem of classes" [ngValue]="classItem.id">
+            {{ classItem.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fənn</label>
+        <select [(ngModel)]="filter.subjectId" (ngModelChange)="applyFilters()">
+          <option [ngValue]="null">Hamısı</option>
+          <option *ngFor="let subject of subjects" [ngValue]="subject.id">
+            {{ subject.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Müəllim</label>
+        <select [(ngModel)]="filter.teacherId" (ngModelChange)="applyFilters()">
+          <option [ngValue]="null">Hamısı</option>
+          <option *ngFor="let teacher of teachers" [ngValue]="teacher.id">
+            {{ teacher.fullName }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="filter.status" (ngModelChange)="applyFilters()">
+          <option value="">Hamısı</option>
+          <option value="Draft">Qaralama</option>
+          <option value="Published">Yayımlanıb</option>
+          <option value="Active">Aktiv</option>
+          <option value="Completed">Tamamlanıb</option>
+          <option value="Cancelled">Ləğv edilib</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <div class="state-card" *ngIf="pageLoading">İmtahan siyahısı yüklənir...</div>
+
+  <section class="exam-list-wrapper" *ngIf="!pageLoading">
+    <article class="exam-card" *ngFor="let exam of filteredExams; trackBy: trackById">
+      <div class="exam-card-top">
+        <div class="exam-main-info">
+          <div class="title-row">
+            <h3>{{ exam.title }}</h3>
+            <span class="status-badge" [ngClass]="getStatusClass(exam.status)">
+              {{ getStatusLabel(exam.status) }}
+            </span>
+          </div>
+
+          <div class="meta-row">
+            <span>Sinif: {{ exam.className || 'Təyin edilməyib' }}</span>
+            <span>Fənn: {{ exam.subjectName || '-' }}</span>
+            <span>Müəllim: {{ exam.teacherName || '-' }}</span>
+          </div>
+
+          <p class="description">
+            İmtahan vaxtı:
+            <strong>{{ formatDateTime(exam.startTime) }}</strong>
+            —
+            <strong>{{ formatDateTime(exam.endTime) }}</strong>
+          </p>
+        </div>
+
+        <div class="exam-side-box">
+          <div class="side-box-row">
+            <small>Müddət</small>
+            <strong>{{ getDurationLabel(exam) }}</strong>
+          </div>
+          <div class="side-box-row">
+            <small>Sual sayı</small>
+            <strong>{{ exam.totalQuestionCount }}</strong>
+          </div>
+          <div class="side-box-row">
+            <small>Yayımlanma</small>
+            <strong>{{ exam.isPublished ? 'Bəli' : 'Xeyr' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="mini-stat">
+          <small>Başlama</small>
+          <strong>{{ formatDateTime(exam.startTime) }}</strong>
+        </div>
+        <div class="mini-stat">
+          <small>Bitmə</small>
+          <strong>{{ formatDateTime(exam.endTime) }}</strong>
+        </div>
+        <div class="mini-stat">
+          <small>Ümumi sual</small>
+          <strong>{{ exam.totalQuestionCount }}</strong>
+        </div>
+        <div class="mini-stat">
+          <small>Status</small>
+          <strong>{{ getStatusLabel(exam.status) }}</strong>
+        </div>
+      </div>
+
+      <div class="exam-actions">
+        <button
+  *ngIf="exam.status !== 'Completed'"
+  class="btn btn-secondary"
+  type="button"
+  (click)="openDelayModal(exam)">
+  Təxirə sal
+</button>
+
+        <button class="btn btn-secondary" type="button" (click)="openDetail(exam.id)">
+          Ətraflı bax
+        </button>
+
+        <button
+          class="btn btn-danger"
+          type="button"
+          [disabled]="deleteLoadingId === exam.id"
+          (click)="deleteExam(exam)">
+          {{ deleteLoadingId === exam.id ? 'Silinir...' : 'Sil' }}
+        </button>
+      </div>
+    </article>
+
+    <div class="empty-state" *ngIf="!filteredExams.length">
+      <h3>Nəticə tapılmadı</h3>
+      <p>Seçilən filterlərə uyğun imtahan yoxdur.</p>
+    </div>
+  </section>
+</section>
+
+<div class="modal-overlay" *ngIf="isDelayModalOpen" (click)="closeDelayModal()"></div>
+
+<div class="modal" *ngIf="isDelayModalOpen">
+  <div class="modal-header">
+    <div>
+      <h3>İmtahanı təxirə sal</h3>
+      <p>{{ delayDraft.examTitle }}</p>
+    </div>
+
+    <button class="modal-close" type="button" (click)="closeDelayModal()">×</button>
+  </div>
+
+  <div class="modal-body">
+    <div class="state-card warning" *ngIf="delayDraft.examTitle">
+      Hazırkı vaxt aralığı: {{ getDelayNote({ 
+        id: delayDraft.examId || 0,
+        title: delayDraft.examTitle,
+        classId: null,
+        className: '',
+        subjectId: undefined,
+        subjectName: '',
+        teacherId: undefined,
+        teacherName: '',
+        startTime: delayDraft.startTime,
+        endTime: delayDraft.endTime,
+        durationMinutes: delayDraft.durationMinutes,
+        status: 'Draft',
+        totalQuestionCount: 0,
+        openQuestionCount: 0,
+        closedQuestionCount: 0,
+        totalScore: 0,
+        closedQuestionScore: 0,
+        description: '',
+        instructions: '',
+        isPublished: false,
+        questions: []
+      }) }}
+    </div>
+
+    <div class="form-grid two-column">
+      <div class="form-group">
+        <label>Yeni başlama vaxtı</label>
+        <input
+          type="datetime-local"
+          [(ngModel)]="delayDraft.startTime"
+          (ngModelChange)="onDelayDateRangeChanged()" />
+      </div>
+
+      <div class="form-group">
+        <label>Yeni bitmə vaxtı</label>
+        <input
+          type="datetime-local"
+          [(ngModel)]="delayDraft.endTime"
+          (ngModelChange)="onDelayDateRangeChanged()" />
+      </div>
+
+      <div class="form-group">
+        <label>Müddət (dəqiqə)</label>
+        <input
+          type="number"
+          min="1"
+          [(ngModel)]="delayDraft.durationMinutes"
+          (ngModelChange)="syncDelayEndTimeFromDuration()" />
+      </div>
+    </div>
+
+    <div class="state-card error" *ngIf="delayError">{{ delayError }}</div>
+  </div>
+
+  <div class="modal-actions">
+    <button class="btn btn-ghost" type="button" [disabled]="saveLoading" (click)="closeDelayModal()">
+      Bağla
+    </button>
+
+    <button class="btn btn-primary" type="button" [disabled]="saveLoading" (click)="confirmDelay()">
+      {{ saveLoading ? 'Yadda saxlanır...' : 'Təsdiq et' }}
+    </button>
+  </div>
+</div>

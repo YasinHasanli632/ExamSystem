@@ -1,0 +1,161 @@
+<div class="profile-page">
+  <div class="page-header">
+    <div>
+      <h1>Profilim</h1>
+      <p>Hesab məlumatlarını idarə et, profilini yenilə və şifrəni dəyiş.</p>
+    </div>
+  </div>
+
+  <div class="state-card loading-card" *ngIf="isLoading">
+    Profil məlumatları yüklənir...
+  </div>
+
+  <div class="state-card error-card" *ngIf="!isLoading && profileErrorMessage">
+    {{ profileErrorMessage }}
+  </div>
+
+  <div class="profile-grid" *ngIf="!isLoading">
+    <div class="profile-card profile-summary">
+      <div class="avatar-lg">
+        <ng-container *ngIf="photoUrl?.trim(); else textAvatar">
+          <img [src]="photoUrl" alt="admin-avatar" class="avatar-image" />
+        </ng-container>
+        <ng-template #textAvatar>{{ avatarText }}</ng-template>
+      </div>
+
+      <h2>{{ fullName || '-' }}</h2>
+      <span class="role-badge">{{ role || '-' }}</span>
+      <p>{{ email || 'Email yoxdur' }}</p>
+
+      <div class="summary-meta">
+        <div>
+          <span class="meta-label">İstifadəçi adı</span>
+          <strong>{{ username || '-' }}</strong>
+        </div>
+
+        <div>
+          <span class="meta-label">Status</span>
+          <strong>{{ statusText }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <h3>Əsas məlumatlar</h3>
+
+      <div class="message success" *ngIf="profileSuccessMessage">
+        {{ profileSuccessMessage }}
+      </div>
+
+      <div class="message error" *ngIf="profileErrorMessage && !isLoading">
+        {{ profileErrorMessage }}
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Ad</label>
+          <input type="text" [(ngModel)]="firstName" />
+        </div>
+
+        <div class="form-group">
+          <label>Soyad</label>
+          <input type="text" [(ngModel)]="lastName" />
+        </div>
+
+        <div class="form-group">
+          <label>İstifadəçi adı</label>
+          <input type="text" [(ngModel)]="username" />
+        </div>
+
+        <div class="form-group">
+          <label>Rol</label>
+          <input type="text" [ngModel]="role" readonly />
+        </div>
+
+        <div class="form-group full-width">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="email" />
+        </div>
+
+        <div class="form-group">
+          <label>Telefon</label>
+          <input type="text" [(ngModel)]="phoneNumber" />
+        </div>
+
+        <div class="form-group">
+          <label>Doğum tarixi</label>
+          <input type="date" [(ngModel)]="birthDate" />
+        </div>
+
+        <div class="form-group full-width">
+          <label>Şəkil URL</label>
+          <input type="text" [(ngModel)]="photoUrl" />
+        </div>
+
+        <div class="form-group full-width">
+          <label>Əlavə məlumat</label>
+          <textarea [(ngModel)]="details" rows="4"></textarea>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="primary-btn" (click)="saveProfile()" [disabled]="isSavingProfile">
+          {{ isSavingProfile ? 'Yadda saxlanır...' : 'Məlumatları yadda saxla' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <h3>Şifrəni dəyiş</h3>
+
+      <div class="message success" *ngIf="passwordSuccessMessage">
+        {{ passwordSuccessMessage }}
+      </div>
+
+      <div class="message error" *ngIf="passwordErrorMessage">
+        {{ passwordErrorMessage }}
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Mövcud şifrə</label>
+          <input type="password" [(ngModel)]="currentPassword" />
+        </div>
+
+        <div class="form-group">
+          <label>Yeni şifrə</label>
+          <input type="password" [(ngModel)]="newPassword" />
+        </div>
+
+        <div class="form-group">
+          <label>Yeni şifrə (təkrar)</label>
+          <input type="password" [(ngModel)]="confirmPassword" />
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="secondary-btn" (click)="changePassword()" [disabled]="isChangingPassword">
+          {{ isChangingPassword ? 'Yenilənir...' : 'Şifrəni yenilə' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <h3>Profil şəkli önizləmə</h3>
+
+      <div class="upload-box">
+        <div class="avatar-preview">
+          <ng-container *ngIf="photoUrl?.trim(); else previewTextAvatar">
+            <img [src]="photoUrl" alt="admin-avatar-preview" class="avatar-preview-image" />
+          </ng-container>
+          <ng-template #previewTextAvatar>{{ avatarText }}</ng-template>
+        </div>
+
+        <div class="preview-meta">
+          <strong>{{ fullName || '-' }}</strong>
+          <span>{{ email || 'Email yoxdur' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,250 @@
+<section class="student-create-page">
+  <div class="top-bar">
+    <div>
+      <a class="back-link" routerLink="/admin/users/students">← Şagird siyahısına qayıt</a>
+      <h1>Yeni şagird əlavə et</h1>
+      <p>Save zamanı sistem əvvəl user account, sonra student profile yaradır.</p>
+    </div>
+  </div>
+
+  <div class="form-alert error-alert" *ngIf="hasError">
+    <div class="alert-icon">⚠</div>
+
+    <div class="alert-content">
+      <strong>{{ errorTitle || 'Xəta baş verdi' }}</strong>
+      <p>{{ errorMessage }}</p>
+
+      <ul *ngIf="errorDetails.length > 0">
+        <li *ngFor="let detail of errorDetails">{{ detail }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="form-alert success-alert" *ngIf="successMessage">
+    <div class="alert-icon">✓</div>
+
+    <div class="alert-content">
+      <strong>Uğurlu əməliyyat</strong>
+      <p>{{ successMessage }}</p>
+    </div>
+  </div>
+
+  <div class="loading-box" *ngIf="loadingLookups">
+    Sinif məlumatları yüklənir...
+  </div>
+
+  <form class="student-form" [formGroup]="studentForm" (ngSubmit)="submit()" *ngIf="!loadingLookups">
+    <div class="form-layout">
+      <div class="main-column">
+        <div class="card">
+          <div class="card-header">
+            <h3>Login məlumatları</h3>
+            <p>Bu hissə User cədvəli üçün yaradılır və rol avtomatik Student olur.</p>
+          </div>
+
+          <div class="form-grid two-columns">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" formControlName="username" placeholder="student.username" />
+              <small class="field-error" *ngIf="f['username'].touched && f['username'].invalid">
+                Username minimum 3 simvol olmalıdır.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Şifrə</label>
+              <input type="password" formControlName="password" placeholder="Minimum 6 simvol" />
+              <small class="field-error" *ngIf="f['password'].touched && f['password'].invalid">
+                Şifrə minimum 6 simvol olmalıdır.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Şəxsi məlumatlar</h3>
+            <p>Şagirdin əsas profil və əlaqə məlumatları</p>
+          </div>
+
+          <div class="form-grid three-columns">
+            <div class="form-group">
+              <label>Ad</label>
+              <input type="text" formControlName="firstName" placeholder="Şagirdin adı" />
+            </div>
+
+            <div class="form-group">
+              <label>Soyad</label>
+              <input type="text" formControlName="lastName" placeholder="Şagirdin soyadı" />
+            </div>
+
+            <div class="form-group">
+              <label>Ata adı</label>
+              <input type="text" formControlName="fatherName" placeholder="Ata adı" />
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" formControlName="email" placeholder="example@mail.com" />
+            </div>
+
+            <div class="form-group">
+              <label>Telefon</label>
+              <input type="text" formControlName="phone" placeholder="+994 50 000 00 00" />
+            </div>
+
+            <div class="form-group">
+              <label>Ölkə</label>
+              <input type="text" formControlName="country" placeholder="Azərbaycan" />
+            </div>
+
+            <div class="form-group">
+              <label>Doğum tarixi</label>
+              <input type="date" formControlName="birthDate" />
+            </div>
+
+            <div class="form-group">
+              <label>Status</label>
+              <select formControlName="status">
+                <option *ngFor="let status of statusOptions" [value]="status">
+                  {{ status }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Avatar URL</label>
+              <input type="text" formControlName="photoUrl" placeholder="https://..." />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Təhsil məlumatları</h3>
+            <p>Student profile üçün backend-ə göndərilən əsas məlumatlar</p>
+          </div>
+
+          <div class="form-grid three-columns">
+            <div class="form-group">
+              <label>Şagird nömrəsi</label>
+              <input type="text" formControlName="studentNumber" placeholder="ST-2026-001" />
+            </div>
+
+            <div class="form-group">
+              <label>Sinif</label>
+              <select formControlName="classRoomId">
+                <option [ngValue]="null">Sinif seçilməyib</option>
+                <option *ngFor="let classItem of classOptions" [ngValue]="classItem.id">
+                  {{ classItem.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group info-box">
+              <label>Rol</label>
+              <div class="read-only-chip">Student</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Əlavə qeydlər</h3>
+            <p>İstəyə bağlı user detail və student notes sahələri</p>
+          </div>
+
+          <div class="form-grid single-column">
+            <div class="form-group">
+              <label>İstifadəçi detalları</label>
+              <textarea
+                formControlName="details"
+                rows="4"
+                placeholder="User tərəfdə saxlanacaq ümumi qeyd"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Student qeydi</label>
+              <textarea
+                formControlName="notes"
+                rows="4"
+                placeholder="Student profile üçün qeyd"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-column">
+        <div class="preview-card">
+          <div class="preview-header">
+            <h3>Canlı ön baxış</h3>
+            <p>Formdakı məlumatlara əsasən şagird kartı</p>
+          </div>
+
+          <div class="student-preview">
+            <img
+              [src]="studentForm.value.photoUrl || 'https://i.pravatar.cc/300?img=18'"
+              alt="Student avatar" />
+
+            <div class="student-preview-body">
+              <strong>
+                {{ (studentForm.value.firstName || 'Ad') + ' ' + (studentForm.value.lastName || 'Soyad') }}
+              </strong>
+
+              <span>{{ studentForm.value.email || 'email@example.com' }}</span>
+
+              <div class="preview-badges">
+                <span>{{ studentForm.value.studentNumber || 'Şagird nömrəsi' }}</span>
+                <span>
+                  {{
+                    classOptions.find(x => x.id === studentForm.value.classRoomId)?.name || 'Sinif seçilməyib'
+                  }}
+                </span>
+                <span>{{ studentForm.value.status || 'Aktiv' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-info-list">
+            <div class="preview-info-item">
+              <span>Username</span>
+              <strong>{{ studentForm.value.username || '-' }}</strong>
+            </div>
+
+            <div class="preview-info-item">
+              <span>Telefon</span>
+              <strong>{{ studentForm.value.phone || '-' }}</strong>
+            </div>
+
+            <div class="preview-info-item">
+              <span>Doğum tarixi</span>
+              <strong>{{ studentForm.value.birthDate || '-' }}</strong>
+            </div>
+
+            <div class="preview-info-item">
+              <span>Ölkə</span>
+              <strong>{{ studentForm.value.country || '-' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-card">
+          <h3>Əməliyyat</h3>
+          <p>
+            Save klikində sistem ardıcıllıqla:
+            <strong>User → Student</strong>
+            yaradacaq.
+          </p>
+
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Yadda saxlanılır...' : 'Şagirdi yadda saxla' }}
+          </button>
+
+          <a class="btn btn-light" routerLink="/admin/users/students">
+            Ləğv et
+          </a>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>

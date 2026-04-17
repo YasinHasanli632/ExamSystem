@@ -1,0 +1,1083 @@
+<section class="student-detail-page">
+  <div class="page-shell" *ngIf="!isLoading; else loadingTpl">
+    <div class="error-box" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="success-box" *ngIf="!errorMessage && saveSuccessMessage">
+      {{ saveSuccessMessage }}
+    </div>
+
+    <div class="error-box small" *ngIf="!errorMessage && saveErrorMessage">
+      {{ saveErrorMessage }}
+    </div>
+
+    <div class="student-hero" *ngIf="!errorMessage">
+      <div class="hero-left">
+        <img class="avatar" [src]="student.avatarUrl" [alt]="student.firstName + ' ' + student.lastName" />
+
+        <div class="hero-meta">
+          <div class="hero-topline">
+            <span class="class-badge">{{ student.className }}</span>
+            <span class="tiny-badge">{{ student.gender }}</span>
+            <span class="tiny-badge" [class.passive]="student.status === 'Passiv'">
+              {{ student.status }}
+            </span>
+          </div>
+
+          <h1>{{ student.firstName }} {{ student.lastName }}</h1>
+
+          <div class="sub-meta">
+            <span>{{ student.email || 'E-poçt göstərilməyib' }}</span>
+            <span>{{ student.phoneNumber || 'Telefon göstərilməyib' }}</span>
+          </div>
+
+          <div class="sub-meta">
+            <span>Valideyn: {{ student.parentName || '-' }}</span>
+            <span>{{ student.parentPhone || 'Telefon göstərilməyib' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="hero-score-box">
+          <span>Ümumi orta bal</span>
+          <strong>{{ student.averageScore }}%</strong>
+        </div>
+
+        <div class="hero-action-row">
+          <button class="btn btn-light" type="button" (click)="openProfileDrawer()">
+            Profili düzəliş et
+          </button>
+          <button class="btn btn-primary" type="button" (click)="setTab('exams')">
+            İmtahanlara bax
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid" *ngIf="!errorMessage">
+      <div class="summary-card">
+        <span class="summary-label">İmtahan sayı</span>
+        <strong>{{ student.examsCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Tapşırıq sayı</span>
+        <strong>{{ student.tasksCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Tamamlanan tapşırıq</span>
+        <strong>{{ student.completedTasksCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Davamiyyət</span>
+        <strong>{{ student.attendanceRate }}%</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Qayıb sayı</span>
+        <strong>{{ student.absentCount }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Gecikmə sayı</span>
+        <strong>{{ student.lateCount }}</strong>
+      </div>
+    </div>
+
+    <div class="tabs-bar" *ngIf="!errorMessage">
+      <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+        Ümumi baxış
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'tasks'" (click)="setTab('tasks')">
+        Tapşırıqlar
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
+        Davamiyyət
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'exams'" (click)="setTab('exams')">
+        İmtahanlar
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'review'" (click)="setTab('review')">
+        İmtahan icmalı
+      </button>
+    </div>
+
+    <!-- ÜMUMİ BAXIŞ -->
+    <ng-container *ngIf="activeTab === 'overview' && !errorMessage">
+      <div class="content-grid">
+        <div class="content-card large-card">
+          <div class="card-header">
+            <div>
+              <h2>Ümumi baxış</h2>
+              <p>Şagirdin son fəaliyyəti və əsas göstəriciləri</p>
+            </div>
+          </div>
+
+          <div class="overview-stats-grid">
+            <div class="metric-box">
+              <span>Gözləyən tapşırıqlar</span>
+              <strong>{{ pendingTasksCount }}</strong>
+            </div>
+
+            <div class="metric-box">
+              <span>Yoxlanılmış tapşırıqlar</span>
+              <strong>{{ reviewedTasksCount }}</strong>
+            </div>
+
+            <div class="metric-box">
+              <span>İştirak edilən dərslər</span>
+              <strong>{{ presentCount }} / {{ attendanceTotalCount }}</strong>
+            </div>
+
+            <div class="metric-box">
+              <span>Uğursuz imtahan sayı</span>
+              <strong>{{ failedExamCount }}</strong>
+            </div>
+          </div>
+
+          <div class="note-box">
+            <h3>Qeyd</h3>
+            <p>{{ student.notes || 'Qeyd yoxdur.' }}</p>
+            <p><strong>Ünvan:</strong> {{ student.address || 'Göstərilməyib' }}</p>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <div>
+              <h2>Son imtahanlar</h2>
+              <p>Ən son 3 nəticə</p>
+            </div>
+          </div>
+
+          <div class="mini-list">
+            <div class="mini-item" *ngFor="let exam of recentExams; trackBy: trackById">
+              <div>
+                <strong>{{ exam.title }}</strong>
+                <p>{{ exam.subjectName }} • {{ exam.date | date:'yyyy-MM-dd' }}</p>
+              </div>
+
+              <span class="score-pill" [ngClass]="getExamScoreClass(exam.percentage)">
+                {{ exam.score }}/{{ exam.maxScore }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <div>
+              <h2>Son tapşırıqlar</h2>
+              <p>Ən son 3 tapşırıq</p>
+            </div>
+          </div>
+
+          <div class="mini-list">
+            <div class="mini-item" *ngFor="let task of recentTasks; trackBy: trackById">
+              <div>
+                <strong>{{ task.title }}</strong>
+                <p>{{ task.subjectName }} • son tarix: {{ task.dueDate | date:'yyyy-MM-dd' }}</p>
+              </div>
+
+              <span class="tag" [ngClass]="getTaskStatusClass(task.status)">
+                {{ getTaskStatusLabel(task.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <div>
+              <h2>Son davamiyyət qeydləri</h2>
+              <p>Ən son qeydlər</p>
+            </div>
+          </div>
+
+          <div class="mini-list">
+            <div class="mini-item" *ngFor="let record of recentAttendance; trackBy: trackById">
+              <div>
+                <strong>{{ record.subjectName }}</strong>
+                <p>{{ record.date | date:'yyyy-MM-dd' }} • {{ record.startTime }} - {{ record.endTime }}</p>
+              </div>
+
+              <span class="tag" [ngClass]="getAttendanceStatusClass(record.status)">
+                {{ getAttendanceStatusLabel(record.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- TAPŞIRIQLAR -->
+    <ng-container *ngIf="activeTab === 'tasks' && !errorMessage">
+      <div class="content-card">
+        <div class="card-header">
+          <div>
+            <h2>Tapşırıq idarəetməsi</h2>
+            <p>Tapşırıqlar, qiymətlər, linklər və statuslar</p>
+          </div>
+
+          <span class="table-count">{{ filteredTasks.length }} tapşırıq</span>
+        </div>
+
+        <div class="filter-grid six-grid">
+          <div class="form-group">
+            <label>Ay</label>
+            <select [(ngModel)]="taskFilter.month" (change)="applyTaskFilters()">
+              <option value="">Bütün aylar</option>
+              <option *ngFor="let month of taskMonthOptions" [value]="month">{{ month }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Fənn</label>
+            <select [(ngModel)]="taskFilter.subjectName" (change)="applyTaskFilters()">
+              <option value="">Bütün fənlər</option>
+              <option *ngFor="let subject of taskSubjectOptions" [value]="subject">{{ subject }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="taskFilter.status" (change)="applyTaskFilters()">
+              <option value="">Bütün statuslar</option>
+              <option value="Pending">Gözləyir</option>
+              <option value="Submitted">Təhvil verilib</option>
+              <option value="Reviewed">Yoxlanılıb</option>
+              <option value="Late">Gecikib</option>
+              <option value="Missing">Təhvil verilməyib</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Müəllim</label>
+            <select [(ngModel)]="taskFilter.teacherName" (change)="applyTaskFilters()">
+              <option value="">Bütün müəllimlər</option>
+              <option *ngFor="let teacher of taskTeacherOptions" [value]="teacher">{{ teacher }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Minimum bal</label>
+            <input type="number" [(ngModel)]="taskFilter.minScore" (input)="applyTaskFilters()" placeholder="0" />
+          </div>
+
+          <div class="form-group">
+            <label>Maksimum bal</label>
+            <input type="number" [(ngModel)]="taskFilter.maxScore" (input)="applyTaskFilters()" placeholder="100" />
+          </div>
+
+          <div class="form-group full-span">
+            <label>Axtarış</label>
+            <input
+              type="text"
+              [(ngModel)]="taskFilter.search"
+              (input)="applyTaskFilters()"
+              placeholder="Tapşırıq adı, müəllim, fənn..."
+            />
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn btn-primary" type="button" (click)="applyTaskFilters()">Filtr et</button>
+          <button class="btn btn-light" type="button" (click)="resetTaskFilters()">Sıfırla</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Tapşırıq</th>
+                <th>Fənn</th>
+                <th>Müəllim</th>
+                <th>Verilmə tarixi</th>
+                <th>Son tarix</th>
+                <th>Status</th>
+                <th>Qiymət</th>
+                <th>Link</th>
+                <th>Qeyd</th>
+                <th>Əməliyyat</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let task of filteredTasks; trackBy: trackById">
+                <td class="strong-cell">{{ task.title }}</td>
+                <td>{{ task.subjectName }}</td>
+                <td>{{ task.teacherName }}</td>
+                <td>{{ task.assignedDate | date:'yyyy-MM-dd' }}</td>
+                <td>{{ task.dueDate | date:'yyyy-MM-dd' }}</td>
+                <td>
+                  <span class="tag" [ngClass]="getTaskStatusClass(task.status)">
+                    {{ getTaskStatusLabel(task.status) }}
+                  </span>
+                </td>
+                <td>{{ task.score }}/{{ task.maxScore }}</td>
+                <td>
+                  <a
+                    class="table-link"
+                    *ngIf="task.link; else noTaskLinkTpl"
+                    [href]="task.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Aç
+                  </a>
+                  <ng-template #noTaskLinkTpl>-</ng-template>
+                </td>
+                <td class="note-cell">{{ task.note || '-' }}</td>
+                <td>
+                  <button class="btn btn-outline" type="button" (click)="openTaskDrawer(task)">
+                    Düzəliş et
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="filteredTasks.length === 0">
+                <td colspan="10" class="empty-state">Tapşırıq tapılmadı.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- DAVAMİYYƏT -->
+    <ng-container *ngIf="activeTab === 'attendance' && !errorMessage">
+      <div class="content-card">
+        <div class="card-header">
+          <div>
+            <h2>Davamiyyət cədvəli</h2>
+            <p>Dərs saatları, iştirak və qayıb statusları</p>
+          </div>
+
+          <span class="table-count">{{ filteredAttendanceRecords.length }} qeyd</span>
+        </div>
+
+        <div class="summary-strip">
+          <div class="summary-strip-item">
+            <span>İştirak edib</span>
+            <strong>{{ presentCount }}</strong>
+          </div>
+
+          <div class="summary-strip-item">
+            <span>Qayıb</span>
+            <strong>{{ student.absentCount }}</strong>
+          </div>
+
+          <div class="summary-strip-item">
+            <span>Gecikib</span>
+            <strong>{{ student.lateCount }}</strong>
+          </div>
+
+          <div class="summary-strip-item">
+            <span>Ümumi qeyd</span>
+            <strong>{{ attendanceTotalCount }}</strong>
+          </div>
+        </div>
+
+        <div class="filter-grid five-grid">
+          <div class="form-group">
+            <label>Ay</label>
+            <select [(ngModel)]="attendanceFilter.month" (change)="applyAttendanceFilters()">
+              <option value="">Bütün aylar</option>
+              <option *ngFor="let month of attendanceMonthOptions" [value]="month">{{ month }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Fənn</label>
+            <select [(ngModel)]="attendanceFilter.subjectName" (change)="applyAttendanceFilters()">
+              <option value="">Bütün fənlər</option>
+              <option *ngFor="let subject of attendanceSubjectOptions" [value]="subject">{{ subject }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="attendanceFilter.status" (change)="applyAttendanceFilters()">
+              <option value="">Bütün statuslar</option>
+              <option value="Present">İştirak edib</option>
+              <option value="Absent">Qayıb</option>
+              <option value="Late">Gecikib</option>
+              <option value="Excused">İcazəli</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Müəllim</label>
+            <select [(ngModel)]="attendanceFilter.teacherName" (change)="applyAttendanceFilters()">
+              <option value="">Bütün müəllimlər</option>
+              <option *ngFor="let teacher of attendanceTeacherOptions" [value]="teacher">{{ teacher }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Axtarış</label>
+            <input
+              type="text"
+              [(ngModel)]="attendanceFilter.search"
+              (input)="applyAttendanceFilters()"
+              placeholder="Fənn, qeyd, gün..."
+            />
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn btn-primary" type="button" (click)="applyAttendanceFilters()">Filtr et</button>
+          <button class="btn btn-light" type="button" (click)="resetAttendanceFilters()">Sıfırla</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Tarix</th>
+                <th>Gün</th>
+                <th>Fənn</th>
+                <th>Müəllim</th>
+                <th>Başlama</th>
+                <th>Bitmə</th>
+                <th>Status</th>
+                <th>Qeyd</th>
+                <th>Əməliyyat</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let record of filteredAttendanceRecords; trackBy: trackById">
+                <td>{{ record.date | date:'yyyy-MM-dd' }}</td>
+                <td>{{ record.dayName }}</td>
+                <td>{{ record.subjectName }}</td>
+                <td>{{ record.teacherName }}</td>
+                <td>{{ record.startTime || '-' }}</td>
+                <td>{{ record.endTime || '-' }}</td>
+                <td>
+                  <span class="tag" [ngClass]="getAttendanceStatusClass(record.status)">
+                    {{ getAttendanceStatusLabel(record.status) }}
+                  </span>
+                </td>
+                <td class="note-cell">{{ record.note || '-' }}</td>
+                <td>
+                  <button class="btn btn-outline" type="button" (click)="openAttendanceDrawer(record)">
+                    Düzəliş et
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="filteredAttendanceRecords.length === 0">
+                <td colspan="9" class="empty-state">Davamiyyət qeydi tapılmadı.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- İMTAHANLAR -->
+    <ng-container *ngIf="activeTab === 'exams' && !errorMessage">
+      <div class="content-card">
+        <div class="card-header">
+          <div>
+            <h2>İmtahan nəticələri</h2>
+            <p>Quiz, aralıq, yekun və məşq nəticələri</p>
+          </div>
+
+          <span class="table-count">{{ filteredExams.length }} imtahan</span>
+        </div>
+
+        <div class="filter-grid six-grid">
+          <div class="form-group">
+            <label>Ay</label>
+            <select [(ngModel)]="examFilter.month" (change)="applyExamFilters()">
+              <option value="">Bütün aylar</option>
+              <option *ngFor="let month of examMonthOptions" [value]="month">{{ month }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Fənn</label>
+            <select [(ngModel)]="examFilter.subjectName" (change)="applyExamFilters()">
+              <option value="">Bütün fənlər</option>
+              <option *ngFor="let subject of examSubjectOptions" [value]="subject">{{ subject }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Növ</label>
+            <select [(ngModel)]="examFilter.type" (change)="applyExamFilters()">
+              <option value="">Bütün növlər</option>
+              <option value="Quiz">Kiçik yoxlama</option>
+              <option value="Midterm">Aralıq imtahan</option>
+              <option value="Final">Yekun imtahan</option>
+              <option value="Practice">Məşq imtahanı</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="examFilter.status" (change)="applyExamFilters()">
+              <option value="">Bütün statuslar</option>
+              <option value="Passed">Keçib</option>
+              <option value="Failed">Uğursuz</option>
+              <option value="Reviewed">Yoxlanılıb</option>
+              <option value="Incomplete">Tamamlanmayıb</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Müəllim</label>
+            <select [(ngModel)]="examFilter.teacherName" (change)="applyExamFilters()">
+              <option value="">Bütün müəllimlər</option>
+              <option *ngFor="let teacher of examTeacherOptions" [value]="teacher">{{ teacher }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Axtarış</label>
+            <input
+              type="text"
+              [(ngModel)]="examFilter.search"
+              (input)="applyExamFilters()"
+              placeholder="İmtahan adı, müəllim, fənn..."
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Minimum bal</label>
+            <input type="number" [(ngModel)]="examFilter.minScore" (input)="applyExamFilters()" placeholder="0" />
+          </div>
+
+          <div class="form-group">
+            <label>Maksimum bal</label>
+            <input type="number" [(ngModel)]="examFilter.maxScore" (input)="applyExamFilters()" placeholder="100" />
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn btn-primary" type="button" (click)="applyExamFilters()">Filtr et</button>
+          <button class="btn btn-light" type="button" (click)="resetExamFilters()">Sıfırla</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>İmtahan</th>
+                <th>Fənn</th>
+                <th>Müəllim</th>
+                <th>Tarix</th>
+                <th>Növ</th>
+                <th>Bal</th>
+                <th>Faiz</th>
+                <th>Status</th>
+                <th>Qeyd</th>
+                <th>Əməliyyat</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let exam of filteredExams; trackBy: trackById">
+                <td class="strong-cell">{{ exam.title }}</td>
+                <td>{{ exam.subjectName }}</td>
+                <td>{{ exam.teacherName }}</td>
+                <td>{{ exam.date | date:'yyyy-MM-dd' }}</td>
+                <td>{{ getExamTypeLabel(exam.type) }}</td>
+                <td>{{ exam.score }}/{{ exam.maxScore }}</td>
+                <td>
+                  <span class="score-pill" [ngClass]="getExamScoreClass(exam.percentage)">
+                    {{ exam.percentage }}%
+                  </span>
+                </td>
+                <td>
+                  <span class="tag" [ngClass]="getExamStatusClass(exam.status)">
+                    {{ getExamStatusLabel(exam.status) }}
+                  </span>
+                </td>
+                <td class="note-cell">{{ exam.note || '-' }}</td>
+                <td>
+                  <div class="action-stack">
+                    <button class="btn btn-outline" type="button" (click)="openExamDrawer(exam)">
+                      Düzəliş et
+                    </button>
+                    <button class="btn btn-light" type="button" (click)="selectExamForReview(exam)">
+                      İcmal
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngIf="filteredExams.length === 0">
+                <td colspan="10" class="empty-state">İmtahan tapılmadı.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- İMTAHAN İCMALI -->
+    <ng-container *ngIf="activeTab === 'review' && !errorMessage">
+      <div class="content-grid review-grid">
+        <div class="content-card review-sidebar">
+          <div class="card-header">
+            <div>
+              <h2>İmtahan seçimi</h2>
+              <p>İcmal üçün imtahan seçin</p>
+            </div>
+          </div>
+
+          <div class="review-exam-list">
+            <button
+              type="button"
+              class="review-exam-item"
+              *ngFor="let exam of exams; trackBy: trackById"
+              [class.active]="selectedExamForReview?.id === exam.id"
+              (click)="selectExamForReview(exam)"
+            >
+              <strong>{{ exam.title }}</strong>
+              <span>{{ exam.subjectName }} • {{ exam.date | date:'yyyy-MM-dd' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="content-card review-main" *ngIf="selectedExamForReview as reviewExam; else noReviewExamTpl">
+          <div class="card-header">
+            <div>
+              <h2>{{ reviewExam.title }}</h2>
+              <p>{{ reviewExam.subjectName }} • {{ reviewExam.teacherName }} • {{ reviewExam.date | date:'yyyy-MM-dd' }}</p>
+            </div>
+
+            <div class="review-summary">
+              <span class="score-pill" [ngClass]="getExamScoreClass(reviewExam.percentage)">
+                {{ reviewExam.score }}/{{ reviewExam.maxScore }}
+              </span>
+              <span class="tag" [ngClass]="getExamStatusClass(reviewExam.status)">
+                {{ getExamStatusLabel(reviewExam.status) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="loading-inline" *ngIf="isExamReviewLoading">İmtahan icmalı yüklənir...</div>
+          <div class="error-box small" *ngIf="examReviewError">{{ examReviewError }}</div>
+
+          <div class="question-list" *ngIf="!isExamReviewLoading && !examReviewError">
+            <div class="question-card" *ngFor="let question of getExamQuestions(reviewExam.id); trackBy: trackById">
+              <div class="question-head">
+                <div>
+                  <span class="question-no">Sual {{ question.questionNo }}</span>
+                  <h3>{{ question.questionText }}</h3>
+                </div>
+
+                <span class="score-pill" [ngClass]="getExamScoreClass(getQuestionScorePercent(question))">
+                  {{ question.awardedScore }}/{{ question.maxScore }}
+                </span>
+              </div>
+
+              <div class="question-type">{{ question.type }}</div>
+
+              <div class="options-list" *ngIf="question.options?.length">
+                <div
+                  class="option-item"
+                  *ngFor="let option of question.options"
+                  [class.correct-option]="option.isCorrect"
+                  [class.student-picked]="option.text === question.studentAnswerText"
+                >
+                  <span>{{ option.text }}</span>
+                </div>
+              </div>
+
+              <div class="answer-grid">
+                <div class="answer-box">
+                  <span>Düzgün cavab</span>
+                  <strong>{{ question.correctAnswerText || '-' }}</strong>
+                </div>
+
+                <div class="answer-box">
+                  <span>Şagirdin cavabı</span>
+                  <strong>{{ question.studentAnswerText || '-' }}</strong>
+                </div>
+              </div>
+
+              <div class="feedback-box">
+                <span>Müəllim rəyi</span>
+                <p>{{ question.teacherFeedback || 'Rəy yoxdur.' }}</p>
+              </div>
+            </div>
+
+            <div *ngIf="getExamQuestions(reviewExam.id).length === 0" class="empty-state-box">
+              Bu imtahan üçün sual məlumatı yoxdur.
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</section>
+
+<div
+  class="drawer-backdrop"
+  *ngIf="isProfileDrawerOpen || isTaskDrawerOpen || isAttendanceDrawerOpen || isExamDrawerOpen"
+></div>
+
+<!-- PROFİL DRAWER -->
+<aside class="drawer drawer-lg" [class.open]="isProfileDrawerOpen">
+  <div class="drawer-header">
+    <div>
+      <h2>Şagird profili düzəlişi</h2>
+      <p>Şagirdin əsas məlumatlarını yenilə</p>
+    </div>
+    <button class="drawer-close" type="button" (click)="closeProfileDrawer()">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="error-box small" *ngIf="saveErrorMessage">
+      {{ saveErrorMessage }}
+    </div>
+
+    <div class="drawer-grid">
+      <div class="form-group">
+        <label>İstifadəçi adı</label>
+        <input type="text" [(ngModel)]="profileEditForm.username" />
+      </div>
+
+      <div class="form-group">
+        <label>E-poçt</label>
+        <input type="email" [(ngModel)]="profileEditForm.email" />
+      </div>
+
+      <div class="form-group">
+        <label>Ad</label>
+        <input type="text" [(ngModel)]="profileEditForm.firstName" />
+      </div>
+
+      <div class="form-group">
+        <label>Soyad</label>
+        <input type="text" [(ngModel)]="profileEditForm.lastName" />
+      </div>
+
+      <div class="form-group">
+        <label>Ata adı</label>
+        <input type="text" [(ngModel)]="profileEditForm.fatherName" />
+      </div>
+
+      <div class="form-group">
+        <label>Tam ad</label>
+        <input type="text" [(ngModel)]="profileEditForm.fullName" />
+      </div>
+
+      <div class="form-group">
+        <label>Telefon nömrəsi</label>
+        <input type="text" [(ngModel)]="profileEditForm.phoneNumber" />
+      </div>
+
+      <div class="form-group">
+        <label>Ölkə</label>
+        <input type="text" [(ngModel)]="profileEditForm.country" />
+      </div>
+
+      <div class="form-group">
+        <label>Doğum tarixi</label>
+        <input type="date" [(ngModel)]="profileEditForm.dateOfBirth" />
+      </div>
+
+      <div class="form-group">
+        <label>Şagird nömrəsi</label>
+        <input type="text" [(ngModel)]="profileEditForm.studentNumber" />
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="profileEditForm.status">
+          <option value="Aktiv">Aktiv</option>
+          <option value="Passiv">Passiv</option>
+          <option value="Məzun">Məzun</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Şəkil linki</label>
+        <input type="text" [(ngModel)]="profileEditForm.photoUrl" />
+      </div>
+
+      <div class="form-group full-span">
+        <label>Əlavə məlumat</label>
+        <textarea [(ngModel)]="profileEditForm.details"></textarea>
+      </div>
+
+      <div class="form-group full-span">
+        <label>Qeyd</label>
+        <textarea [(ngModel)]="profileEditForm.notes"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button class="btn btn-light" type="button" (click)="closeProfileDrawer()" [disabled]="isProfileSaving">
+      Ləğv et
+    </button>
+    <button class="btn btn-primary" type="button" (click)="saveProfileEdit()" [disabled]="isProfileSaving">
+      <span *ngIf="!isProfileSaving">Yadda saxla</span>
+      <span *ngIf="isProfileSaving">Yadda saxlanılır...</span>
+    </button>
+  </div>
+</aside>
+
+<!-- TAPŞIRIQ DRAWER -->
+<aside class="drawer drawer-md" [class.open]="isTaskDrawerOpen">
+  <div class="drawer-header">
+    <div>
+      <h2>Tapşırıq düzəlişi</h2>
+      <p>Tapşırığın statusunu, qiymətini, linkini və qeydini yenilə</p>
+    </div>
+    <button class="drawer-close" type="button" (click)="closeTaskDrawer()">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="error-box small" *ngIf="saveErrorMessage">
+      {{ saveErrorMessage }}
+    </div>
+
+    <div class="form-group">
+      <label>Tapşırıq adı</label>
+      <input type="text" [(ngModel)]="taskEditForm.title" />
+    </div>
+
+    <div class="drawer-grid">
+      <div class="form-group">
+        <label>Fənn</label>
+        <input type="text" [(ngModel)]="taskEditForm.subjectName" />
+      </div>
+
+      <div class="form-group">
+        <label>Müəllim</label>
+        <input type="text" [(ngModel)]="taskEditForm.teacherName" />
+      </div>
+
+      <div class="form-group">
+        <label>Verilmə tarixi</label>
+        <input type="date" [(ngModel)]="taskEditForm.assignedDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Son tarix</label>
+        <input type="date" [(ngModel)]="taskEditForm.dueDate" />
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="taskEditForm.status">
+          <option value="Pending">Gözləyir</option>
+          <option value="Submitted">Təhvil verilib</option>
+          <option value="Reviewed">Yoxlanılıb</option>
+          <option value="Late">Gecikib</option>
+          <option value="Missing">Təhvil verilməyib</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Qiymət</label>
+        <input type="number" [(ngModel)]="taskEditForm.score" />
+      </div>
+
+      <div class="form-group">
+        <label>Maksimum bal</label>
+        <input type="number" [(ngModel)]="taskEditForm.maxScore" />
+      </div>
+
+      <div class="form-group full-span">
+        <label>Link</label>
+        <input type="text" [(ngModel)]="taskEditForm.link" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Qeyd</label>
+      <textarea [(ngModel)]="taskEditForm.note"></textarea>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button class="btn btn-light" type="button" (click)="closeTaskDrawer()" [disabled]="isTaskSaving">
+      Ləğv et
+    </button>
+    <button class="btn btn-primary" type="button" (click)="saveTaskEdit()" [disabled]="isTaskSaving">
+      <span *ngIf="!isTaskSaving">Yadda saxla</span>
+      <span *ngIf="isTaskSaving">Yadda saxlanılır...</span>
+    </button>
+  </div>
+</aside>
+
+<!-- DAVAMİYYƏT DRAWER -->
+<aside class="drawer drawer-md" [class.open]="isAttendanceDrawerOpen">
+  <div class="drawer-header">
+    <div>
+      <h2>Davamiyyət düzəlişi</h2>
+      <p>Dərs saatını və iştirak statusunu yenilə</p>
+    </div>
+    <button class="drawer-close" type="button" (click)="closeAttendanceDrawer()">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="error-box small" *ngIf="saveErrorMessage">
+      {{ saveErrorMessage }}
+    </div>
+
+    <div class="drawer-grid">
+      <div class="form-group">
+        <label>Tarix</label>
+        <input type="date" [(ngModel)]="attendanceEditForm.date" />
+      </div>
+
+      <div class="form-group">
+        <label>Gün</label>
+        <input type="text" [(ngModel)]="attendanceEditForm.dayName" />
+      </div>
+
+      <div class="form-group">
+        <label>Fənn</label>
+        <input type="text" [(ngModel)]="attendanceEditForm.subjectName" />
+      </div>
+
+      <div class="form-group">
+        <label>Müəllim</label>
+        <input type="text" [(ngModel)]="attendanceEditForm.teacherName" />
+      </div>
+
+      <div class="form-group">
+        <label>Başlama saatı</label>
+        <input type="time" [(ngModel)]="attendanceEditForm.startTime" />
+      </div>
+
+      <div class="form-group">
+        <label>Bitmə saatı</label>
+        <input type="time" [(ngModel)]="attendanceEditForm.endTime" />
+      </div>
+
+      <div class="form-group full-span">
+        <label>Status</label>
+        <select [(ngModel)]="attendanceEditForm.status">
+          <option value="Present">İştirak edib</option>
+          <option value="Absent">Qayıb</option>
+          <option value="Late">Gecikib</option>
+          <option value="Excused">İcazəli</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Qeyd</label>
+      <textarea [(ngModel)]="attendanceEditForm.note"></textarea>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button class="btn btn-light" type="button" (click)="closeAttendanceDrawer()" [disabled]="isAttendanceSaving">
+      Ləğv et
+    </button>
+    <button class="btn btn-primary" type="button" (click)="saveAttendanceEdit()" [disabled]="isAttendanceSaving">
+      <span *ngIf="!isAttendanceSaving">Yadda saxla</span>
+      <span *ngIf="isAttendanceSaving">Yadda saxlanılır...</span>
+    </button>
+  </div>
+</aside>
+
+<!-- İMTAHAN DRAWER -->
+<aside class="drawer drawer-lg" [class.open]="isExamDrawerOpen">
+  <div class="drawer-header">
+    <div>
+      <h2>İmtahan nəticəsi düzəlişi</h2>
+      <p>Balı, statusu, tarixi və qeydi yenilə</p>
+    </div>
+    <button class="drawer-close" type="button" (click)="closeExamDrawer()">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="error-box small" *ngIf="saveErrorMessage">
+      {{ saveErrorMessage }}
+    </div>
+
+    <div class="form-group">
+      <label>İmtahan adı</label>
+      <input type="text" [(ngModel)]="examEditForm.title" />
+    </div>
+
+    <div class="drawer-grid">
+      <div class="form-group">
+        <label>Fənn</label>
+        <input type="text" [(ngModel)]="examEditForm.subjectName" />
+      </div>
+
+      <div class="form-group">
+        <label>Müəllim</label>
+        <input type="text" [(ngModel)]="examEditForm.teacherName" />
+      </div>
+
+      <div class="form-group">
+        <label>Tarix</label>
+        <input type="date" [(ngModel)]="examEditForm.date" />
+      </div>
+
+      <div class="form-group">
+        <label>Növ</label>
+        <select [(ngModel)]="examEditForm.type">
+          <option value="Quiz">Kiçik yoxlama</option>
+          <option value="Midterm">Aralıq imtahan</option>
+          <option value="Final">Yekun imtahan</option>
+          <option value="Practice">Məşq imtahanı</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Bal</label>
+        <input type="number" [(ngModel)]="examEditForm.score" />
+      </div>
+
+      <div class="form-group">
+        <label>Maksimum bal</label>
+        <input type="number" [(ngModel)]="examEditForm.maxScore" />
+      </div>
+
+      <div class="form-group full-span">
+        <label>Status</label>
+        <select [(ngModel)]="examEditForm.status">
+          <option value="Passed">Keçib</option>
+          <option value="Failed">Uğursuz</option>
+          <option value="Reviewed">Yoxlanılıb</option>
+          <option value="Incomplete">Tamamlanmayıb</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Qeyd</label>
+      <textarea [(ngModel)]="examEditForm.note"></textarea>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button class="btn btn-light" type="button" (click)="closeExamDrawer()" [disabled]="isExamSaving">
+      Ləğv et
+    </button>
+    <button class="btn btn-primary" type="button" (click)="saveExamEdit()" [disabled]="isExamSaving">
+      <span *ngIf="!isExamSaving">Yadda saxla</span>
+      <span *ngIf="isExamSaving">Yadda saxlanılır...</span>
+    </button>
+  </div>
+</aside>
+
+<ng-template #loadingTpl>
+  <div class="loading-box">Yüklənir...</div>
+</ng-template>
+
+<ng-template #noReviewExamTpl>
+  <div class="content-card">
+    <div class="empty-state-box">İcmal üçün imtahan seçilməyib.</div>
+  </div>
+</ng-template>

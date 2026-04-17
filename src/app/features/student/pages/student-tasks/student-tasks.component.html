@@ -1,0 +1,227 @@
+<div class="student-tasks-page">
+  <section class="page-hero">
+    <div class="page-hero__content">
+      <span class="hero-chip">Student Panel</span>
+      <h1>Tapşırıqlarım</h1>
+      <p>
+        Fənn üzrə tasklara bax, statusa görə filter et, cavab göndər və
+        nəticələri bir yerdə izləyin.
+      </p>
+    </div>
+  </section>
+
+  <section class="filter-card">
+    <div class="filter-card__header">
+      <div>
+        <h2>Filterlər</h2>
+        <p>Fənn, status və axtarış ilə task siyahısını dəqiqləşdir.</p>
+      </div>
+
+      <div class="filter-card__actions">
+        <button type="button" class="secondary-btn" (click)="resetFilters()">
+          Təmizlə
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-grid">
+      <div class="form-group">
+        <label for="subjectId">Fənn seç</label>
+        <select
+          id="subjectId"
+          name="subjectId"
+          [(ngModel)]="filter.subjectId"
+          (change)="onSubjectChange()">
+          <option [ngValue]="null">Bütün fənlər</option>
+          <option *ngFor="let item of subjectOptions" [ngValue]="item.id">
+            {{ item.name }} ({{ item.count }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select
+          id="status"
+          name="status"
+          [(ngModel)]="filter.status"
+          (change)="applyClientFilters()">
+          <option value="">Bütün statuslar</option>
+          <option value="Pending">Gözləyən</option>
+          <option value="Submitted">Təslim edilən</option>
+          <option value="Reviewed">Yoxlanılan</option>
+          <option value="Late">Gecikən</option>
+          <option value="Missing">Buraxılan</option>
+        </select>
+      </div>
+
+      <div class="form-group form-group--wide">
+        <label for="searchText">Axtarış</label>
+        <input
+          id="searchText"
+          name="searchText"
+          type="text"
+          [(ngModel)]="filter.searchText"
+          (input)="applyClientFilters()"
+          placeholder="Task adı, fənn, müəllim və ya status üzrə axtar..." />
+      </div>
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span class="summary-card__label">Hamısı</span>
+      <strong class="summary-card__value">{{ visibleStats.totalCount }}</strong>
+      <small class="summary-card__hint">Cari filter nəticəsi</small>
+    </article>
+
+    <article class="summary-card summary-card--pending">
+      <span class="summary-card__label">Gözləyən</span>
+      <strong class="summary-card__value">{{ visibleStats.pendingCount }}</strong>
+      <small class="summary-card__hint">Submit gözləyən tasklar</small>
+    </article>
+
+    <article class="summary-card summary-card--submitted">
+      <span class="summary-card__label">Təslim edilən</span>
+      <strong class="summary-card__value">{{ visibleStats.submittedCount }}</strong>
+      <small class="summary-card__hint">Vaxtında göndərilənlər</small>
+    </article>
+
+    <article class="summary-card summary-card--reviewed">
+      <span class="summary-card__label">Yoxlanılan</span>
+      <strong class="summary-card__value">{{ visibleStats.reviewedCount }}</strong>
+      <small class="summary-card__hint">Qiymətləndirilmiş tasklar</small>
+    </article>
+
+    <article class="summary-card summary-card--late">
+      <span class="summary-card__label">Gecikən</span>
+      <strong class="summary-card__value">{{ visibleStats.lateCount }}</strong>
+      <small class="summary-card__hint">Son tarixdən sonra göndərilənlər</small>
+    </article>
+
+    <article class="summary-card summary-card--missing">
+      <span class="summary-card__label">Buraxılan</span>
+      <strong class="summary-card__value">{{ visibleStats.missingCount }}</strong>
+      <small class="summary-card__hint">Təhvil verilməyən tasklar</small>
+    </article>
+  </section>
+
+  <section class="tasks-card">
+    <div class="tasks-card__header">
+      <div>
+        <h2>Task siyahısı</h2>
+        <p>Backenddən gələn tapşırıqlar kart formatında göstərilir.</p>
+      </div>
+
+      <span class="result-badge">{{ visibleTasks.length }} nəticə</span>
+    </div>
+
+    <div *ngIf="isLoading" class="state-box">
+      <div class="loader"></div>
+      <div>
+        <strong>Yüklənir...</strong>
+        <p>Tapşırıqlar backenddən gətirilir.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoading && errorMessage" class="state-box state-box--error">
+      <strong>Xəta baş verdi</strong>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="primary-btn" (click)="loadInitialData()">
+        Yenidən yoxla
+      </button>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage && isFilterLoading" class="state-box state-box--inline">
+      <div class="loader loader--small"></div>
+      <p>Nəticələr yenilənir...</p>
+    </div>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && !visibleTasks.length"
+      class="empty-state">
+      <div class="empty-state__icon">📝</div>
+      <h3>{{ emptyStateTitle }}</h3>
+      <p>{{ emptyStateDescription }}</p>
+
+      <button
+        *ngIf="hasActiveFilters"
+        type="button"
+        class="secondary-btn"
+        (click)="resetFilters()">
+        Filterləri təmizlə
+      </button>
+    </div>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && visibleTasks.length"
+      class="task-grid">
+      <article
+        *ngFor="let task of visibleTasks; trackBy: trackByTask"
+        class="task-card">
+        <div class="task-card__top">
+          <span class="status-badge" [ngClass]="getStatusClass(task.statusKey)">
+            {{ task.statusLabel }}
+          </span>
+
+          <span class="score-chip">
+            {{ task.score }} / {{ task.maxScore }}
+          </span>
+        </div>
+
+        <div class="task-card__body">
+          <h3>{{ task.title }}</h3>
+
+          <div class="meta-list">
+            <div class="meta-item">
+              <span>Fənn</span>
+              <strong>{{ task.subjectName }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Müəllim</span>
+              <strong>{{ task.teacherName }}</strong>
+            </div>
+
+            <div class="meta-item" *ngIf="task.className">
+              <span>Sinif</span>
+              <strong>{{ task.className }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Təyin olunub</span>
+              <strong>{{ formatDate(task.assignedDate) }}</strong>
+            </div>
+
+            <div class="meta-item">
+              <span>Son tarix</span>
+              <strong>{{ formatDate(task.dueDate) }}</strong>
+            </div>
+
+            <div class="meta-item" *ngIf="task.submittedAt">
+              <span>Göndərilib</span>
+              <strong>{{ formatDateTime(task.submittedAt) }}</strong>
+            </div>
+          </div>
+
+          <div class="progress-block">
+            <div class="progress-label">
+              <span>Nəticə faizi</span>
+              <strong>{{ task.progressPercent }}%</strong>
+            </div>
+
+            <div class="progress-bar">
+              <div class="progress-bar__fill" [style.width.%]="task.progressPercent"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="task-card__footer">
+          <button type="button" class="detail-btn" (click)="openDetail(task.id)">
+            Ətraflı bax
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>

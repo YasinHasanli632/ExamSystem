@@ -1,0 +1,90 @@
+<div class="login-page">
+  <div class="login-overlay"></div>
+
+  <div class="login-wrapper">
+    <div class="login-brand-panel">
+      <div class="brand-badge">Exam System</div>
+
+      <h1>İmtahan İdarəetmə Platforması</h1>
+
+      <p>
+        Admin, müəllim və tələbələr üçün vahid sistem.
+        Təhlükəsiz giriş et, imtahanları idarə et və nəticələri rahat izləyin.
+      </p>
+
+      <div class="brand-features">
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span>Təhlükəsiz giriş və rol əsaslı idarəetmə</span>
+        </div>
+
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span>İmtahan, sinif və istifadəçi idarəetməsi</span>
+        </div>
+
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span>Şifrə bərpası və ilk girişdə təhlükəsiz yeniləmə</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-card-header">
+        <h2>Xoş gəlmisən</h2>
+        <p>Hesabına daxil olmaq üçün məlumatlarını daxil et</p>
+      </div>
+
+      <form class="login-form" (ngSubmit)="onLogin()">
+        <div class="form-group">
+          <label for="usernameOrEmail">İstifadəçi adı və ya Email</label>
+          <input
+            id="usernameOrEmail"
+            type="text"
+            name="usernameOrEmail"
+            [(ngModel)]="usernameOrEmail"
+            placeholder="Məsələn: superadmin və ya admin@mail.com"
+            autocomplete="username" />
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password">Şifrə</label>
+            <a routerLink="/forgot-password" class="text-link">Şifrəni unutdum?</a>
+          </div>
+
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              placeholder="Şifrənizi daxil edin"
+              autocomplete="current-password" />
+
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePassword()">
+              {{ showPassword ? 'Gizlət' : 'Göstər' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="error-box" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <button class="login-btn" type="submit" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Daxil ol</span>
+          <span *ngIf="isLoading">Yüklənir...</span>
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <span>Sistemə giriş yalnız səlahiyyətli istifadəçilər üçündür.</span>
+      </div>
+    </div>
+  </div>
+</div>

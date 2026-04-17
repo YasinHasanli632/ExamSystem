@@ -1,0 +1,207 @@
+<div class="student-dashboard">
+  <div *ngIf="isLoading" class="state-card">
+    <div class="state-icon">⏳</div>
+    <h3>Dashboard yüklənir</h3>
+    <p>Məlumatlar hazırlanır, zəhmət olmasa gözləyin...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error">
+    <div class="state-icon">⚠️</div>
+    <h3>Xəta baş verdi</h3>
+    <p>{{ errorMessage }}</p>
+    <button class="retry-btn" type="button" (click)="refreshDashboard()">
+      Yenidən yoxla
+    </button>
+  </div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage">
+    <section class="hero-card">
+      <div class="hero-content">
+        <div class="hero-badge">Tələbə Paneli</div>
+        <h1>{{ getWelcomeTitle() }}</h1>
+        <p>
+          Dashboard bölməsində imtahanlarını, tapşırıqlarını və ümumi nəticələrini bir yerdə izləyə bilərsən.
+        </p>
+
+        <div class="hero-meta">
+          <div class="hero-meta-item">
+            <span class="meta-label">Tələbə nömrəsi</span>
+            <strong>{{ dashboard.studentNumber || 'Məlumat yoxdur' }}</strong>
+          </div>
+
+          <div class="hero-meta-item">
+            <span class="meta-label">Sinif</span>
+            <strong>{{ getClassName() }}</strong>
+          </div>
+
+          <div class="hero-meta-item">
+            <span class="meta-label">Status</span>
+            <strong>{{ getStudentStatusText(dashboard.studentStatus) }}</strong>
+          </div>
+
+          <div class="hero-meta-item">
+            <span class="meta-label">Oxunmamış bildiriş</span>
+            <strong>{{ dashboard.unreadNotificationsCount }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <div class="hero-side-card">
+          <span>Orta nəticə</span>
+          <strong>{{ formatAverageScore(dashboard.averageScore) }}</strong>
+          <small>Ümumi göstərici</small>
+        </div>
+
+        <div class="hero-side-card">
+          <span>Yaxın imtahan</span>
+          <strong>{{ dashboard.upcomingExamsCount }}</strong>
+          <small>Aktiv planlanan imtahan</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <div
+        class="stat-card"
+        *ngFor="let card of statCards"
+        [ngClass]="card.accent"
+      >
+        <div class="stat-icon">{{ card.icon }}</div>
+        <div class="stat-body">
+          <span class="stat-title">{{ card.title }}</span>
+          <strong class="stat-value">{{ card.value }}</strong>
+          <small class="stat-subtitle">{{ card.subtitle }}</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>Yaxın və son imtahanlar</h3>
+            <p>İmtahan tarixlərini və ümumi məlumatları buradan izləyə bilərsən.</p>
+          </div>
+        </div>
+
+        <div class="list-block" *ngIf="dashboard.exams.length; else noExams">
+          <div
+            class="list-item exam-item"
+            *ngFor="let exam of dashboard.exams; trackBy: trackByExam"
+          >
+            <div class="item-main">
+              <strong>{{ exam.title }}</strong>
+              <span>İmtahan tarixi: {{ formatDateTime(exam.startTime) }}</span>
+            </div>
+
+            <div class="item-side">
+              <span class="soft-badge">Bitiş: {{ formatDateTime(exam.endTime) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noExams>
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <strong>İmtahan tapılmadı</strong>
+            <p>Hazırda dashboard üçün görünən imtahan məlumatı yoxdur.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>Son tapşırıqlar</h3>
+            <p>Tapşırıqların cari vəziyyəti burada görünür.</p>
+          </div>
+        </div>
+
+        <div class="list-block" *ngIf="dashboard.recentTasks.length; else noTasks">
+          <div
+            class="list-item task-item"
+            *ngFor="let task of dashboard.recentTasks; trackBy: trackByTask"
+          >
+            <div class="item-main">
+              <strong>{{ task.title }}</strong>
+              <span>Son tarix: {{ formatDate(task.dueDate) }}</span>
+            </div>
+
+            <div class="item-side">
+              <span [class]="getTaskStatusClass(task.status)">
+                {{ getTaskStatusText(task.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noTasks>
+          <div class="empty-state">
+            <div class="empty-icon">📌</div>
+            <strong>Tapşırıq tapılmadı</strong>
+            <p>Hazırda görünən tapşırıq məlumatı yoxdur.</p>
+          </div>
+        </ng-template>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <div class="panel-card compact">
+        <div class="panel-header">
+          <div>
+            <h3>Qısa məlumat</h3>
+            <p>Tələbə məlumatlarının xülasəsi</p>
+          </div>
+        </div>
+
+        <div class="summary-list">
+          <div class="summary-row">
+            <span>Ad soyad</span>
+            <strong>{{ dashboard.fullName || 'Məlumat yoxdur' }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Tələbə nömrəsi</span>
+            <strong>{{ dashboard.studentNumber || 'Məlumat yoxdur' }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Sinif</span>
+            <strong>{{ getClassName() }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Status</span>
+            <strong>{{ getStudentStatusText(dashboard.studentStatus) }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card compact">
+        <div class="panel-header">
+          <div>
+            <h3>Ümumi göstəricilər</h3>
+            <p>Dashboard xülasə nəticələri</p>
+          </div>
+        </div>
+
+        <div class="summary-list">
+          <div class="summary-row">
+            <span>Fənlərin sayı</span>
+            <strong>{{ dashboard.mySubjectsCount }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Yaxın imtahanlar</span>
+            <strong>{{ dashboard.upcomingExamsCount }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Tamamlanan imtahanlar</span>
+            <strong>{{ dashboard.completedExamsCount }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Oxunmamış bildirişlər</span>
+            <strong>{{ dashboard.unreadNotificationsCount }}</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

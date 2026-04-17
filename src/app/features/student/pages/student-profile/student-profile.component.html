@@ -1,0 +1,283 @@
+<div class="student-profile-page">
+  <div *ngIf="isLoading" class="state-card">
+    Profil məlumatları yüklənir...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && successMessage" class="state-card success-state">
+    {{ successMessage }}
+  </div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage && profile">
+    <section class="profile-hero">
+      <div class="hero-left">
+        <img
+          [src]="profile.photoUrl || 'https://via.placeholder.com/140x140?text=Student'"
+          alt="student-profile"
+          class="profile-photo"
+        />
+
+        <div class="profile-main">
+          <div class="hero-badges">
+            <span class="status-badge">{{ profile.status }}</span>
+            <span class="class-badge">{{ profile.className || 'Sinif təyin edilməyib' }}</span>
+          </div>
+
+          <h2>{{ profile.fullName }}</h2>
+          <p>
+            Tələbə nömrəsi: <strong>{{ profile.studentNumber }}</strong>
+          </p>
+
+          <div class="info-chips">
+            <span>{{ profile.email || 'Email yoxdur' }}</span>
+            <span>{{ profile.phoneNumber || 'Telefon yoxdur' }}</span>
+            <span>{{ profile.gender || 'Bilinmir' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button
+          *ngIf="!isEditMode"
+          type="button"
+          class="primary-btn"
+          (click)="startEdit()">
+          Düzəliş et
+        </button>
+
+        <ng-container *ngIf="isEditMode">
+          <button
+            type="button"
+            class="primary-btn"
+            [disabled]="isSaving"
+            (click)="saveProfile()">
+            {{ isSaving ? 'Yadda saxlanır...' : 'Yadda saxla' }}
+          </button>
+
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="isSaving"
+            (click)="cancelEdit()">
+            Ləğv et
+          </button>
+        </ng-container>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span>Orta bal</span>
+        <strong>{{ profile.averageScore }}</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>İmtahan sayı</span>
+        <strong>{{ profile.examsCount }}</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Davamiyyət</span>
+        <strong>{{ profile.attendanceRate }}%</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Tapşırıq tamamlanma</span>
+        <strong>{{ completionRate }}%</strong>
+      </div>
+    </section>
+
+    <section *ngIf="!isEditMode" class="detail-grid">
+      <div class="detail-card">
+        <h3>Şəxsi məlumatlar</h3>
+
+        <div class="detail-list">
+          <div class="detail-row">
+            <span>Ad</span>
+            <strong>{{ profile.firstName || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Soyad</span>
+            <strong>{{ profile.lastName || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Ata adı</span>
+            <strong>{{ profile.parentName || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Doğum tarixi</span>
+            <strong>{{ profile.dateOfBirth ? (profile.dateOfBirth | date:'dd.MM.yyyy') : '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Cins</span>
+            <strong>{{ profile.gender || '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3>Əlaqə və sistem məlumatları</h3>
+
+        <div class="detail-list">
+          <div class="detail-row">
+            <span>Email</span>
+            <strong>{{ profile.email || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Telefon</span>
+            <strong>{{ profile.phoneNumber || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Valideyn telefonu</span>
+            <strong>{{ profile.parentPhone || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Ünvan</span>
+            <strong>{{ profile.address || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Status</span>
+            <strong>{{ profile.status || '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card full-width">
+        <h3>Qısa qeydlər</h3>
+        <p class="notes-text">
+          {{ profile.notes || 'Əlavə qeyd daxil edilməyib.' }}
+        </p>
+      </div>
+
+      <div class="detail-card">
+        <h3>Tapşırıq statistikası</h3>
+
+        <div class="detail-list">
+          <div class="detail-row">
+            <span>Ümumi tapşırıq</span>
+            <strong>{{ profile.tasksCount }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Tamamlanan</span>
+            <strong>{{ profile.completedTasksCount }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Qayıb sayı</span>
+            <strong>{{ profile.absentCount }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Gecikmə sayı</span>
+            <strong>{{ profile.lateCount }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3>Son fəaliyyət xülasəsi</h3>
+
+        <div class="mini-list">
+<div class="mini-item" *ngFor="let exam of profile.exams | slice:0:3; trackBy: trackByExamId">            <strong>{{ exam.examTitle }}</strong>
+            <span>{{ exam.subjectName }} • {{ exam.score }}/{{ exam.maxScore }}</span>
+          </div>
+
+          <div class="mini-empty" *ngIf="!profile.exams?.length">
+            İmtahan məlumatı yoxdur.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section *ngIf="isEditMode" class="edit-card">
+      <h3>Profil məlumatlarını yenilə</h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Ad</label>
+          <input [(ngModel)]="editModel.firstName" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label>Soyad</label>
+          <input [(ngModel)]="editModel.lastName" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label>Ata adı</label>
+          <input [(ngModel)]="editModel.fatherName" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input [(ngModel)]="editModel.email" type="email" />
+        </div>
+
+        <div class="form-group">
+          <label>Telefon</label>
+          <input [(ngModel)]="editModel.phoneNumber" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label>Valideyn telefonu</label>
+          <input [(ngModel)]="editModel.parentPhone" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label>Tələbə nömrəsi</label>
+          <input [(ngModel)]="editModel.studentNumber" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label>Doğum tarixi</label>
+          <input [(ngModel)]="editModel.dateOfBirth" type="date" />
+        </div>
+
+        <div class="form-group">
+          <label>Cins</label>
+          <select [(ngModel)]="editModel.gender">
+            <option value="Bilinmir">Bilinmir</option>
+            <option value="Kişi">Kişi</option>
+            <option value="Qadın">Qadın</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="editModel.status">
+            <option value="Aktiv">Aktiv</option>
+            <option value="Passiv">Passiv</option>
+            <option value="Məzun">Məzun</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Şəkil URL</label>
+          <input [(ngModel)]="editModel.photoUrl" type="text" />
+        </div>
+
+        <div class="form-group full-width">
+          <label>Ünvan</label>
+          <input [(ngModel)]="editModel.address" type="text" />
+        </div>
+
+        <div class="form-group full-width">
+          <label>Qeyd</label>
+          <textarea [(ngModel)]="editModel.notes" rows="4"></textarea>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

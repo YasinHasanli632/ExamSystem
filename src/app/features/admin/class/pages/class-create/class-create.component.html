@@ -1,0 +1,329 @@
+<section class="class-create-page">
+  <div class="top-bar">
+    <div>
+      <a class="back-link" routerLink="/admin/classes">← Sinif siyahısına qayıt</a>
+      <h1>Yeni sinif yarat</h1>
+      <p>
+        Sinif məlumatlarını, fənləri, müəllim təyinatlarını və şagirdləri vahid paneldən idarə et.
+      </p>
+    </div>
+  </div>
+
+  <form class="class-form" [formGroup]="classForm" (ngSubmit)="submit()">
+    <div class="form-layout">
+      <div class="main-column">
+        <div class="card">
+          <div class="card-header">
+            <h3>Əsas məlumatlar</h3>
+            <p>Sinfin əsas struktur və identifikasiya məlumatları</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Sinif adı</label>
+              <input type="text" formControlName="name" placeholder="Məsələn: 10A" />
+              <small *ngIf="f['name'].touched && f['name'].invalid">
+                Sinif adı daxil edin
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Tədris ili</label>
+              <input type="text" formControlName="academicYear" placeholder="2025-2026" />
+              <small *ngIf="f['academicYear'].touched && f['academicYear'].invalid">
+                Tədris ilini daxil edin
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Otaq / kabinet</label>
+              <input type="text" formControlName="room" placeholder="Məsələn: 204 və ya Lab-2" />
+              <small>İstəyə görə</small>
+            </div>
+
+            <div class="form-group">
+              <label>Status</label>
+              <select formControlName="status">
+                <option value="Aktiv">Aktiv</option>
+                <option value="Passiv">Passiv</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Maksimum şagird sayı</label>
+              <input type="number" formControlName="maxStudentCount" placeholder="30" />
+              <small *ngIf="f['maxStudentCount'].touched && f['maxStudentCount'].invalid">
+                1 ilə 60 arası dəyər daxil et
+              </small>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Əlavə qeyd</label>
+              <textarea
+                rows="4"
+                formControlName="description"
+                placeholder="Sinif haqqında əlavə qeyd, istiqamət və ya daxili məlumat..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBJECTS -->
+        <div class="card accordion-card">
+          <button type="button" class="accordion-toggle" (click)="toggleSection('subjects')">
+            <div>
+              <h3>Fənn əlavə et</h3>
+              <p>Sinifə fənn bağlamaq istəyirsənsə seç. İstəyə görədir.</p>
+            </div>
+
+            <div class="accordion-meta">
+              <span class="count-badge">{{ selectedSubjectCount }}</span>
+              <span class="accordion-icon" [class.open]="isSubjectsOpen">⌄</span>
+            </div>
+          </button>
+
+          <div class="accordion-content" *ngIf="isSubjectsOpen">
+            <div class="search-inline">
+              <input
+                type="text"
+                [value]="subjectSearchText"
+                (input)="onSubjectSearchChange($any($event.target).value)"
+                placeholder="Fənn axtar... məsələn Riyaziyyat"
+              />
+            </div>
+
+            <div class="loading-state" *ngIf="isLoadingSubjects">Fənnlər yüklənir...</div>
+
+            <div class="selection-grid" *ngIf="!isLoadingSubjects && availableSubjects.length > 0">
+              <button
+                type="button"
+                class="select-chip"
+                *ngFor="let subject of availableSubjects; trackBy: trackBySubjectId"
+                [class.active]="isSubjectSelected(subject.id)"
+                (click)="toggleSubject(subject)"
+              >
+                <span>{{ subject.name }}</span>
+                <small>{{ subject.code || 'Kod yoxdur' }}</small>
+              </button>
+            </div>
+
+            <div class="empty-state" *ngIf="!isLoadingSubjects && availableSubjects.length === 0">
+              Fənn tapılmadı.
+            </div>
+
+            <div class="selected-preview" *ngIf="selectedSubjects.length > 0">
+              <span *ngFor="let subject of selectedSubjects; trackBy: trackBySubjectId">
+                {{ subject.name }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEACHERS -->
+        <div class="card accordion-card">
+          <button type="button" class="accordion-toggle" (click)="toggleSection('teachers')">
+            <div>
+              <h3>Müəllim əlavə et</h3>
+              <p>Seçilmiş fənlər üçün müəllim təyin et. İstəyə görədir.</p>
+            </div>
+
+            <div class="accordion-meta">
+              <span class="count-badge">{{ selectedTeacherCount }}</span>
+              <span class="accordion-icon" [class.open]="isTeachersOpen">⌄</span>
+            </div>
+          </button>
+
+          <div class="accordion-content" *ngIf="isTeachersOpen">
+            <div class="empty-state" *ngIf="selectedSubjects.length === 0">
+              Əvvəl istəyə görə fənn seçə bilərsən. Fənn seçilməsə də sinif yaratmaq mümkündür.
+            </div>
+
+            <div class="assignment-list" *ngIf="selectedSubjects.length > 0">
+              <div class="assignment-row" *ngFor="let subject of selectedSubjects; trackBy: trackBySubjectId">
+                <div class="assignment-subject">
+                  <strong>{{ subject.name }}</strong>
+                  <span>Kod: {{ subject.code || '-' }}</span>
+                </div>
+
+                <div class="assignment-teacher">
+                  <select
+                    [value]="teacherAssignments[subject.id] ?? ''"
+                    (change)="onTeacherSelected(subject.id, $any($event.target).value)"
+                  >
+                    <option value="">Müəllim seçmədən davam et</option>
+                    <option
+                      *ngFor="let teacher of getTeachersForSubject(subject.id); trackBy: trackByTeacherId"
+                      [value]="teacher.id"
+                    >
+                      {{ teacher.fullName }} — {{ teacher.status }}
+                    </option>
+                  </select>
+
+                  <div class="assignment-actions">
+                    <button type="button" class="link-btn" (click)="clearTeacher(subject.id)">
+                      Təmizlə
+                    </button>
+                    <small *ngIf="loadingTeachersBySubject[subject.id]">Müəllimlər yüklənir...</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENTS -->
+        <div class="card accordion-card">
+          <button type="button" class="accordion-toggle" (click)="toggleSection('students')">
+            <div>
+              <h3>Şagird əlavə et</h3>
+              <p>Şagird bağlamaq istəyirsənsə axtarıb əlavə et. İstəyə görədir.</p>
+            </div>
+
+            <div class="accordion-meta">
+              <span class="count-badge">{{ selectedStudentCount }}</span>
+              <span class="accordion-icon" [class.open]="isStudentsOpen">⌄</span>
+            </div>
+          </button>
+
+          <div class="accordion-content" *ngIf="isStudentsOpen">
+            <div class="search-inline">
+              <input
+                type="text"
+                [value]="studentSearchText"
+                (input)="onStudentSearchChange($any($event.target).value)"
+                placeholder="Şagird axtar... məsələn Ayxan və ya Yusif"
+              />
+            </div>
+
+            <div class="loading-state" *ngIf="isLoadingStudents">Şagirdlər axtarılır...</div>
+
+            <div class="search-results" *ngIf="!isLoadingStudents && searchedStudents.length > 0">
+              <button
+                type="button"
+                class="search-result-item"
+                *ngFor="let student of searchedStudents; trackBy: trackByStudentId"
+                (click)="addStudent(student)"
+              >
+                <img [src]="student.photoUrl" [alt]="student.fullName" />
+                <div class="student-meta">
+                  <strong>{{ student.fullName }}</strong>
+                  <span>{{ student.email }}</span>
+                  <small>
+                    {{ student.className || 'Sinifsiz' }} • Ortalama:
+                    {{ student.averageScore || 0 }}
+                  </small>
+                </div>
+              </button>
+            </div>
+
+            <div class="empty-state" *ngIf="studentSearchText.trim() && !isLoadingStudents && searchedStudents.length === 0">
+              Uyğun şagird tapılmadı.
+            </div>
+
+            <div class="selected-students" *ngIf="selectedStudents.length > 0">
+              <div class="selected-student-card" *ngFor="let student of selectedStudents; trackBy: trackByStudentId">
+                <img [src]="student.photoUrl" [alt]="student.fullName" />
+
+                <div class="student-card-meta">
+                  <strong>{{ student.fullName }}</strong>
+                  <span>{{ student.email }}</span>
+                  <small>{{ student.className || 'Sinifsiz' }} • {{ student.status }}</small>
+                </div>
+
+                <button type="button" class="remove-btn" (click)="removeStudent(student.id)">
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-column">
+        <div class="card preview-card">
+          <div class="card-header">
+            <h3>Canlı önizləmə</h3>
+            <p>Yaradılacaq sinfin qısa görünüşü</p>
+          </div>
+
+          <div class="class-preview">
+            <div class="preview-top">
+              <div class="preview-badge">{{ classForm.value.name || 'Sinif' }}</div>
+              <div class="preview-status">{{ classForm.value.status || 'Status' }}</div>
+            </div>
+
+            <h4>{{ classForm.value.name || 'Yeni sinif' }}</h4>
+            <p>{{ classForm.value.description || 'Sinif üçün əlavə qeyd yoxdur.' }}</p>
+
+            <div class="preview-stats">
+              <div>
+                <span>Tədris ili</span>
+                <strong>{{ classForm.value.academicYear || '-' }}</strong>
+              </div>
+              <div>
+                <span>Otaq</span>
+                <strong>{{ classForm.value.room || '-' }}</strong>
+              </div>
+              <div>
+                <span>Şagird sayı</span>
+                <strong>{{ selectedStudentCount }}</strong>
+              </div>
+              <div>
+                <span>Maksimum</span>
+                <strong>{{ classForm.value.maxStudentCount || 0 }}</strong>
+              </div>
+            </div>
+
+            <div class="preview-block">
+              <label>Seçilən fənlər</label>
+              <div class="mini-tags" *ngIf="selectedSubjects.length > 0; else noSubjects">
+                <span *ngFor="let subject of selectedSubjects; trackBy: trackBySubjectId">
+                  {{ subject.name }}
+                </span>
+              </div>
+              <ng-template #noSubjects>
+                <div class="empty-preview">Fənn seçilməyib</div>
+              </ng-template>
+            </div>
+
+            <div class="preview-block">
+              <label>Fənn → müəllim</label>
+
+              <div class="assignment-preview-row" *ngFor="let subject of selectedSubjects; trackBy: trackBySubjectId">
+                <span>{{ subject.name }}</span>
+                <strong>{{ getTeacherName(subject.id) }}</strong>
+              </div>
+
+              <div class="empty-preview" *ngIf="selectedSubjects.length === 0">
+                Müəllim təyinatı yoxdur
+              </div>
+            </div>
+
+            <div class="preview-block">
+              <label>Seçilən şagirdlər</label>
+              <div class="mini-tags student-tags" *ngIf="selectedStudents.length > 0; else noStudents">
+                <span *ngFor="let student of selectedStudents; trackBy: trackByStudentId">
+                  {{ student.fullName }}
+                </span>
+              </div>
+              <ng-template #noStudents>
+                <div class="empty-preview">Şagird seçilməyib</div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+
+        <div class="card submit-card">
+          <div class="card-header">
+            <h3>Yadda saxla</h3>
+            <p>Sinif məlumatlarını sistemə əlavə et</p>
+          </div>
+
+          <button class="submit-btn" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Yadda saxlanılır...' : 'Sinifi yarat' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>

@@ -1,0 +1,245 @@
+<div class="teacher-exams-page">
+  <div class="page-header">
+    <div class="page-header__content">
+      <span class="page-badge">Teacher Panel</span>
+      <h1 class="page-title">İmtahanlarım</h1>
+      <p class="page-subtitle">
+        Müəllim kimi sizə aid imtahanları burada izləyə, filtrləyə və yayımlaya bilərsiniz.
+      </p>
+    </div>
+
+    <div class="page-header__actions">
+      <button type="button" class="btn btn-outline" (click)="loadMyExams()">
+        Yenilə
+      </button>
+
+      <button type="button" class="btn btn-primary" (click)="goToCreate()">
+        Yeni imtahan yarat
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card__label">Ümumi imtahan</div>
+      <div class="stat-card__value">{{ exams.length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Yayımlanan</div>
+      <div class="stat-card__value">{{ publishedCount }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Qaralama</div>
+      <div class="stat-card__value">{{ draftCount }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Aktiv</div>
+      <div class="stat-card__value">{{ activeCount }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Tamamlanan</div>
+      <div class="stat-card__value">{{ completedCount }}</div>
+    </div>
+  </div>
+
+  <div class="filters-card">
+    <div class="filters-card__top">
+      <div>
+        <h2>Filtrlər</h2>
+        <p>İmtahanları axtarış, sinif, fənn və statusa görə süz.</p>
+      </div>
+
+      <button type="button" class="btn btn-light" (click)="clearFilters()">
+        Filtrləri sıfırla
+      </button>
+    </div>
+
+    <div class="filters-grid">
+      <div class="form-group form-group--search">
+        <label for="searchTerm">Axtarış</label>
+        <input
+          id="searchTerm"
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="İmtahan adı, sinif və ya fənn yaz..."
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="selectedClass">Sinif</label>
+        <select
+          id="selectedClass"
+          [(ngModel)]="selectedClass"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="">Hamısı</option>
+          <option *ngFor="let classItem of classes" [value]="classItem">
+            {{ classItem }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="selectedSubject">Fənn</label>
+        <select
+          id="selectedSubject"
+          [(ngModel)]="selectedSubject"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="">Hamısı</option>
+          <option *ngFor="let subjectItem of subjects" [value]="subjectItem">
+            {{ subjectItem }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="selectedStatus">Status</label>
+        <select
+          id="selectedStatus"
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="">Hamısı</option>
+          <option *ngFor="let statusItem of statuses" [value]="statusItem">
+            {{ getStatusLabel(statusItem) }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="selectedPublishFilter">Yayımlanma</label>
+        <select
+          id="selectedPublishFilter"
+          [(ngModel)]="selectedPublishFilter"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="">Hamısı</option>
+          <option value="published">Yayımlanan</option>
+          <option value="draft">Qaralama</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <strong>Xəta:</strong> {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-card">
+    <div class="loader"></div>
+    <p>İmtahanlar yüklənir...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="filteredExams.length > 0; else emptyState">
+      <div class="table-card__header">
+        <div>
+          <h2>İmtahan siyahısı</h2>
+          <p>{{ filteredExams.length }} nəticə göstərilir</p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="exam-table">
+          <thead>
+            <tr>
+              <th>İmtahan</th>
+              <th>Sinif</th>
+              <th>Fənn</th>
+              <th>Status</th>
+              <th>Yayımlanma</th>
+              <th>Başlama</th>
+              <th>Müddət</th>
+              <th>Bal</th>
+              <th>Sual sayı</th>
+              <th>Əməliyyatlar</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let exam of filteredExams">
+              <td>
+                <div class="exam-main">
+                  <strong>{{ exam.title }}</strong>
+                  <span>{{ exam.description || 'Təsvir əlavə edilməyib.' }}</span>
+                </div>
+              </td>
+
+              <td>{{ exam.className || '-' }}</td>
+              <td>{{ exam.subjectName || '-' }}</td>
+
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(exam.status)">
+                  {{ getStatusLabel(exam.status) }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="publish-badge"
+                  [class.publish-badge--yes]="exam.isPublished"
+                  [class.publish-badge--no]="!exam.isPublished"
+                >
+                  {{ exam.isPublished ? 'Yayımlanıb' : 'Qaralama' }}
+                </span>
+              </td>
+
+              <td>{{ formatDate(exam.startTime) }}</td>
+              <td>{{ displayNumber(exam.durationMinutes) }} dəq</td>
+              <td>{{ displayNumber(exam.totalScore) }}</td>
+              <td>{{ displayNumber(exam.questionCount) }}</td>
+
+              <td>
+                <div class="table-actions">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-light"
+                    (click)="goToDetail(exam)"
+                  >
+                    Detail
+                  </button>
+
+                  <button
+                    *ngIf="!exam.isPublished"
+                    type="button"
+                    class="btn btn-sm btn-primary"
+                    [disabled]="publishingId === exam.id"
+                    (click)="publishExam(exam)"
+                  >
+                    {{ publishingId === exam.id ? 'Yayımlanır...' : 'Yayımla' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <div class="empty-state__icon">📘</div>
+        <h3>İmtahan tapılmadı</h3>
+        <p>
+          Seçilən filtrlərə uyğun nəticə yoxdur və ya hələ müəllim üçün imtahan əlavə edilməyib.
+        </p>
+
+        <div class="empty-state__actions">
+          <button type="button" class="btn btn-light" (click)="clearFilters()">
+            Filtrləri sıfırla
+          </button>
+
+          <button type="button" class="btn btn-primary" (click)="goToCreate()">
+            Yeni imtahan yarat
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </ng-container>
+</div>

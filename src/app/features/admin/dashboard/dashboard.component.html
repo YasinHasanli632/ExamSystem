@@ -1,0 +1,110 @@
+<div class="dashboard-page">
+  <div *ngIf="isLoading" class="panel-card">
+    Dashboard yüklənir...
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="panel-card">
+    <strong>Xəta baş verdi:</strong> {{ errorMessage }}
+  </div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage">
+    <div class="hero-card">
+      <div class="hero-left">
+        <span class="hero-badge">Live Overview</span>
+        <h2>Platform idarəetmə mərkəzi</h2>
+        <p>
+          İstifadəçiləri, sinifləri, imtahanları və nəticələri bir paneldən nəzarətdə saxla.
+        </p>
+
+        <div class="hero-actions">
+          <button class="primary-btn" (click)="goToCreateExam()">Yeni imtahan yarat</button>
+          <button class="secondary-btn" (click)="goToReports()">Hesabatlara bax</button>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="mini-stat">
+          <span>Aktiv müəllim</span>
+          <strong>{{ dashboard.activeTeacherCount }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Bugünkü iştirak</span>
+          <strong>{{ dashboard.todayAttendanceRate }}%</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-title">Total Siniflər</span>
+        <strong>{{ dashboard.totalClasses }}</strong>
+        <small>Ümumi aktiv siniflər</small>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-title">Total Müəllimlər</span>
+        <strong>{{ dashboard.totalTeachers }}</strong>
+        <small>Aktiv müəllimlər</small>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-title">Total Şagirdlər</span>
+        <strong>{{ dashboard.totalStudents }}</strong>
+        <small>Aktiv şagirdlər</small>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-title">Aktiv İmtahanlar</span>
+        <strong>{{ dashboard.activeExams }}</strong>
+        <small>{{ dashboard.todayExamCount }} bu gün</small>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3>Son fəaliyyətlər</h3>
+          <button type="button" (click)="refreshDashboard()">Yenilə</button>
+        </div>
+
+        <div class="activity-list" *ngIf="dashboard.activities.length; else noActivities">
+          <div
+            class="activity-item"
+            *ngFor="let activity of dashboard.activities; trackBy: trackByActivity"
+          >
+            <div class="activity-dot blue"></div>
+            <div>
+              <strong>{{ activity.title || 'Sistem fəaliyyəti' }}</strong>
+              <p>{{ activity.description || 'Əlavə açıqlama yoxdur.' }}</p>
+            </div>
+            <span>{{ formatTime(activity.actionTime) }}</span>
+          </div>
+        </div>
+
+        <ng-template #noActivities>
+          <div class="activity-item">
+            <div class="activity-dot green"></div>
+            <div>
+              <strong>Fəaliyyət tapılmadı</strong>
+              <p>Hələlik dashboard üçün activity məlumatı görünmür.</p>
+            </div>
+            <span>—</span>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3>Tez əməliyyatlar</h3>
+        </div>
+
+        <div class="quick-actions">
+          <button class="quick-btn" (click)="goToAdmins()">İstifadəçi əlavə et</button>
+          <button class="quick-btn" (click)="goToClasses()">Sinif yarat</button>
+          <button class="quick-btn" (click)="goToSubjects()">Fənn əlavə et</button>
+          <button class="quick-btn" (click)="goToExams()">İmtahan qur</button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

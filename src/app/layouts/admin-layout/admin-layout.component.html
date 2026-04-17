@@ -1,0 +1,203 @@
+<div class="admin-shell">
+  <aside class="sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-top">
+      <div class="brand-row">
+        <div class="brand-mark">E</div>
+
+        @if (!isCollapsed) {
+          <div class="brand-meta">
+            <h2>Exam System</h2>
+            <p>Enterprise Panel</p>
+          </div>
+        }
+
+        <button class="sidebar-toggle" type="button" (click)="toggleSidebar()">
+          {{ isCollapsed ? '→' : '←' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      @if (!isCollapsed) {
+        <div class="workspace-card">
+          <span class="workspace-label">Workspace</span>
+          <strong>Academic Management</strong>
+          <small>Admin access enabled</small>
+        </div>
+      }
+
+      <div class="menu-section">
+        @if (!isCollapsed) {
+          <div class="section-title">Əsas menyu</div>
+        }
+
+        <nav class="menu-list">
+          @for (item of topMenuItems; track item.key) {
+            <div class="menu-block">
+              @if (!item.children?.length) {
+                <a
+                  [routerLink]="item.route"
+                  class="menu-item"
+                  [class.active]="isParentActive(item)">
+                  <div class="menu-main">
+                    <span class="menu-icon">{{ item.icon }}</span>
+
+                    @if (!isCollapsed) {
+                      <span class="menu-text">{{ item.label }}</span>
+                    }
+                  </div>
+
+                  @if (!isCollapsed && item.badge) {
+                    <span class="menu-badge">{{ item.badge }}</span>
+                  }
+                </a>
+              }
+
+              @if (item.children?.length) {
+                <button
+                  type="button"
+                  class="menu-item menu-button"
+                  [class.active]="isParentActive(item)"
+                  (click)="toggleMenu(item.key)">
+                  <div class="menu-main">
+                    <span class="menu-icon">{{ item.icon }}</span>
+
+                    @if (!isCollapsed) {
+                      <span class="menu-text">{{ item.label }}</span>
+                    }
+                  </div>
+
+                  @if (!isCollapsed) {
+                    <span class="menu-arrow" [class.open]="isMenuOpen(item.key)">⌄</span>
+                  }
+                </button>
+
+                @if (isMenuOpen(item.key) && !isCollapsed) {
+                  <div class="submenu">
+                    @for (child of item.children; track child.route) {
+                      <a
+                        [routerLink]="child.route"
+                        class="submenu-item"
+                        [class.active]="isChildActive(child.route)">
+                        <div class="submenu-left">
+                          <span class="submenu-dot"></span>
+                          <span>{{ child.label }}</span>
+                        </div>
+
+                        @if (child.badge) {
+                          <span class="submenu-badge">{{ child.badge }}</span>
+                        }
+                      </a>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+        </nav>
+      </div>
+
+      @if (!isCollapsed) {
+        <div class="stats-card">
+          <div class="stats-header">
+            <span>Bugünkü xülasə</span>
+          </div>
+
+          <div class="stats-list">
+            @for (stat of quickStats; track stat.label) {
+              <div class="stat-item">
+                <span>{{ stat.label }}</span>
+                <strong>{{ stat.value }}</strong>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="sidebar-bottom">
+      @for (item of bottomMenuItems; track item.key) {
+        <a
+          [routerLink]="item.route"
+          class="menu-item bottom-item"
+          [class.active]="isParentActive(item)">
+          <div class="menu-main">
+            <span class="menu-icon">{{ item.icon }}</span>
+
+            @if (!isCollapsed) {
+              <span class="menu-text">{{ item.label }}</span>
+            }
+          </div>
+        </a>
+      }
+
+      <div class="user-panel" [class.compact]="isCollapsed">
+        <div class="user-avatar">
+          {{ currentUserName.charAt(0) }}
+        </div>
+
+        @if (!isCollapsed) {
+          <div class="user-info">
+            <strong>{{ currentUserName }}</strong>
+            <span>{{ currentUserRole }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="page-info">
+          <h1>Admin Dashboard</h1>
+          <p>Sistemə ümumi nəzarət, istifadəçilər və imtahanların idarəsi</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+          <input
+            type="text"
+            name="globalSearch"
+            [(ngModel)]="searchText"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Axtarış et..."
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false" />
+        </div>
+
+        <button
+          type="button"
+          class="icon-btn notification-btn"
+          (click)="goToNotifications()"
+          title="Bildirişlər">
+          🔔
+
+          @if (notificationCount > 0) {
+            <span class="notification-count">
+              {{ notificationCount > 99 ? '99+' : notificationCount }}
+            </span>
+          }
+        </button>
+
+        <button type="button" class="profile-btn" (click)="goToProfile()">
+          <div class="profile-avatar">{{ currentUserName.charAt(0) }}</div>
+          <div class="profile-meta">
+            <strong>{{ currentUserName }}</strong>
+            <span>{{ currentUserEmail }}</span>
+          </div>
+        </button>
+
+        <button type="button" class="logout-btn" (click)="logout()">Çıxış</button>
+      </div>
+    </header>
+
+    <section class="content-area">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

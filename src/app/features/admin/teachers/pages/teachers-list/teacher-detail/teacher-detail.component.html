@@ -1,0 +1,166 @@
+<div class="state-card" *ngIf="loading">
+  Müəllim məlumatı yüklənir...
+</div>
+
+<div class="state-card error" *ngIf="!loading && errorMessage">
+  {{ errorMessage }}
+</div>
+
+<ng-container *ngIf="!loading && teacher as teacher">
+  <section class="teacher-detail-page">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <a class="back-link" routerLink="/admin/users/teachers">← Müəllimlər siyahısına qayıt</a>
+        <h1>{{ teacher.firstName }} {{ teacher.lastName }}</h1>
+        <p>{{ teacher.details || 'Əlavə məlumat yoxdur.' }}</p>
+      </div>
+
+      <div class="top-bar-actions">
+        <button type="button" class="danger-btn" (click)="deleteTeacher()">
+          Müəllimi sil
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-left">
+        <img [src]="teacher.photoUrl" [alt]="teacher.firstName + ' ' + teacher.lastName" />
+        <div>
+          <h2>{{ teacher.firstName }} {{ teacher.lastName }}</h2>
+          <span class="meta">{{ teacher.fatherName || 'Ata adı qeyd edilməyib' }}</span>
+
+          <div class="status-line">
+            <span class="info-chip">{{ teacher.status }}</span>
+            <span class="info-chip">{{ totalClasses }} sinif</span>
+            <span class="info-chip">{{ totalSubjects }} fənn</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-right">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Email</label>
+            <span>{{ teacher.email }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Telefon</label>
+            <span>{{ teacher.phone || '-' }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Ölkə</label>
+            <span>{{ teacher.country || '-' }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Yaş</label>
+            <span>{{ teacher.age || '-' }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Department</label>
+            <span>{{ teacher.department || '-' }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>İxtisas</label>
+            <span>{{ teacher.specialization || '-' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" *ngFor="let block of performanceBlocks">
+        <span>{{ block.title }}</span>
+        <strong>{{ block.value }}</strong>
+        <p>{{ block.description }}</p>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="card-header">
+          <h3>Keçdiyi fənlər</h3>
+        </div>
+
+        <div class="tag-list" *ngIf="teacher.subjects.length; else noSubjects">
+          <span class="tag" *ngFor="let subject of teacher.subjects">{{ subject }}</span>
+        </div>
+
+        <ng-template #noSubjects>
+          <div class="empty-state">Bu müəllimə bağlı fənn yoxdur.</div>
+        </ng-template>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h3>Ümumi performans blokları</h3>
+        </div>
+
+        <div class="performance-list">
+          <div class="performance-item">
+            <span>Uğur göstəricisi</span>
+            <strong>{{ teacher.performance.successRate }}%</strong>
+          </div>
+
+          <div class="performance-item">
+            <span>Orta nəticə</span>
+            <strong>{{ teacher.performance.averageScore }}</strong>
+          </div>
+
+          <div class="performance-item">
+            <span>Task tamamlama</span>
+            <strong>{{ teacher.performance.completedTasks }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="card-header">
+        <h3>Keçdiyi siniflər</h3>
+      </div>
+
+      <div class="class-grid" *ngIf="teacher.classes.length; else noClasses">
+        <div class="class-card" *ngFor="let classItem of teacher.classes">
+          <h4>{{ classItem.name }}</h4>
+          <p>{{ classItem.studentCount }} tələbə</p>
+
+          <div class="tag-list">
+            <span class="tag" *ngFor="let subject of classItem.subjectNames">{{ subject }}</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noClasses>
+        <div class="empty-state">Bu müəllimə bağlı sinif yoxdur.</div>
+      </ng-template>
+    </div>
+
+    <div class="content-card">
+      <div class="card-header">
+        <h3>Task-lar</h3>
+      </div>
+
+      <div class="task-list" *ngIf="teacher.tasks.length; else noTasks">
+        <div class="task-item" *ngFor="let task of teacher.tasks">
+          <div>
+            <h4>{{ task.title }}</h4>
+            <p>Son tarix: {{ task.dueDate }}</p>
+          </div>
+
+          <span [class]="getTaskStatusClass(task.status)">
+            {{ task.status }}
+          </span>
+        </div>
+      </div>
+
+      <ng-template #noTasks>
+        <div class="empty-state">Task məlumatı yoxdur.</div>
+      </ng-template>
+    </div>
+  </section>
+</ng-container>

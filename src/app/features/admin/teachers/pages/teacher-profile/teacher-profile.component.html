@@ -1,0 +1,86 @@
+<div class="teacher-profile-page">
+  <div *ngIf="isLoading" class="state-card">Profil məlumatları yüklənir...</div>
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">{{ errorMessage }}</div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage && teacher">
+    <section class="profile-hero">
+      <img [src]="teacher.photoUrl" alt="teacher" class="profile-photo" />
+
+      <div class="profile-main">
+        <span class="status-badge">{{ teacher.status }}</span>
+        <h2>{{ teacher.fullName }}</h2>
+        <p>{{ teacher.department || 'Müəllim' }} • {{ teacher.specialization || 'İxtisas göstərilməyib' }}</p>
+
+        <div class="info-chips">
+          <span>{{ teacher.email || 'Email yoxdur' }}</span>
+          <span>{{ teacher.phone || 'Telefon yoxdur' }}</span>
+          <span>{{ teacher.country || 'Ölkə yoxdur' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-grid">
+      <div class="detail-card">
+        <h3>Şəxsi məlumatlar</h3>
+
+        <div class="detail-list">
+          <div class="detail-row">
+            <span>Ad</span>
+            <strong>{{ teacher.firstName || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Soyad</span>
+            <strong>{{ teacher.lastName || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Ata adı</span>
+            <strong>{{ teacher.fatherName || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Yaş</span>
+            <strong>{{ teacher.age || 0 }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Doğum tarixi</span>
+            <strong>{{ teacher.birthDate ? (teacher.birthDate | date:'dd.MM.yyyy') : '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3>İş məlumatları</h3>
+
+        <div class="detail-list">
+          <div class="detail-row">
+            <span>İstifadəçi adı</span>
+            <strong>{{ teacher.username || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Şöbə</span>
+            <strong>{{ teacher.department || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>İxtisas</span>
+            <strong>{{ teacher.specialization || '-' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Aktivlik</span>
+            <strong>{{ teacher.isActive ? 'Aktiv' : 'Passiv' }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Əlavə qeyd</span>
+            <strong>{{ teacher.details || '-' }}</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

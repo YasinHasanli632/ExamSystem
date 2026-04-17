@@ -1,0 +1,292 @@
+<section class="teacher-dashboard-page">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Teacher Panel / Dashboard</p>
+      <h1>Müəllim dashboardu</h1>
+      <p class="page-description">
+        Siniflər, şagirdlər, imtahanlar, tasklar və ümumi teacher statistikaları
+        bu səhifədə backend məlumatları ilə göstərilir.
+      </p>
+    </div>
+
+    <button class="refresh-btn" type="button" (click)="refreshDashboard()">
+      Yenilə
+    </button>
+  </header>
+
+  <div *ngIf="isLoading" class="state-card loading-state">
+    <div class="state-icon">⏳</div>
+    <div>
+      <strong>Dashboard yüklənir...</strong>
+      <span>Müəllim paneli üçün məlumatlar hazırlanır.</span>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="state-card error-state">
+    <div class="state-icon">⚠️</div>
+    <div>
+      <strong>Xəta baş verdi</strong>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading && !errorMessage">
+    <section class="hero-card">
+      <div class="hero-left">
+        <span class="hero-badge">Teacher Workspace</span>
+        <h2>Xoş gəldiniz, {{ teacherFullName }}</h2>
+        <p>
+          Bu paneldən siniflərinizi, imtahanlarınızı, tapşırıqlarınızı və
+          gələcək bildiriş axınını idarə edə bilərsiniz.
+        </p>
+
+        <div class="hero-meta">
+          <span class="meta-chip">{{ teacherDepartment || 'Departament qeyd edilməyib' }}</span>
+          <span class="meta-chip">{{ teacherSpecialization || 'İxtisas qeyd edilməyib' }}</span>
+          <span class="meta-chip">{{ teacherStatus }}</span>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="teacher-profile-box">
+          <div class="teacher-avatar" *ngIf="!teacherPhotoUrl">
+            {{ teacherFullName ? teacherFullName.charAt(0) : 'T' }}
+          </div>
+
+          <img
+            *ngIf="teacherPhotoUrl"
+            [src]="teacherPhotoUrl"
+            alt="teacher photo"
+            class="teacher-photo"
+          />
+
+          <div class="teacher-profile-meta">
+            <strong>{{ teacherFullName }}</strong>
+            <span>{{ teacherDepartment || 'Teacher' }}</span>
+            <small>{{ teacherSpecialization || 'İxtisas qeyd edilməyib' }}</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card" *ngFor="let stat of statCards">
+        <div class="stat-top">
+          <span class="stat-icon">{{ stat.icon }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+
+        <strong>{{ stat.value }}</strong>
+        <small>{{ stat.helper }}</small>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel-card panel-card--wide">
+        <div class="panel-header">
+          <div>
+            <h3>Siniflər üzrə ümumi baxış</h3>
+            <p>Teacher dashboard endpointindən gələn sinif məlumatları</p>
+          </div>
+
+          <span class="panel-badge">{{ classCards.length }} sinif</span>
+        </div>
+
+        <div *ngIf="classCards.length; else noClasses" class="class-grid">
+          <article
+            class="class-card"
+            *ngFor="let classItem of classCards; trackBy: trackByClass"
+          >
+            <div class="class-card-header">
+              <div>
+                <p class="class-kicker">Sinif kartı</p>
+                <h4>{{ classItem.classRoomName }}</h4>
+              </div>
+
+              <span
+                class="attendance-badge"
+                [ngClass]="{
+                  'attendance-badge--good': getAttendanceState(classItem.attendanceRate) === 'good',
+                  'attendance-badge--medium': getAttendanceState(classItem.attendanceRate) === 'medium',
+                  'attendance-badge--low': getAttendanceState(classItem.attendanceRate) === 'low'
+                }"
+              >
+                {{ formatPercent(classItem.attendanceRate) }}
+              </span>
+            </div>
+
+            <div class="class-stats">
+              <div class="mini-stat">
+                <span>Şagird sayı</span>
+                <strong>{{ classItem.studentCount }}</strong>
+              </div>
+
+              <div class="mini-stat">
+                <span>İmtahan sayı</span>
+                <strong>{{ classItem.examCount }}</strong>
+              </div>
+
+              <div class="mini-stat">
+                <span>Orta nəticə</span>
+                <strong>{{ formatScore(classItem.averageScore) }}</strong>
+              </div>
+
+              <div class="mini-stat">
+                <span>Davamiyyət</span>
+                <strong>{{ formatPercent(classItem.attendanceRate) }}</strong>
+              </div>
+            </div>
+
+            <div class="subject-block">
+              <p class="block-title">Fənlər</p>
+
+              <div class="subject-list" *ngIf="classItem.subjectNames.length; else noSubjects">
+                <span class="subject-chip" *ngFor="let subject of classItem.subjectNames">
+                  {{ subject }}
+                </span>
+              </div>
+
+              <ng-template #noSubjects>
+                <div class="info-empty info-empty--small">Bu sinif üzrə fənn tapılmadı.</div>
+              </ng-template>
+            </div>
+
+            <div class="top-student-block" *ngIf="classItem.topStudentName; else noTopStudent">
+              <p class="block-title">Ən yüksək nəticəli tələbə</p>
+
+              <div class="top-student-card">
+                <div>
+                  <strong>{{ classItem.topStudentName }}</strong>
+                  <small>Sinif üzrə ən yaxşı nəticə</small>
+                </div>
+
+                <span>{{ formatScore(classItem.topStudentScore) }}</span>
+              </div>
+            </div>
+
+            <ng-template #noTopStudent>
+              <div class="info-empty info-empty--small">
+                Ən yüksək nəticəli tələbə məlumatı yoxdur.
+              </div>
+            </ng-template>
+
+            <div class="card-actions">
+              <button
+                class="action-btn action-btn--primary"
+                type="button"
+                (click)="goToClassDetail(classItem)"
+              >
+                Ətraflı bax
+              </button>
+
+              <button
+                class="action-btn action-btn--secondary"
+                type="button"
+                (click)="goToAttendance(classItem)"
+              >
+                Davamiyyət
+              </button>
+
+              <button
+                class="action-btn action-btn--dark"
+                type="button"
+                (click)="goToExamCreate(classItem)"
+              >
+                İmtahan yarat
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noClasses>
+          <div class="empty-state">
+            Hələlik sizə bağlı sinif görünmür.
+          </div>
+        </ng-template>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>Son tasklar</h3>
+            <p>Teacher task endpointindən gələn son qeydlər</p>
+          </div>
+
+          <button class="link-btn" type="button" (click)="goToTasks()">
+            Hamısına bax
+          </button>
+        </div>
+
+        <div *ngIf="recentTasks.length; else noTasks" class="task-list">
+          <div class="task-item" *ngFor="let task of recentTasks; trackBy: trackByTask">
+            <div class="task-main">
+              <strong>{{ task.title }}</strong>
+              <p>{{ task.description || 'Əlavə açıqlama yoxdur.' }}</p>
+            </div>
+
+            <div class="task-meta">
+              <span class="task-status" [class.done]="task.isCompleted">
+                {{ task.statusText }}
+              </span>
+              <small>{{ formatTaskDueDate(task.dueDate) }}</small>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noTasks>
+          <div class="empty-state">
+            Tapşırıq məlumatı tapılmadı.
+          </div>
+        </ng-template>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>Sürətli keçidlər</h3>
+            <p>Teacher panel üzrə əsas bölmələr</p>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button
+            class="quick-action-card"
+            type="button"
+            *ngFor="let action of quickActions"
+            (click)="action.action()"
+          >
+            <strong>{{ action.title }}</strong>
+            <span>{{ action.description }}</span>
+            <small>{{ action.buttonText }}</small>
+          </button>
+        </div>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h3>Bildirişlər</h3>
+            <p>Hələlik statik blok, sonra notification servisinə bağlanacaq</p>
+          </div>
+
+          <span class="panel-badge">{{ unreadNotificationsCount }} unread</span>
+        </div>
+
+        <div class="notification-list">
+          <div
+            class="notification-item"
+            *ngFor="let item of staticNotifications"
+            [ngClass]="item.type"
+          >
+            <div class="notification-top">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.timeText }}</span>
+            </div>
+
+            <p>{{ item.description }}</p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </ng-container>
+</section>

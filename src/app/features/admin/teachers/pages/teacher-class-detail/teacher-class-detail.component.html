@@ -1,0 +1,246 @@
+<div class="teacher-class-detail-page">
+  <div class="top-bar">
+    <button class="back-btn" type="button" (click)="goBack()">
+      ← Siniflərə qayıt
+    </button>
+
+    <button class="refresh-btn" type="button" (click)="loadClassDetail()">
+      Yenilə
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="state-card">
+    <div class="loader"></div>
+    <p>Sinif detalları yüklənir...</p>
+  </div>
+
+  <ng-container *ngIf="!loading && classDetail">
+    <div class="hero-card">
+      <div class="hero-main">
+        <p class="hero-kicker">Teacher Panel / Sinif detalı</p>
+        <h1>{{ className }}</h1>
+        <p class="hero-subtitle">
+          Sinif üzrə tələbələr, imtahanlar, task-lar və ümumi statistik göstəricilər.
+        </p>
+
+        <div class="subject-badges" *ngIf="subjectNames.length > 0">
+          <span class="subject-badge" *ngFor="let subject of subjectNames">
+            {{ subject }}
+          </span>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span>Tələbə sayı</span>
+          <strong>{{ students.length }}</strong>
+        </div>
+        <div class="hero-stat">
+          <span>İmtahan sayı</span>
+          <strong>{{ exams.length }}</strong>
+        </div>
+        <div class="hero-stat">
+          <span>Task sayı</span>
+          <strong>{{ tasks.length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>İmtahan xülasəsi</h3>
+        <div class="summary-values">
+          <div>
+            <span>Ümumi</span>
+            <strong>{{ examSummary?.totalExams ?? exams.length }}</strong>
+          </div>
+          <div>
+            <span>Aktiv</span>
+            <strong>{{ examSummary?.activeExams ?? '-' }}</strong>
+          </div>
+          <div>
+            <span>Orta bal</span>
+            <strong>{{ examSummary?.averageScore ?? '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3>Task xülasəsi</h3>
+        <div class="summary-values">
+          <div>
+            <span>Ümumi</span>
+            <strong>{{ taskSummary?.totalTasks ?? tasks.length }}</strong>
+          </div>
+          <div>
+            <span>Tamamlanan</span>
+            <strong>{{ taskSummary?.completedTasks ?? '-' }}</strong>
+          </div>
+          <div>
+            <span>Gecikən</span>
+            <strong>{{ taskSummary?.overdueTasks ?? '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3>Davamiyyət xülasəsi</h3>
+        <div class="summary-values">
+          <div>
+            <span>Orta davamiyyət</span>
+            <strong>{{ attendanceSummary?.averageAttendance ?? '-' }}</strong>
+          </div>
+          <div>
+            <span>İştirak edənlər</span>
+            <strong>{{ attendanceSummary?.presentCount ?? '-' }}</strong>
+          </div>
+          <div>
+            <span>Qeyri-iştirak</span>
+            <strong>{{ attendanceSummary?.absentCount ?? '-' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="card-header">
+          <h2>Tələbələr</h2>
+          <span>{{ students.length }} nəfər</span>
+        </div>
+
+        <div *ngIf="students.length === 0" class="empty-box">
+          Tələbə məlumatı tapılmadı.
+        </div>
+
+        <div *ngIf="students.length > 0" class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ad soyad</th>
+                <th>Email</th>
+                <th>Orta bal</th>
+                <th>Davranış / status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let student of students; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ student?.fullName || student?.name || '-' }}</td>
+                <td>{{ student?.email || '-' }}</td>
+                <td>{{ student?.averageScore ?? '-' }}</td>
+                <td>{{ student?.status || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="side-column">
+        <div class="content-card">
+          <div class="card-header">
+            <h2>Top tələbələr</h2>
+          </div>
+
+          <div *ngIf="topStudents.length === 0" class="empty-box">
+            Top tələbə məlumatı yoxdur.
+          </div>
+
+          <div *ngIf="topStudents.length > 0" class="top-students-list">
+            <div class="top-student-item" *ngFor="let student of topStudents; let i = index">
+              <div class="rank">{{ i + 1 }}</div>
+              <div class="student-info">
+                <strong>{{ student?.fullName || student?.name || '-' }}</strong>
+                <span>Orta bal: {{ student?.averageScore ?? '-' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <h2>Fənnlər</h2>
+          </div>
+
+          <div *ngIf="subjectNames.length === 0" class="empty-box">
+            Fənn məlumatı yoxdur.
+          </div>
+
+          <div *ngIf="subjectNames.length > 0" class="subject-stack">
+            <span class="subject-chip" *ngFor="let subject of subjectNames">
+              {{ subject }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-grid second-grid">
+      <div class="content-card">
+        <div class="card-header">
+          <h2>İmtahanlar</h2>
+          <span>{{ exams.length }} ədəd</span>
+        </div>
+
+        <div *ngIf="exams.length === 0" class="empty-box">
+          İmtahan məlumatı tapılmadı.
+        </div>
+
+        <div *ngIf="exams.length > 0" class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Başlıq</th>
+                <th>Status</th>
+                <th>Başlama</th>
+                <th>Bitmə</th>
+                <th>Orta bal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let exam of exams">
+                <td>{{ exam?.title || '-' }}</td>
+                <td>{{ exam?.status || '-' }}</td>
+                <td>{{ formatDateTime(exam?.startTime) }}</td>
+                <td>{{ formatDateTime(exam?.endTime) }}</td>
+                <td>{{ exam?.averageScore ?? '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="card-header">
+          <h2>Task-lar</h2>
+          <span>{{ tasks.length }} ədəd</span>
+        </div>
+
+        <div *ngIf="tasks.length === 0" class="empty-box">
+          Task məlumatı tapılmadı.
+        </div>
+
+        <div *ngIf="tasks.length > 0" class="tasks-list">
+          <div class="task-item" *ngFor="let task of tasks">
+            <div class="task-main">
+              <strong>{{ task?.title || '-' }}</strong>
+              <span>{{ task?.subjectName || task?.subject || '-' }}</span>
+            </div>
+
+            <div class="task-meta">
+              <span class="task-date">{{ formatDate(task?.dueDate) }}</span>
+              <span class="task-badge" [ngClass]="getTaskStatusClass(task?.status)">
+                {{ getTaskStatusLabel(task?.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
