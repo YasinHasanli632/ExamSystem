@@ -303,8 +303,8 @@ export class ExamListComponent implements OnInit, OnDestroy {
             subjectId: Number(detail.subjectId),
             teacherId: Number(detail.teacherId),
             classRoomId: detail.classId ?? null,
-            startTime: new Date(this.delayDraft.startTime).toISOString(),
-            endTime: new Date(this.delayDraft.endTime).toISOString(),
+            startTime: this.delayDraft.startTime,
+endTime: this.delayDraft.endTime,
             durationMinutes: this.calculateDurationMinutes(
               this.delayDraft.startTime,
               this.delayDraft.endTime

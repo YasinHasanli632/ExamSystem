@@ -310,8 +310,8 @@ export class TeacherTasksComponent implements OnInit {
       subjectId: Number(this.createForm.subjectId),
       title: this.createForm.title.trim(),
       description: this.createForm.description?.trim() || null,
-      assignedDate: assignedDate.toISOString(),
-      dueDate: dueDate.toISOString(),
+     assignedDate: this.createForm.assignedDate,
+dueDate: this.createForm.dueDate,
       maxScore: Number(this.createForm.maxScore),
       link: this.createForm.link?.trim() || null,
       note: this.createForm.note?.trim() || null

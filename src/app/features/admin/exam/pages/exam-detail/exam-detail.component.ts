@@ -902,8 +902,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
       classRoomId: resolvedClassRoomId !== null && resolvedClassRoomId !== undefined
         ? Number(resolvedClassRoomId)
         : null,
-      startTime: this.toIsoString(exam.startTime),
-      endTime: this.toIsoString(exam.endTime),
+     startTime: exam.startTime,
+endTime: exam.endTime,
       durationMinutes: Number(
         exam.durationMinutes || this.calculateDurationMinutes(exam.startTime, exam.endTime)
       ),
@@ -1187,10 +1187,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
-  private toIsoString(value: string): string {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toISOString();
-  }
+  
 
   private generateClientId(): number {
     return -Math.floor(Math.random() * 1_000_000_000);

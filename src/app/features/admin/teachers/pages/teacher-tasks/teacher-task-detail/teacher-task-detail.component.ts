@@ -165,8 +165,8 @@ export class TeacherTaskDetailComponent implements OnInit {
     const payload: UpdateTeacherTaskPayload = {
       title: this.task.title,
       description: this.task.description ?? null,
-      assignedDate: new Date(this.task.assignedDate).toISOString(),
-      dueDate: newDueDate.toISOString(),
+     assignedDate: this.toLocalDateTimeInputValue(this.task.assignedDate),
+dueDate: this.extendDueDate,
       maxScore: Number(this.task.maxScore),
       link: this.task.link ?? null,
       note: this.task.note ?? null
@@ -450,4 +450,18 @@ export class TeacherTaskDetailComponent implements OnInit {
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
     return local.toISOString().slice(0, 16);
   }
+  private toLocalDateTimeInputValue(value: string | Date | null | undefined): string {
+  if (!value) return '';
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  const hours = `${date.getHours()}`.padStart(2, '0');
+  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
 }
