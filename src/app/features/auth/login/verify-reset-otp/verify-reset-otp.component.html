@@ -1,52 +1,63 @@
 <div class="auth-page">
-  <div class="auth-overlay"></div>
-
-  <div class="auth-card">
-    <div class="brand-badge">Exam System</div>
-
-    <div class="auth-header">
-      <h2>OTP təsdiqi</h2>
-      <p>{{ email }} ünvanına göndərilən 6 rəqəmli kodu daxil et.</p>
-    </div>
-
-    <form class="auth-form" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label for="otp">Təsdiq kodu</label>
-        <input
-          id="otp"
-          type="text"
-          name="otp"
-          [(ngModel)]="otp"
-          maxlength="6"
-          placeholder="Məsələn: 123456"
-          autocomplete="one-time-code" />
+  <div class="auth-shell auth-shell-single">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <span class="card-badge">Verification</span>
+        <h2>Təsdiq kodunu yoxla</h2>
+        <p>
+          Email ünvanınıza göndərilən təsdiq kodunu daxil edin.
+        </p>
       </div>
 
-      <div class="success-box" *ngIf="successMessage">
-        {{ successMessage }}
+      <form class="auth-form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="email">Email ünvanı</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="Email ünvanını daxil edin"
+            autocomplete="email" />
+        </div>
+
+        <div class="form-group">
+          <label for="otp">Təsdiq kodu</label>
+          <input
+            id="otp"
+            type="text"
+            name="otp"
+            [(ngModel)]="otp"
+            placeholder="6 rəqəmli kodu daxil edin"
+            autocomplete="one-time-code" />
+        </div>
+
+        <div class="info-box" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+
+        <div class="error-box" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <button class="primary-btn" type="submit" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Kodu təsdiqlə</span>
+          <span *ngIf="isLoading">Yoxlanılır...</span>
+        </button>
+
+        <button
+          type="button"
+          class="secondary-btn"
+          (click)="resendCode()"
+          [disabled]="resendLoading">
+          <span *ngIf="!resendLoading">Kodu yenidən göndər</span>
+          <span *ngIf="resendLoading">Göndərilir...</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <a routerLink="/forgot-password" class="text-link">Geri qayıt</a>
       </div>
-
-      <div class="error-box" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
-
-      <button class="primary-btn" type="submit" [disabled]="isLoading">
-        <span *ngIf="!isLoading">Kodu təsdiqlə</span>
-        <span *ngIf="isLoading">Yoxlanılır...</span>
-      </button>
-
-      <button
-        class="secondary-btn"
-        type="button"
-        [disabled]="resendLoading"
-        (click)="resendCode()">
-        <span *ngIf="!resendLoading">Kodu yenidən göndər</span>
-        <span *ngIf="resendLoading">Göndərilir...</span>
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      <a routerLink="/forgot-password" class="text-link">Emaili dəyiş</a>
     </div>
   </div>
 </div>

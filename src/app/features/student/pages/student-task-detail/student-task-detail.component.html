@@ -43,6 +43,11 @@
       {{ successMessage }}
     </div>
 
+    <!-- YENI -->
+    <div *ngIf="showSubmittedLockMessage" class="success-banner">
+      Bu tapşırıq üçün cavab artıq göndərilib. Yenidən göndərmə bloklanıb.
+    </div>
+
     <section class="summary-grid">
       <article class="summary-card">
         <span>Tapşırıq tarixi</span>
@@ -112,6 +117,7 @@
               name="submissionText"
               rows="7"
               [(ngModel)]="submitForm.submissionText"
+              [disabled]="isSubmitting || isSubmitLocked"
               placeholder="Tapşırıq cavabını burada yaz..."></textarea>
           </div>
 
@@ -122,6 +128,7 @@
               name="submissionLink"
               type="text"
               [(ngModel)]="submitForm.submissionLink"
+              [disabled]="isSubmitting || isSubmitLocked"
               placeholder="https://..." />
           </div>
 
@@ -132,6 +139,7 @@
               name="submissionFileUrl"
               type="text"
               [(ngModel)]="submitForm.submissionFileUrl"
+              [disabled]="isSubmitting || isSubmitLocked"
               placeholder="Drive və ya digər fayl linki" />
           </div>
         </div>
@@ -141,7 +149,7 @@
             type="button"
             class="primary-btn"
             (click)="submitTask()"
-            [disabled]="isSubmitting">
+            [disabled]="isSubmitting || isSubmitLocked">
             {{ isSubmitting ? 'Göndərilir...' : 'Göndər' }}
           </button>
         </div>

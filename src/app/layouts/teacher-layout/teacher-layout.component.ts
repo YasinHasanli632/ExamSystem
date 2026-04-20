@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+  inject
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   NavigationEnd,
@@ -7,8 +13,8 @@ import {
   RouterLink,
   RouterOutlet
 } from '@angular/router';
-import { Subject, interval } from 'rxjs';
-import { filter, startWith, switchMap, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { TeacherNotificationService } from '../../features/teacher/services/teacher-notification.service';
 
@@ -31,6 +37,7 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly teacherNotificationService = inject(TeacherNotificationService);
+  private readonly cdr = inject(ChangeDetectorRef); // YENI
   private readonly destroy$ = new Subject<void>();
 
   isCollapsed = false;
@@ -38,6 +45,10 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
 
   notificationCount = 0;
   previousNotificationCount = 0;
+
+  // YENI
+  private hasUserInteracted = false;
+  private audioContext: AudioContext | null = null;
 
   menuItems: TeacherSidebarItem[] = [
     {
@@ -85,38 +96,76 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         takeUntil(this.destroy$)
       )
-      .subscribe();
+      .subscribe(() => {
+        this.updateNotificationBadge();
+        this.safeDetectChanges();
+      });
   }
 
   ngOnInit(): void {
-    this.loadNotificationCount();
+    // YENI
+    this.bindUserInteractionForSound();
 
-    interval(15000)
-      .pipe(
-        startWith(0),
-        switchMap(() => this.teacherNotificationService.getUnreadCount()),
-        takeUntil(this.destroy$)
-      )
+    // YENI
+    // Realtime polling service üzərindən başlasın
+    this.teacherNotificationService.startRealtimePolling(1000);
+
+    // YENI
+    this.teacherNotificationService.unreadCount$
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: response => {
-          const newCount = response?.unreadCount ?? 0;
+        next: (count) => {
+          const newCount = Number(count ?? 0);
 
-          if (this.previousNotificationCount > 0 && newCount > this.previousNotificationCount) {
+          if (this.shouldPlayNotificationSound(this.previousNotificationCount, newCount)) {
             this.playNotificationSound();
           }
 
           this.notificationCount = newCount;
           this.previousNotificationCount = newCount;
           this.updateNotificationBadge();
+          this.safeDetectChanges();
         },
         error: () => {
           this.notificationCount = 0;
+          this.previousNotificationCount = 0;
           this.updateNotificationBadge();
+          this.safeDetectChanges();
+        }
+      });
+
+    // YENI
+    // İlk açılışda bir dəfə məcburi refresh
+    this.teacherNotificationService.refreshAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.safeDetectChanges();
+        },
+        error: () => {
+          this.safeDetectChanges();
         }
       });
   }
 
   ngOnDestroy(): void {
+    // YENI
+    this.teacherNotificationService.stopRealtimePolling();
+
+    // YENI
+    window.removeEventListener('click', this.handleFirstUserInteraction);
+    window.removeEventListener('keydown', this.handleFirstUserInteraction);
+    window.removeEventListener('touchstart', this.handleFirstUserInteraction);
+
+    if (this.audioContext) {
+      try {
+        this.audioContext.close();
+      } catch {
+        // səssiz keç
+      }
+      this.audioContext = null;
+    }
+
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -176,7 +225,11 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   }
 
   isActive(route: string): boolean {
-    return this.router.url === route;
+    if (route === '/teacher/dashboard') {
+      return this.router.url === route;
+    }
+
+    return this.router.url.startsWith(route);
   }
 
   goToProfile(): void {
@@ -195,15 +248,17 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   loadNotificationCount(): void {
     this.teacherNotificationService.getUnreadCount().subscribe({
       next: response => {
-        const unreadCount = response?.unreadCount ?? 0;
+        const unreadCount = Number(response?.unreadCount ?? 0);
         this.notificationCount = unreadCount;
         this.previousNotificationCount = unreadCount;
         this.updateNotificationBadge();
+        this.safeDetectChanges();
       },
       error: () => {
         this.notificationCount = 0;
         this.previousNotificationCount = 0;
         this.updateNotificationBadge();
+        this.safeDetectChanges();
       }
     });
   }
@@ -218,27 +273,107 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  private playNotificationSound(): void {
-    try {
-      const audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+  // YENI
+  private shouldPlayNotificationSound(previousCount: number, currentCount: number): boolean {
+    if (!this.hasUserInteracted) {
+      return false;
+    }
 
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+    if (previousCount === 0 && currentCount > 0) {
+      return false;
+    }
+
+    return currentCount > previousCount;
+  }
+
+  // YENI
+  private bindUserInteractionForSound(): void {
+    window.addEventListener('click', this.handleFirstUserInteraction, { passive: true });
+    window.addEventListener('keydown', this.handleFirstUserInteraction, { passive: true });
+    window.addEventListener('touchstart', this.handleFirstUserInteraction, { passive: true });
+  }
+
+  // YENI
+  private readonly handleFirstUserInteraction = (): void => {
+    if (this.hasUserInteracted) {
+      return;
+    }
+
+    this.hasUserInteracted = true;
+    this.ensureAudioContext();
+
+    window.removeEventListener('click', this.handleFirstUserInteraction);
+    window.removeEventListener('keydown', this.handleFirstUserInteraction);
+    window.removeEventListener('touchstart', this.handleFirstUserInteraction);
+  };
+
+  // YENI
+  private ensureAudioContext(): void {
+    if (this.audioContext) {
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(() => {
+          // səssiz keç
+        });
+      }
+      return;
+    }
+
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+    if (!AudioContextCtor) {
+      return;
+    }
+
+    try {
+      this.audioContext = new AudioContextCtor();
+
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(() => {
+          // səssiz keç
+        });
+      }
+    } catch {
+      this.audioContext = null;
+    }
+  }
+
+  private playNotificationSound(): void {
+    this.ensureAudioContext();
+
+    if (!this.audioContext) {
+      return;
+    }
+
+    try {
+      const context = this.audioContext;
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
 
       oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(880, context.currentTime);
 
-      gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.35);
+      gainNode.gain.setValueAtTime(0.0001, context.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.08, context.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.35);
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(context.destination);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.35);
+      oscillator.start(context.currentTime);
+      oscillator.stop(context.currentTime + 0.35);
     } catch {
       // brauzer bloklasa səssiz keç
+    }
+  }
+
+  // YENI
+  private safeDetectChanges(): void {
+    try {
+      this.cdr.detectChanges();
+    } catch {
+      // destroy anında detectChanges xətası atmamaq üçün
     }
   }
 }

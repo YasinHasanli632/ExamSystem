@@ -1,10 +1,12 @@
 import { Injectable, inject, NgZone } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import {
   BehaviorSubject,
   Observable,
   Subscription,
   catchError,
+  finalize,
+  forkJoin,
   interval,
   map,
   of,
@@ -56,6 +58,19 @@ export class StudentNotificationService {
   readonly unreadCount$ = this.unreadCountSubject.asObservable();
   readonly loading$ = this.loadingSubject.asObservable();
 
+  private buildNoCacheOptions(params?: HttpParams) {
+    const noCacheParams = (params ?? new HttpParams()).set('_t', Date.now().toString());
+
+    return {
+      params: noCacheParams,
+      headers: new HttpHeaders({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0'
+      })
+    };
+  }
+
   getMyNotifications(
     isRead?: boolean | null,
     type?: number | null
@@ -71,7 +86,10 @@ export class StudentNotificationService {
     }
 
     return this.http
-      .get<NotificationListItemDto[]>(`${this.baseUrl}/my`, { params })
+      .get<NotificationListItemDto[]>(
+        `${this.baseUrl}/my`,
+        this.buildNoCacheOptions(params)
+      )
       .pipe(
         map((items) => (items ?? []).map((item) => this.mapNotification(item))),
         catchError((error) => {
@@ -85,7 +103,10 @@ export class StudentNotificationService {
     const params = new HttpParams().set('take', String(take));
 
     return this.http
-      .get<NotificationListItemDto[]>(`${this.baseUrl}/my/latest`, { params })
+      .get<NotificationListItemDto[]>(
+        `${this.baseUrl}/my/latest`,
+        this.buildNoCacheOptions(params)
+      )
       .pipe(
         map((items) => (items ?? []).map((item) => this.mapNotification(item))),
         catchError((error) => {
@@ -97,7 +118,10 @@ export class StudentNotificationService {
 
   getMyUnreadCount(): Observable<StudentNotificationUnreadCountModel> {
     return this.http
-      .get<NotificationUnreadCountDto>(`${this.baseUrl}/my/unread-count`)
+      .get<NotificationUnreadCountDto>(
+        `${this.baseUrl}/my/unread-count`,
+        this.buildNoCacheOptions()
+      )
       .pipe(
         map((dto) => ({
           unreadCount: Number(dto?.unreadCount ?? 0)
@@ -117,29 +141,26 @@ export class StudentNotificationService {
     this.isRefreshing = true;
     this.loadingSubject.next(true);
 
-    return this.getMyNotifications().pipe(
-      switchMap((notifications) =>
-        this.getMyUnreadCount().pipe(
-          tap((countResult) => {
-            this.ngZone.run(() => {
-              this.notificationsSubject.next(notifications);
-              this.unreadCountSubject.next(countResult.unreadCount);
-              this.loadingSubject.next(false);
-              this.isRefreshing = false;
-            });
-          }),
-          map(() => void 0)
-        )
-      ),
+    return forkJoin({
+      notifications: this.getMyNotifications(),
+      unread: this.getMyUnreadCount()
+    }).pipe(
+      tap(({ notifications, unread }) => {
+        this.ngZone.run(() => {
+          this.notificationsSubject.next(notifications);
+          this.unreadCountSubject.next(unread.unreadCount);
+        });
+      }),
+      map(() => void 0),
       catchError((error) => {
         console.error('Student notifications refresh error:', error);
-
+        return of(void 0);
+      }),
+      finalize(() => {
         this.ngZone.run(() => {
           this.loadingSubject.next(false);
           this.isRefreshing = false;
         });
-
-        return of(void 0);
       })
     );
   }
@@ -174,22 +195,7 @@ export class StudentNotificationService {
     return this.http
       .patch<void>(`${this.baseUrl}/${notificationId}/read`, {})
       .pipe(
-        tap(() => {
-          const updated = this.notificationsSubject.value.map((item) =>
-            item.id === notificationId
-              ? {
-                  ...item,
-                  isRead: true,
-                  readAt: item.readAt ?? new Date().toISOString()
-                }
-              : item
-          );
-
-          this.ngZone.run(() => {
-            this.notificationsSubject.next(updated);
-            this.unreadCountSubject.next(updated.filter((x) => !x.isRead).length);
-          });
-        }),
+        switchMap(() => this.refreshAll()),
         map(() => void 0)
       );
   }
@@ -198,18 +204,7 @@ export class StudentNotificationService {
     return this.http
       .patch<void>(`${this.baseUrl}/read-all`, {})
       .pipe(
-        tap(() => {
-          const updated = this.notificationsSubject.value.map((item) => ({
-            ...item,
-            isRead: true,
-            readAt: item.readAt ?? new Date().toISOString()
-          }));
-
-          this.ngZone.run(() => {
-            this.notificationsSubject.next(updated);
-            this.unreadCountSubject.next(0);
-          });
-        }),
+        switchMap(() => this.refreshAll()),
         map(() => void 0)
       );
   }
@@ -218,16 +213,7 @@ export class StudentNotificationService {
     return this.http
       .delete<void>(`${this.baseUrl}/${notificationId}`)
       .pipe(
-        tap(() => {
-          const updated = this.notificationsSubject.value.filter(
-            (item) => item.id !== notificationId
-          );
-
-          this.ngZone.run(() => {
-            this.notificationsSubject.next(updated);
-            this.unreadCountSubject.next(updated.filter((x) => !x.isRead).length);
-          });
-        }),
+        switchMap(() => this.refreshAll()),
         map(() => void 0)
       );
   }
@@ -372,4 +358,4 @@ export class StudentNotificationService {
       minute: '2-digit'
     });
   }
-}
+} 

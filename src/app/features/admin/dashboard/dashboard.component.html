@@ -1,110 +1,249 @@
 <div class="dashboard-page">
-  <div *ngIf="isLoading" class="panel-card">
+  <div *ngIf="isLoading" class="state-card">
     Dashboard yüklənir...
   </div>
 
-  <div *ngIf="!isLoading && errorMessage" class="panel-card">
+  <div *ngIf="!isLoading && errorMessage" class="state-card error">
     <strong>Xəta baş verdi:</strong> {{ errorMessage }}
   </div>
 
   <ng-container *ngIf="!isLoading && !errorMessage">
-    <div class="hero-card">
-      <div class="hero-left">
-        <span class="hero-badge">Live Overview</span>
-        <h2>Platform idarəetmə mərkəzi</h2>
+    <section class="page-header-card">
+      <div class="page-header-left">
+        <h1>Admin Dashboard</h1>
         <p>
-          İstifadəçiləri, sinifləri, imtahanları və nəticələri bir paneldən nəzarətdə saxla.
+          İmtahanların idarə edilməsi, iştirakçıların izlənməsi və istifadəçilərə nəzarət üçün
+          idarəetmə sistemi.
         </p>
-
-        <div class="hero-actions">
-          <button class="primary-btn" (click)="goToCreateExam()">Yeni imtahan yarat</button>
-          <button class="secondary-btn" (click)="goToReports()">Hesabatlara bax</button>
-        </div>
       </div>
 
-      <div class="hero-right">
-        <div class="mini-stat">
-          <span>Aktiv müəllim</span>
-          <strong>{{ dashboard.activeTeacherCount }}</strong>
-        </div>
-        <div class="mini-stat">
-          <span>Bugünkü iştirak</span>
-          <strong>{{ dashboard.todayAttendanceRate }}%</strong>
-        </div>
-      </div>
-    </div>
+      <div class="page-header-actions">
+        <button class="primary-btn" type="button" (click)="goToCreateExam()">
+          Yeni imtahan yarat
+        </button>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-title">Total Siniflər</span>
-        <strong>{{ dashboard.totalClasses }}</strong>
-        <small>Ümumi aktiv siniflər</small>
-      </div>
+        <button class="secondary-btn" type="button" (click)="goToReports()">
+          Hesabatlara bax
+        </button>
 
-      <div class="stat-card">
-        <span class="stat-title">Total Müəllimlər</span>
-        <strong>{{ dashboard.totalTeachers }}</strong>
-        <small>Aktiv müəllimlər</small>
+        <button class="icon-more-btn" type="button" (click)="refreshDashboard()">···</button>
+      </div>
+    </section>
+
+    <section class="panel-card">
+      <div class="panel-title-row">
+        <h2>Sistem Xülasəsi</h2>
       </div>
 
-      <div class="stat-card">
-        <span class="stat-title">Total Şagirdlər</span>
-        <strong>{{ dashboard.totalStudents }}</strong>
-        <small>Aktiv şagirdlər</small>
-      </div>
-
-      <div class="stat-card">
-        <span class="stat-title">Aktiv İmtahanlar</span>
-        <strong>{{ dashboard.activeExams }}</strong>
-        <small>{{ dashboard.todayExamCount }} bu gün</small>
-      </div>
-    </div>
-
-    <div class="content-grid">
-      <div class="panel-card">
-        <div class="panel-header">
-          <h3>Son fəaliyyətlər</h3>
-          <button type="button" (click)="refreshDashboard()">Yenilə</button>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Bugünkü imtahanlar</div>
+          <div class="summary-value">{{ dashboard.todayExamCount }}</div>
+          <div class="summary-note success">{{ dashboard.activeExams }} aktiv</div>
         </div>
 
-        <div class="activity-list" *ngIf="dashboard.activities.length; else noActivities">
-          <div
-            class="activity-item"
-            *ngFor="let activity of dashboard.activities; trackBy: trackByActivity"
-          >
-            <div class="activity-dot blue"></div>
-            <div>
-              <strong>{{ activity.title || 'Sistem fəaliyyəti' }}</strong>
-              <p>{{ activity.description || 'Əlavə açıqlama yoxdur.' }}</p>
+        <div class="summary-card">
+          <div class="summary-label">Aktiv Şagirdlər</div>
+          <div class="summary-value">{{ dashboard.totalStudents }}</div>
+          <div class="summary-note neutral">Sistem üzrə aktiv şagird</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Total Müəllimlər</div>
+          <div class="summary-value">{{ dashboard.totalTeachers }}</div>
+          <div class="summary-note neutral">{{ dashboard.activeTeacherCount }} aktiv müəllim</div>
+        </div>
+
+        <div class="summary-card progress-card">
+          <div class="summary-label">Bugünkü girişlər</div>
+          <div class="summary-value">{{ dashboard.todayAttendanceRate }}</div>
+
+          <div class="progress-badge">
+            {{ dashboard.todayAttendanceRate }}%
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              [style.width.%]="dashboard.todayAttendanceRate > 100 ? 100 : dashboard.todayAttendanceRate">
             </div>
-            <span>{{ formatTime(activity.actionTime) }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="dashboard-main">
+        <div class="panel-card">
+          <div class="panel-title-row complex">
+            <h2>Son fəaliyyətlər</h2>
+
+            <div class="fake-filters">
+              <span class="filter-chip">Fəaliyyət</span>
+              <span class="filter-chip">Users</span>
+              <span class="filter-chip">Bütün məlumatlar daha</span>
+              <span class="filter-chip">Daha çox...</span>
+            </div>
+          </div>
+
+          <div class="activity-table" *ngIf="dashboard.activities.length; else noActivities">
+            <div class="activity-table-head">
+              <div>Fəaliyyət</div>
+              <div>Detallar</div>
+              <div>Tarix</div>
+            </div>
+
+            <div
+              class="activity-table-row"
+              *ngFor="let activity of dashboard.activities; trackBy: trackByActivity">
+              <div class="activity-user">
+                <div class="activity-avatar">
+                  {{ (activity.title || 'S').charAt(0) }}
+                </div>
+
+                <div class="activity-user-text">
+                  <strong>{{ activity.title || 'superadmin' }}</strong>
+                  <p>{{ activity.description || 'Əlavə açıqlama yoxdur.' }}</p>
+                </div>
+              </div>
+
+              <div class="activity-detail">
+                <span class="role-pill">SuperAdmin</span>
+              </div>
+
+              <div class="activity-date">
+                {{ formatTime(activity.actionTime) }}
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noActivities>
+            <div class="empty-line">
+              Fəaliyyət tapılmadı.
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-title-row">
+            <h2>Son fəaliyyətlər</h2>
+            <button class="light-select-btn" type="button">Bütün məlumatlar daha</button>
+          </div>
+
+          <div class="simple-activity-list" *ngIf="dashboard.activities.length; else noSimpleActivities">
+            <div
+              class="simple-activity-item"
+              *ngFor="let activity of dashboard.activities; trackBy: trackByActivity">
+              <div class="simple-left">
+                <div class="activity-avatar">
+                  {{ (activity.title || 'S').charAt(0) }}
+                </div>
+
+                <div class="simple-text">
+                  <strong>{{ activity.title || 'superadmin' }}</strong>
+                  <p>{{ activity.description || 'Əlavə açıqlama yoxdur.' }}</p>
+                </div>
+              </div>
+
+              <div class="simple-date">
+                {{ formatTime(activity.actionTime) }}
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noSimpleActivities>
+            <div class="empty-line">
+              Fəaliyyət tapılmadı.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <aside class="dashboard-side">
+        <div class="panel-card side-panel">
+          <div class="panel-title-row">
+            <h2>Bugünkü imtahanlar</h2>
+          </div>
+
+          <div class="mini-table-head">
+            <span>İmtahan</span>
+            <span>Siniflər</span>
+            <span>Status</span>
+            <span>Tarix</span>
+          </div>
+
+          <div class="empty-side-box">
+            Yoxdur
           </div>
         </div>
 
-        <ng-template #noActivities>
-          <div class="activity-item">
-            <div class="activity-dot green"></div>
-            <div>
-              <strong>Fəaliyyət tapılmadı</strong>
-              <p>Hələlik dashboard üçün activity məlumatı görünmür.</p>
-            </div>
-            <span>—</span>
+        <div class="panel-card side-panel">
+          <div class="panel-title-row">
+            <h2>Tez əməliyyatlar</h2>
           </div>
-        </ng-template>
-      </div>
 
-      <div class="panel-card">
-        <div class="panel-header">
-          <h3>Tez əməliyyatlar</h3>
-        </div>
+          <div class="quick-actions-list">
+            <button class="quick-action-item" type="button" (click)="goToAdmins()">
+              <span class="qa-left">
+                <span class="qa-icon">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M16 19V17.8C16 16.12 14.43 14.75 12.5 14.75H8.5C6.57 14.75 5 16.12 5 17.8V19" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M10.5 11A3 3 0 1 0 10.5 5A3 3 0 1 0 10.5 11Z" stroke-width="1.8"/>
+                    <path d="M17 8.5A2.5 2.5 0 1 0 17 13.5" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>İstifadəçi əlavə et</span>
+              </span>
 
-        <div class="quick-actions">
-          <button class="quick-btn" (click)="goToAdmins()">İstifadəçi əlavə et</button>
-          <button class="quick-btn" (click)="goToClasses()">Sinif yarat</button>
-          <button class="quick-btn" (click)="goToSubjects()">Fənn əlavə et</button>
-          <button class="quick-btn" (click)="goToExams()">İmtahan qur</button>
+              <span class="qa-arrow">›</span>
+            </button>
+
+            <button class="quick-action-item" type="button" (click)="goToClasses()">
+              <span class="qa-left">
+                <span class="qa-icon">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M4 7.5H20" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M6 5H18A2 2 0 0 1 20 7V18A2 2 0 0 1 18 20H6A2 2 0 0 1 4 18V7A2 2 0 0 1 6 5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M8 11H16" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>Sinif yarat</span>
+              </span>
+
+              <span class="qa-arrow">›</span>
+            </button>
+
+            <button class="quick-action-item" type="button" (click)="goToSubjects()">
+              <span class="qa-left">
+                <span class="qa-icon">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M5 6.5H19V17.5H5V6.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M9 6.5V17.5" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>Form əlavə et</span>
+              </span>
+
+              <span class="qa-arrow">›</span>
+            </button>
+
+            <button class="quick-action-item" type="button" (click)="goToExams()">
+              <span class="qa-left">
+                <span class="qa-icon">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 4.5H17L20 7.5V19A1.5 1.5 0 0 1 18.5 20.5H7A1.5 1.5 0 0 1 5.5 19V6A1.5 1.5 0 0 1 7 4.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M14 4.5V8H17.5" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M8.5 12H15.5" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span>İmtahan apar</span>
+              </span>
+
+              <span class="qa-arrow">›</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+      </aside>
+    </section>
   </ng-container>
 </div>

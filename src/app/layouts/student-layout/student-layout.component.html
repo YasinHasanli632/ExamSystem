@@ -1,4 +1,4 @@
-<div class="student-shell">
+<div class="student-shell" [class.sidebar-collapsed]="isCollapsed">
   <aside class="sidebar" [class.collapsed]="isCollapsed">
     <div class="sidebar-top">
       <div class="brand-row">
@@ -9,8 +9,10 @@
           <p>Student Panel</p>
         </div>
 
-        <button class="sidebar-toggle" type="button" (click)="toggleSidebar()">
-          {{ isCollapsed ? '→' : '←' }}
+        <button class="sidebar-toggle" type="button" (click)="toggleSidebar()" title="Sidebar">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
         </button>
       </div>
     </div>
@@ -29,7 +31,77 @@
           class="menu-item"
           [class.active]="isActive(item.route)">
           <div class="menu-main">
-            <span class="menu-icon">{{ item.icon }}</span>
+            <span class="menu-icon">
+              <ng-container *ngIf="item.route?.includes('dashboard')">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M3 10.5L12 4L21 10.5V20H3V10.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M9 20V13H15V20" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </ng-container>
+
+              <ng-container *ngIf="item.route?.includes('profile') || item.route?.includes('profil')">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M16 19V17.8C16 16.12 14.43 14.75 12.5 14.75H8.5C6.57 14.75 5 16.12 5 17.8V19" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10.5 11A3 3 0 1 0 10.5 5A3 3 0 1 0 10.5 11Z" stroke-width="1.8"/>
+                  <path d="M17 8.5A2.5 2.5 0 1 0 17 13.5" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </ng-container>
+
+              <ng-container *ngIf="item.route?.includes('attendance') || item.route?.includes('davam')">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7 4.5H17L20 7.5V19A1.5 1.5 0 0 1 18.5 20.5H7A1.5 1.5 0 0 1 5.5 19V6A1.5 1.5 0 0 1 7 4.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M14 4.5V8H17.5" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M8.5 12H15.5" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M8.5 15.5H13" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </ng-container>
+
+              <ng-container *ngIf="item.route?.includes('task') || item.route?.includes('tapshiriq') || item.route?.includes('tapsiriq')">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M9 11.5L11 13.5L15.5 9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 4.5H17L20 7.5V19A1.5 1.5 0 0 1 18.5 20.5H7A1.5 1.5 0 0 1 5.5 19V6A1.5 1.5 0 0 1 7 4.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M14 4.5V8H17.5" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </ng-container>
+
+              <ng-container *ngIf="item.route?.includes('exam') || item.route?.includes('imtahan')">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7 4.5H17L20 7.5V19A1.5 1.5 0 0 1 18.5 20.5H7A1.5 1.5 0 0 1 5.5 19V6A1.5 1.5 0 0 1 7 4.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M14 4.5V8H17.5" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M8.5 12H15.5" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M8.5 15.5H13" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </ng-container>
+
+              <ng-container *ngIf="item.route?.includes('notification') || item.route?.includes('bildiris')">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M6.5 16.5H17.5" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M8 16.5V10.5C8 8.01 9.79 6 12 6C14.21 6 16 8.01 16 10.5V16.5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M10 18.5C10.44 19.4 11.12 20 12 20C12.88 20 13.56 19.4 14 18.5" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </ng-container>
+
+              <ng-container
+                *ngIf="
+                  !item.route?.includes('dashboard') &&
+                  !item.route?.includes('profile') &&
+                  !item.route?.includes('profil') &&
+                  !item.route?.includes('attendance') &&
+                  !item.route?.includes('davam') &&
+                  !item.route?.includes('task') &&
+                  !item.route?.includes('tapshiriq') &&
+                  !item.route?.includes('tapsiriq') &&
+                  !item.route?.includes('exam') &&
+                  !item.route?.includes('imtahan') &&
+                  !item.route?.includes('notification') &&
+                  !item.route?.includes('bildiris')
+                ">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M5 6.5H19V17.5H5V6.5Z" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M9 6.5V17.5" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </ng-container>
+            </span>
 
             <span class="menu-text" *ngIf="!isCollapsed">
               {{ item.label }}
@@ -54,21 +126,45 @@
           <span>{{ currentUserRole }}</span>
         </div>
       </div>
+
+      <button type="button" class="logout-link" (click)="logout()" *ngIf="!isCollapsed">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M10 17L15 12L10 7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15 12H4" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M13 4H18A2 2 0 0 1 20 6V18A2 2 0 0 1 18 20H13" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span>Log out</span>
+      </button>
     </div>
   </aside>
 
   <main class="main-area">
     <header class="topbar">
       <div class="topbar-left">
-        <div class="page-info">
-          <h1>{{ pageTitle }}</h1>
-          <p>{{ pageDescription }}</p>
+        <div class="topbar-breadcrumb">
+          <button class="topbar-menu-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 7H20" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M4 12H20" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M4 17H20" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <span class="crumb muted">Student</span>
+          <span class="crumb-separator">/</span>
+          <span class="crumb current">{{ pageTitle }}</span>
         </div>
       </div>
 
       <div class="topbar-right">
         <div class="search-box">
-          <span class="search-icon">⌕</span>
+          <span class="search-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M11 19A8 8 0 1 0 11 3A8 8 0 1 0 11 19Z" stroke-width="1.8"/>
+              <path d="M20 20L16.65 16.65" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+
           <input
             type="text"
             name="studentSearch"
@@ -84,8 +180,14 @@
         <button
           type="button"
           class="icon-btn notification-btn"
-          (click)="goToNotifications()">
-          🔔
+          (click)="goToNotifications()"
+          title="Bildirişlər">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6.5 16.5H17.5" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M8 16.5V10.5C8 8.01 9.79 6 12 6C14.21 6 16 8.01 16 10.5V16.5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 18.5C10.44 19.4 11.12 20 12 20C12.88 20 13.56 19.4 14 18.5" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+
           <span class="notification-count" *ngIf="unreadNotificationCount > 0">
             {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
           </span>
@@ -98,10 +200,15 @@
             <span>{{ currentUserEmail }}</span>
           </div>
         </button>
-
-        <button type="button" class="logout-btn" (click)="logout()">Çıxış</button>
       </div>
     </header>
+
+    <section class="page-head">
+      <div class="page-head-left">
+        <h1>{{ pageTitle }}</h1>
+        <p>{{ pageDescription }}</p>
+      </div>
+    </section>
 
     <section class="content-area">
       <router-outlet></router-outlet>

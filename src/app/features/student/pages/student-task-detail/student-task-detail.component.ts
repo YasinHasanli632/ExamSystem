@@ -95,6 +95,13 @@ export class StudentTaskDetailComponent implements OnInit {
       return;
     }
 
+    // YENI
+    if (this.isSubmitLocked) {
+      this.submitValidationError = 'Bu tapşırıq üçün cavab artıq göndərilib.';
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.submitValidationError = '';
     this.successMessage = '';
 
@@ -111,6 +118,7 @@ export class StudentTaskDetailComponent implements OnInit {
     }
 
     this.isSubmitting = true;
+    this.cdr.detectChanges();
 
     this.studentTaskService
       .submitMyTask(this.task.id, payload)
@@ -125,6 +133,8 @@ export class StudentTaskDetailComponent implements OnInit {
           this.task = response;
           this.patchSubmitFormFromTask(response);
           this.successMessage = 'Tapşırıq cavabı uğurla göndərildi.';
+          this.submitValidationError = '';
+          this.cdr.detectChanges();
         },
         error: (error) => {
           console.error('Student task submit error:', error);
@@ -132,6 +142,7 @@ export class StudentTaskDetailComponent implements OnInit {
             error?.error?.message ||
             error?.message ||
             'Cavab göndərilərkən xəta baş verdi.';
+          this.cdr.detectChanges();
         }
       });
   }
@@ -145,7 +156,17 @@ export class StudentTaskDetailComponent implements OnInit {
   }
 
   get canShowSubmitForm(): boolean {
-    return !!this.task?.canSubmit && !this.task?.isReviewed;
+    return !!this.task?.canSubmit && !this.task?.isReviewed && !this.isSubmitLocked;
+  }
+
+  // YENI
+  get isSubmitLocked(): boolean {
+    return !!this.task?.isSubmitted || !!this.task?.submittedAt;
+  }
+
+  // YENI
+  get showSubmittedLockMessage(): boolean {
+    return this.isSubmitLocked && !this.task?.isReviewed;
   }
 
   getStatusClass(status: string): string {
