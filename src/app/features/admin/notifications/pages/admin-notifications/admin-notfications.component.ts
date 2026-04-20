@@ -133,18 +133,16 @@ export class AdminNotificationsComponent implements OnInit, OnDestroy {
         !selectedTypeName ||
         (item.type ?? '').toLowerCase() === selectedTypeName.toLowerCase();
 
-      const searchableText = [
-        item.title,
-        item.message,
-        item.type,
-        item.category,
-        item.priority,
-        item.relatedEntityType,
-        item.actionUrl
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+     const searchableText = [
+  item.title,
+  item.message,
+  item.type,
+  this.getCategoryLabel(item.category),
+  item.priority
+]
+  .filter(Boolean)
+  .join(' ')
+  .toLowerCase();
 
       const matchesSearch =
         !normalizedSearch || searchableText.includes(normalizedSearch);
@@ -265,7 +263,34 @@ export class AdminNotificationsComponent implements OnInit, OnDestroy {
     const fallbackRoute = this.buildFallbackRoute(item);
     this.router.navigateByUrl(fallbackRoute);
   }
+getCategoryLabel(category: string | null | undefined): string {
+  const value = (category ?? '').toLowerCase();
 
+  switch (value) {
+    case 'tasksubmitted':
+      return 'Tapşırıq göndərildi';
+    case 'userstatuschanged':
+      return 'Hesab statusu';
+    case 'exampublished':
+      return 'İmtahan yayımlandı';
+    case 'examrescheduled':
+      return 'İmtahan vaxtı dəyişdi';
+    case 'examcompleted':
+      return 'İmtahan tamamlandı';
+    case 'openquestionreviewpending':
+      return 'Yoxlama gözləyir';
+    case 'rolechanged':
+      return 'Rol dəyişdi';
+    case 'profileupdated':
+      return 'Profil yeniləndi';
+    case 'systemwarning':
+      return 'Sistem xəbərdarlığı';
+    case 'systemerror':
+      return 'Sistem xətası';
+    default:
+      return category || 'Ümumi';
+  }
+}
   getPriorityBadgeClass(priority: string | null | undefined): string {
     const value = (priority ?? '').toLowerCase();
 

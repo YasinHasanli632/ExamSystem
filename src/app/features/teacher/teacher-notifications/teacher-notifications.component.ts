@@ -138,18 +138,15 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
         (item.type ?? '').toLowerCase() === selectedTypeName.toLowerCase();
 
       const searchableText = [
-        item.title,
-        item.message,
-        item.type,
-        item.category,
-        item.priority,
-        item.relatedEntityType,
-        item.actionUrl,
-        item.icon
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+  item.title,
+  item.message,
+  item.type,
+  this.getCategoryLabel(item.category),
+  item.priority
+]
+  .filter(Boolean)
+  .join(' ')
+  .toLowerCase();
 
       const matchesSearch =
         !normalizedSearch || searchableText.includes(normalizedSearch);

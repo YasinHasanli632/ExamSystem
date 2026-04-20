@@ -118,8 +118,7 @@
                 {{ getPriorityLabel(item.priority) }}
               </span>
 
-              <span class="category-chip">{{ item.category }}</span>
-            </div>
+<span class="category-chip">{{ getCategoryLabel(item.category) }}</span>            </div>
           </div>
         </div>
 
@@ -146,13 +145,7 @@
           <span class="value">{{ item.readAt | date: 'dd.MM.yyyy HH:mm' }}</span>
         </div>
 
-        <div class="extra-item" *ngIf="item.relatedEntityType">
-          <span class="label">Entity:</span>
-          <span class="value">
-            {{ item.relatedEntityType }}
-            <ng-container *ngIf="item.relatedEntityId">#{{ item.relatedEntityId }}</ng-container>
-          </span>
-        </div>
+        
       </div>
 
       <div class="notification-actions">

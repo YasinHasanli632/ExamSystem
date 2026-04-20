@@ -44,12 +44,11 @@ export class StudentNotificationsComponent implements OnInit, OnDestroy {
     const search = currentFilter.searchText.trim().toLowerCase();
 
     return this.notifications().filter((item) => {
-      const matchesSearch =
-        !search ||
-        item.title.toLowerCase().includes(search) ||
-        item.message.toLowerCase().includes(search) ||
-        (item.category ?? '').toLowerCase().includes(search) ||
-        item.typeLabel.toLowerCase().includes(search);
+     const matchesSearch =
+  !search ||
+  item.title.toLowerCase().includes(search) ||
+  item.message.toLowerCase().includes(search) ||
+  item.typeLabel.toLowerCase().includes(search);
 
       const matchesType =
         !currentFilter.type ||
