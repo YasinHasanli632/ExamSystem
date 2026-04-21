@@ -142,7 +142,7 @@ export class AdminNotificationsComponent implements OnInit, OnDestroy {
 ]
   .filter(Boolean)
   .join(' ')
-  .toLowerCase();
+  .toLowerCase();   
 
       const matchesSearch =
         !normalizedSearch || searchableText.includes(normalizedSearch);

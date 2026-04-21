@@ -264,4 +264,4 @@ getByUserId(userId: number): Observable<Teacher> {
 
     return age;
   }
-}
+} 

@@ -1,47 +1,107 @@
 <div class="login-page">
   <div class="login-shell">
     <div class="login-brand-panel">
+      <div class="brand-panel-overlay"></div>
+      <div class="brand-grid"></div>
+
       <div class="brand-top">
-        <div class="brand-logo">E</div>
+        <div class="brand-logo-wrap">
+          <div class="brand-logo">E</div>
+        </div>
+
         <div class="brand-meta">
           <span class="brand-name">Exam System</span>
-          <span class="brand-subtitle">Enterprise Panel</span>
         </div>
       </div>
 
       <div class="brand-content">
-        <span class="brand-badge">İdarəetmə Platforması</span>
+        <span class="brand-badge">İdarəetmə platforması</span>
 
-        <h1>İmtahan idarəetmə sisteminə giriş</h1>
+        <h1>Məktəb imtahanlarını vahid platformada idarə edin</h1>
 
         <p>
-          Administrator, müəllim və tələbələr üçün nəzərdə tutulmuş vahid platforma.
-          Təhlükəsiz giriş et, imtahan proseslərini idarə et və nəticələri mərkəzləşdirilmiş
-          şəkildə izləyin.
+          Müasir və təhlükəsiz həllərimizlə məktəblərdəki imtahan proseslərini,
+          müəllimləri, şagirdləri və nəticələri asanlıqla idarə edin.
         </p>
+
+        <div class="brand-divider"></div>
+
+        <div class="brand-visual">
+          <div class="visual-monitor">
+            <div class="monitor-topbar">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <div class="monitor-body">
+              <div class="dashboard-main">
+                <div class="dashboard-sidebar">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <div class="dashboard-chart">
+                  <div class="chart-bars">
+                    <span class="bar h-1"></span>
+                    <span class="bar h-2"></span>
+                    <span class="bar h-3"></span>
+                    <span class="bar h-4"></span>
+                  </div>
+
+                  <div class="chart-lines">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+
+                <div class="dashboard-sidecards">
+                  <div class="progress-card">
+                    <div class="progress-ring">
+                      <div class="progress-inner">75%</div>
+                    </div>
+                  </div>
+
+                  <div class="info-card"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="visual-float visual-float-left">
+            <span>🎓</span>
+          </div>
+
+          <div class="visual-float visual-float-right">
+            <span>👥</span>
+          </div>
+        </div>
 
         <div class="brand-features">
           <div class="feature-item">
-            <span class="feature-icon">✓</span>
+            <span class="feature-icon">🛡</span>
             <div class="feature-text">
               <strong>Təhlükəsiz giriş</strong>
-              <span>Rol əsaslı giriş və qorunan hesab idarəetməsi</span>
+              <span>Məlumatlarınız yüksək səviyyədə qorunur.</span>
             </div>
           </div>
 
           <div class="feature-item">
-            <span class="feature-icon">✓</span>
+            <span class="feature-icon">👥</span>
             <div class="feature-text">
-              <strong>Mərkəzləşdirilmiş idarəetmə</strong>
-              <span>İmtahan, sinif, müəllim və istifadəçi əməliyyatları bir paneldə</span>
+              <strong>Rol əsaslı idarəetmə</strong>
+              <span>İstifadəçi rollarına uyğun səlahiyyət sistemi.</span>
             </div>
           </div>
 
           <div class="feature-item">
-            <span class="feature-icon">✓</span>
+            <span class="feature-icon">◔</span>
             <div class="feature-text">
-              <strong>Təhlükəsiz hesab bərpası</strong>
-              <span>OTP və şifrə yeniləmə axını ilə güclü hesab qorunması</span>
+              <strong>Mərkəzləşdirilmiş nəzarət</strong>
+              <span>Bütün imtahan proseslərini vahid platformada idarə edin.</span>
             </div>
           </div>
         </div>
@@ -49,60 +109,71 @@
     </div>
 
     <div class="login-card">
-      <div class="login-card-header">
-        <div class="card-badge">Admin Access</div>
-        <h2>Xoş gəlmisən</h2>
-        <p>Hesabına daxil olmaq üçün məlumatlarını daxil et</p>
-      </div>
-
-      <form class="login-form" (ngSubmit)="onLogin()">
-        <div class="form-group">
-          <label for="usernameOrEmail">İstifadəçi adı və ya Email</label>
-          <input
-            id="usernameOrEmail"
-            type="text"
-            name="usernameOrEmail"
-            [(ngModel)]="usernameOrEmail"
-            placeholder="Məsələn: superadmin və ya admin@mail.com"
-            autocomplete="username" />
+      <div class="login-card-inner">
+        <div class="login-card-header">
+          <div class="card-badge">Admin Access</div>
+          <h2>Xoş gəlmisən!</h2>
+          <p>Hesabına daxil olmaq üçün məlumatlarını daxil et.</p>
         </div>
 
-        <div class="form-group">
-          <div class="label-row">
-            <label for="password">Şifrə</label>
-            <a routerLink="/forgot-password" class="text-link">Şifrəni unutdum?</a>
+        <form class="login-form" (ngSubmit)="onLogin()">
+          <div class="form-group">
+            <label for="usernameOrEmail">İstifadəçi adı və ya Email</label>
+            <div class="input-shell">
+              <span class="input-icon input-icon-user" aria-hidden="true"></span>
+              <input
+                id="usernameOrEmail"
+                type="text"
+                name="usernameOrEmail"
+                [(ngModel)]="usernameOrEmail"
+                placeholder="istifadəçi@domain.com"
+                autocomplete="username" />
+            </div>
           </div>
 
-          <div class="password-wrapper">
-            <input
-              id="password"
-              [type]="showPassword ? 'text' : 'password'"
-              name="password"
-              [(ngModel)]="password"
-              placeholder="Şifrənizi daxil edin"
-              autocomplete="current-password" />
+          <div class="form-group">
+            <div class="label-row">
+              <label for="password">Şifrə</label>
+              <a routerLink="/forgot-password" class="text-link">Şifrəni unutdunuz?</a>
+            </div>
 
-            <button
-              type="button"
-              class="toggle-password"
-              (click)="togglePassword()">
-              {{ showPassword ? 'Gizlət' : 'Göstər' }}
-            </button>
+            <div class="input-shell password-shell">
+              <span class="input-icon input-icon-lock" aria-hidden="true"></span>
+              <input
+                id="password"
+                [type]="showPassword ? 'text' : 'password'"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Şifrənizi daxil edin"
+                autocomplete="current-password" />
+
+              <button
+                type="button"
+                class="toggle-password icon-only"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword ? 'Şifrəni gizlət' : 'Şifrəni göstər'">
+                <span
+                  class="eye-icon"
+                  [class.eye-off]="showPassword"
+                  aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
+
+          <div class="error-box" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <button class="login-btn" type="submit" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Daxil ol</span>
+            <span *ngIf="isLoading">Yüklənir...</span>
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <span class="footer-icon" aria-hidden="true"></span>
+          <span>Sistemə yalnız səlahiyyətli istifadəçilər üçün giriş mümkündür.</span>
         </div>
-
-        <div class="error-box" *ngIf="errorMessage">
-          {{ errorMessage }}
-        </div>
-
-        <button class="login-btn" type="submit" [disabled]="isLoading">
-          <span *ngIf="!isLoading">Daxil ol</span>
-          <span *ngIf="isLoading">Yüklənir...</span>
-        </button>
-      </form>
-
-      <div class="login-footer">
-        <span>Sistemə giriş yalnız səlahiyyətli istifadəçilər üçündür.</span>
       </div>
     </div>
   </div>
